@@ -150,7 +150,13 @@ const ISO2_TO_ISO3: Record<string, string> = {
  * (New York/New York Newark…, Den Haag/The Hague). Проверено по списку
  * несопоставленных после автоматического прогона — построчным поиском
  * названия страны в источнике, а не по памяти.
+ *
+ * Минимальный год измерения — 2018: более старые записи игнорируются (источник
+ * содержит записи с 2010 года, некоторые станции измеряли нерегулярно, и старое
+ * значение для города, у которого сейчас нет ни одной современной станции, вводит
+ * в заблуждение сильнее, чем отсутствие значения).
  */
+const MIN_MEASUREMENT_YEAR = 2018;
 const CITY_SLUG_ALIASES: Record<string, string> = {
   'new-york': 'new-york-city',
   'ho-chi-minh': 'ho-chi-minh-city',
@@ -389,19 +395,30 @@ function matchesCity(citySlug: string, sourceCityName: string): boolean {
 
 function pickBestValue(rows: WhoRow[], iso3: string, citySlug: string): number | null {
   const candidates = rows.filter(
-    (r) => r.iso3 === iso3 && matchesCity(citySlug, r.cityName) && r.pm25 !== null,
+    (r) =>
+      r.iso3 === iso3 &&
+      matchesCity(citySlug, r.cityName) &&
+      r.pm25 !== null &&
+      r.year >= MIN_MEASUREMENT_YEAR,
   );
   if (candidates.length === 0) return null;
   candidates.sort((a, b) => b.year - a.year);
   return candidates[0].pm25;
 }
 
-async function main(): Promise<void> {
+function parseLimit(): number | null {
   const limitArgIdx = process.argv.indexOf('--limit');
-  const limit =
-    limitArgIdx !== -1 && process.argv[limitArgIdx + 1]
-      ? Number.parseInt(process.argv[limitArgIdx + 1], 10)
-      : null;
+  if (limitArgIdx === -1) return null;
+  const raw = process.argv[limitArgIdx + 1];
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`--limit ожидает положительное целое число, получено: ${raw}`);
+  }
+  return value;
+}
+
+async function main(): Promise<void> {
+  const limit = parseLimit();
 
   const tStart = Date.now();
 
@@ -444,18 +461,29 @@ async function main(): Promise<void> {
     factorId: 'air-quality',
     source: {
       ...SOURCE,
-      period: '2011–2024 (последний доступный год по каждому городу)',
+      period: '2018–2024 (последний доступный год по каждому городу)',
       notes:
         'Среднегодовая PM2.5 по данным станций, агрегированная WHO на уровне города. ' +
         'Для города берётся самый свежий год из версии 2026 v8, для которого источник ' +
-        'приводит значение (NA пропущены). Гонконг, Макао, Тайвань и Оман источник не покрывает.',
+        'приводит значение (NA пропущены), не старше 2018 года — записи старше отбрасываются ' +
+        'как устаревшие. Гонконг, Макао, Тайвань и Оман источник не покрывает. Каир: 285 мкг/м³ — ' +
+        'это собственное значение источника за 2018 год (последний год с непустым pm25 у Каира; ' +
+        'более новых лет для него нет), оно неправдоподобно высоко и почти равно (даже выше) ' +
+        'значению PM10 того же года (283.5), что физически невозможно (PM2.5 — подмножество ' +
+        'PM10) — вероятная ошибка измерения или агрегации на стороне WHO. Значение оставлено ' +
+        'как есть, потому что это буквально то, что сообщает источник, а не ошибка разбора.',
     },
     unit: 'мкг/м³',
     values,
   };
   const outPath = join(DATA_DIR, 'samples', 'air-quality.who-2026.json');
-  writeFileSync(outPath, JSON.stringify(sample, null, 2) + '\n');
-  log('запись файла', Date.now() - t0, outPath);
+  if (limit !== null) {
+    console.log(`--limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+  } else {
+    writeFileSync(outPath, JSON.stringify(sample, null, 2) + '\n');
+    log('запись файла', Date.now() - t0, outPath);
+  }
 
   console.log(`\nЗаполнено ${Object.keys(values).length} из ${cities.length}`);
   console.log('Первые десять несопоставленных:', unmatched.slice(0, 10).join(', ') || '(нет)');
