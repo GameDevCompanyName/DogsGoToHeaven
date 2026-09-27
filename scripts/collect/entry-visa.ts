@@ -13,7 +13,9 @@
  *   - «Visa not required», «Freedom of movement»              → visa-free
  *   - «Visa on arrival», «e-VOA» (electronic visa on arrival)  → visa-on-arrival
  *   - «eVisa», «Online Visa», «Electronic Travel Authorization»/
- *     «Electronic Travel Authorisation», «Electronic Authorization», «ETA» → e-visa
+ *     «Electronic Travel Authorisation», «Electronic Authorization», «ETA» (только как
+ *     отдельное слово, регэксп с границами слова — голая подстрока «eta» ложно совпадает
+ *     внутри других слов ячейки) → e-visa
  *   - «Visa required»                                          → consular
  *   - «Admission refused», «Entry banned»                      → refused (туристический
  *     въезд гражданам РФ запрещён; это реальная информация, а не пропуск)
@@ -71,7 +73,6 @@ const PHRASE_TO_CATEGORY: Array<{ phrase: string; category: CategoryCode }> = [
   { phrase: 'electronic travel authorization', category: 'e-visa' },
   { phrase: 'electronic travel authorisation', category: 'e-visa' },
   { phrase: 'electronic authorization', category: 'e-visa' },
-  { phrase: 'eta', category: 'e-visa' },
   { phrase: 'visa required', category: 'consular' },
   { phrase: 'admission refused', category: 'refused' },
   { phrase: 'entry banned', category: 'refused' },
@@ -258,6 +259,13 @@ function parseRows(tableWikitext: string): SourceRow[] {
   return rows;
 }
 
+/**
+ * «ETA» (Electronic Travel Authorization) — только как отдельное слово: голая подстрока
+ * «eta» ловит случайные совпадения внутри других слов ячейки (например, часть слова,
+ * оканчивающегося на «...eta...»), не имеющих отношения к визовому режиму.
+ */
+const ETA_WORD_RE = /\beta\b/i;
+
 /** Самая мягкая категория среди фраз, найденных в тексте ячейки; undefined, если ни одна не найдена. */
 function matchCategory(cellText: string): CategoryCode | undefined {
   const lowerText = cellText.toLowerCase();
@@ -265,6 +273,7 @@ function matchCategory(cellText: string): CategoryCode | undefined {
   for (const { phrase, category } of PHRASE_TO_CATEGORY) {
     if (lowerText.includes(phrase)) found.add(category);
   }
+  if (ETA_WORD_RE.test(cellText)) found.add('e-visa');
   for (const category of LENIENCY_ORDER) {
     if (found.has(category)) return category;
   }
@@ -337,8 +346,13 @@ async function main(): Promise<void> {
   };
 
   const outPath = join(DATA_DIR, 'samples', 'entry-visa.wikipedia-2026.json');
-  mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
-  writeFileSync(outPath, `${JSON.stringify(sample, null, 2)}\n`);
+  if (limit !== undefined) {
+    console.log(`--limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+  } else {
+    mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
+    writeFileSync(outPath, `${JSON.stringify(sample, null, 2)}\n`);
+  }
   markStage('запись');
 
   const filledCount = Object.keys(values).length;
