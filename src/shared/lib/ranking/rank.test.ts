@@ -4,7 +4,7 @@ import { rank } from './rank';
 import type { Dataset, DatasetCity, RankingSettings } from './types';
 
 function makeCity(id: string, values: DatasetCity['values']): DatasetCity {
-  return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values };
+  return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values, coverage: 1 };
 }
 
 /**
@@ -20,6 +20,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'rent',
         kind: 'numeric',
         name: 'Аренда',
+        definition: 'Тест',
         group: 'g',
         level: 'city',
         scoring: { type: 'lower-better' },
@@ -30,6 +31,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'safety',
         kind: 'numeric',
         name: 'Безопасность',
+        definition: 'Тест',
         group: 'g',
         level: 'city',
         scoring: { type: 'higher-better' },
@@ -40,6 +42,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'visa',
         kind: 'categorical',
         name: 'Виза',
+        definition: 'Тест',
         group: 'g',
         level: 'country',
         categories: [

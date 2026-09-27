@@ -23,6 +23,7 @@ function makeRaw(): RawData {
           id: 'rent',
           kind: 'numeric',
           name: 'Аренда',
+          definition: 'Тест',
           group: 'g',
           level: 'city',
           scoring: { type: 'lower-better' },
@@ -34,6 +35,7 @@ function makeRaw(): RawData {
           id: 'visa',
           kind: 'categorical',
           name: 'Виза',
+          definition: 'Тест',
           group: 'g',
           level: 'country',
           activeSample: 'visa.a',
@@ -43,6 +45,7 @@ function makeRaw(): RawData {
           id: 'sunshine',
           kind: 'numeric',
           name: 'Солнце',
+          definition: 'Тест',
           group: 'g',
           level: 'city',
           scoring: { type: 'higher-better' },
@@ -122,5 +125,33 @@ describe('buildDataset', () => {
 
   it('passes groups through', () => {
     expect(buildDataset(makeRaw()).groups).toEqual([{ id: 'g', name: 'Группа' }]);
+  });
+});
+
+describe('buildDataset coverage', () => {
+  it('is the share of factors with an active sample that have a value', () => {
+    const dataset = buildDataset(makeRaw());
+    expect(dataset.cities.map((city) => city.coverage)).toEqual([1, 1, 0]);
+  });
+
+  it('ignores factors without an active sample', () => {
+    const raw = makeRaw();
+    raw.samples = raw.samples.filter((sample) => sample.id !== 'visa.a');
+    raw.registry.factors = raw.registry.factors.map((factor) =>
+      factor.id === 'visa' ? { ...factor, activeSample: undefined } : factor,
+    );
+    const dataset = buildDataset(raw);
+    expect(dataset.cities.map((city) => city.coverage)).toEqual([1, 1, 0]);
+  });
+
+  it('is zero when no factor has an active sample', () => {
+    const raw = makeRaw();
+    raw.samples = [];
+    raw.registry.factors = raw.registry.factors.map((factor) => ({
+      ...factor,
+      activeSample: undefined,
+    }));
+    const dataset = buildDataset(raw);
+    expect(dataset.cities.map((city) => city.coverage)).toEqual([0, 0, 0]);
   });
 });

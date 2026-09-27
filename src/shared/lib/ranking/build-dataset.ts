@@ -21,15 +21,19 @@ export function buildDataset(raw: RawData): Dataset {
 
   const cities: DatasetCity[] = raw.cities.map((city) => {
     const values: Record<FactorId, FactorValue> = {};
+    let filled = 0;
     for (const factor of raw.registry.factors) {
       const sample = activeSamples.get(factor.id);
       const key = factor.level === 'city' ? city.id : city.countryId;
-      values[factor.id] = sample?.values[key] ?? null;
+      const value = sample?.values[key] ?? null;
+      values[factor.id] = value;
+      if (value !== null) filled += 1;
     }
     return {
       ...city,
       countryName: countryNames.get(city.countryId) ?? city.countryId,
       values,
+      coverage: activeSamples.size === 0 ? 0 : filled / activeSamples.size,
     };
   });
 

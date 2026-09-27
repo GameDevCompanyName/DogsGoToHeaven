@@ -11,6 +11,7 @@ describe('schemas reject unknown keys', () => {
           id: 'rent',
           kind: 'numeric',
           name: 'Аренда',
+          definition: 'Тест',
           group: 'g',
           level: 'city',
           scoring: { type: 'lower-better' },

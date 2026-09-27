@@ -14,6 +14,8 @@ export interface DatasetCity {
   lat: number;
   lon: number;
   values: Record<FactorId, FactorValue>;
+  /** Доля факторов с активной выборкой, по которым у города есть значение, 0–1. */
+  coverage: number;
 }
 
 export interface FactorProvenance extends SampleSource {
