@@ -171,6 +171,7 @@
       "definition": "Визовый режим въезда для граждан РФ с обычным паспортом на краткий срок",
       "group": "legalization",
       "level": "country",
+      "activeSample": "entry-visa.wikipedia-2026",
       "categories": [
         {
           "code": "visa-free",
@@ -187,6 +188,10 @@
         {
           "code": "consular",
           "name": "Виза в консульстве"
+        },
+        {
+          "code": "refused",
+          "name": "Въезд закрыт"
         }
       ]
     },
