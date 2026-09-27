@@ -1,5 +1,5 @@
 export { buildDataset } from './build-dataset';
-export { rank } from './rank';
+export { MIN_CITY_COVERAGE, rank } from './rank';
 export {
   type CategoricalFactor,
   type CategoricalFilter,
@@ -38,5 +38,6 @@ export type {
   RankedCity,
   RankingResult,
   RankingSettings,
+  RankOptions,
 } from './types';
 export { validateRawData } from './validate';

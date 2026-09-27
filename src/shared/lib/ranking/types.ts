@@ -14,6 +14,8 @@ export interface DatasetCity {
   lat: number;
   lon: number;
   values: Record<FactorId, FactorValue>;
+  /** Доля факторов с активной выборкой, по которым у города есть значение, 0–1. */
+  coverage: number;
 }
 
 export interface FactorProvenance extends SampleSource {
@@ -63,7 +65,14 @@ export interface RankedCity {
 
 export interface ExcludedCity {
   cityId: CityId;
+  /** `coverage` — мало данных, `filter` — провалил жёсткий фильтр. */
+  reason: 'coverage' | 'filter';
   failedFilterIds: FactorId[];
+}
+
+export interface RankOptions {
+  /** Минимальное покрытие города данными, 0–1. По умолчанию MIN_CITY_COVERAGE. */
+  minCoverage?: number;
 }
 
 export interface RankingResult {

@@ -54,6 +54,8 @@ export const weightSchema = z.number().int().min(0).max(10);
 const factorBaseSchema = z.object({
   id: idSchema,
   name: nameSchema,
+  /** Что именно измеряем и в каких единицах; сборщик данных измеряет ровно это. */
+  definition: nameSchema,
   group: idSchema,
   level: z.enum(['city', 'country']),
   activeSample: sampleIdSchema.optional(),

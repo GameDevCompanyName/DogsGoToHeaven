@@ -1,20 +1,41 @@
 {
   "groups": [
-    { "id": "money", "name": "Деньги" },
-    { "id": "safety", "name": "Безопасность и здоровье" },
-    { "id": "climate", "name": "Климат" },
-    { "id": "legalization", "name": "Легализация" },
-    { "id": "adaptation", "name": "Адаптация" },
-    { "id": "remote", "name": "Удалёнка" }
+    {
+      "id": "money",
+      "name": "Деньги"
+    },
+    {
+      "id": "safety",
+      "name": "Безопасность и здоровье"
+    },
+    {
+      "id": "climate",
+      "name": "Климат"
+    },
+    {
+      "id": "legalization",
+      "name": "Легализация"
+    },
+    {
+      "id": "adaptation",
+      "name": "Адаптация"
+    },
+    {
+      "id": "remote",
+      "name": "Удалёнка"
+    }
   ],
   "factors": [
     {
       "id": "cost-of-living",
       "kind": "numeric",
       "name": "Стоимость жизни",
+      "definition": "Индекс стоимости жизни без аренды, Нью-Йорк = 100",
       "group": "money",
       "level": "city",
-      "scoring": { "type": "lower-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 8,
       "defaultEnabled": true
     },
@@ -22,9 +43,12 @@
       "id": "rent",
       "kind": "numeric",
       "name": "Стоимость аренды",
+      "definition": "Индекс стоимости аренды жилья, Нью-Йорк = 100",
       "group": "money",
       "level": "city",
-      "scoring": { "type": "lower-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 7,
       "defaultEnabled": true
     },
@@ -32,9 +56,12 @@
       "id": "it-salary",
       "kind": "numeric",
       "name": "Зарплата в IT",
+      "definition": "Медианная годовая компенсация разработчика ПО, USD",
       "group": "money",
-      "level": "city",
-      "scoring": { "type": "higher-better" },
+      "level": "country",
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
@@ -42,9 +69,12 @@
       "id": "tax-burden",
       "kind": "numeric",
       "name": "Налоговая нагрузка",
+      "definition": "Максимальная ставка налога на доходы физических лиц, %",
       "group": "money",
       "level": "country",
-      "scoring": { "type": "lower-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 4,
       "defaultEnabled": true
     },
@@ -52,9 +82,12 @@
       "id": "safety",
       "kind": "numeric",
       "name": "Безопасность",
+      "definition": "Индекс безопасности 0–100, больше — безопаснее",
       "group": "safety",
       "level": "city",
-      "scoring": { "type": "higher-better" },
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 7,
       "defaultEnabled": true
     },
@@ -62,19 +95,25 @@
       "id": "healthcare",
       "kind": "numeric",
       "name": "Здравоохранение",
+      "definition": "Индекс доступности и качества здравоохранения 0–100",
       "group": "safety",
       "level": "country",
-      "scoring": { "type": "higher-better" },
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
     {
       "id": "air-quality",
       "kind": "numeric",
-      "name": "Качество воздуха",
+      "name": "Загрязнение воздуха (PM2.5)",
+      "definition": "Среднегодовая концентрация PM2.5, мкг/м³",
       "group": "safety",
       "level": "city",
-      "scoring": { "type": "higher-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 4,
       "defaultEnabled": true
     },
@@ -82,9 +121,13 @@
       "id": "winter-temp",
       "kind": "numeric",
       "name": "Температура зимой",
+      "definition": "Средняя температура самого холодного месяца, °C, по климатической норме",
       "group": "climate",
       "level": "city",
-      "scoring": { "type": "range", "defaultRange": [5, 20] },
+      "scoring": {
+        "type": "range",
+        "defaultRange": [5, 20]
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
@@ -92,9 +135,13 @@
       "id": "summer-temp",
       "kind": "numeric",
       "name": "Температура летом",
+      "definition": "Средняя температура самого тёплого месяца, °C, по климатической норме",
       "group": "climate",
       "level": "city",
-      "scoring": { "type": "range", "defaultRange": [18, 28] },
+      "scoring": {
+        "type": "range",
+        "defaultRange": [18, 28]
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
@@ -102,9 +149,12 @@
       "id": "sunshine",
       "kind": "numeric",
       "name": "Солнечные дни",
+      "definition": "Часов солнечного сияния в год",
       "group": "climate",
       "level": "city",
-      "scoring": { "type": "higher-better" },
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 4,
       "defaultEnabled": true
     },
@@ -112,45 +162,78 @@
       "id": "entry-visa",
       "kind": "categorical",
       "name": "Визовый режим для въезда",
+      "definition": "Визовый режим въезда для граждан РФ с обычным паспортом на краткий срок",
       "group": "legalization",
       "level": "country",
       "categories": [
-        { "code": "visa-free", "name": "Без визы" },
-        { "code": "visa-on-arrival", "name": "Виза по прибытии" },
-        { "code": "e-visa", "name": "Электронная виза" },
-        { "code": "consular", "name": "Виза в консульстве" }
+        {
+          "code": "visa-free",
+          "name": "Без визы"
+        },
+        {
+          "code": "visa-on-arrival",
+          "name": "Виза по прибытии"
+        },
+        {
+          "code": "e-visa",
+          "name": "Электронная виза"
+        },
+        {
+          "code": "consular",
+          "name": "Виза в консульстве"
+        }
       ]
     },
     {
       "id": "work-visa",
       "kind": "categorical",
       "name": "Рабочая виза",
+      "definition": "Доступность рабочей визы для граждан РФ без работодателя-спонсора из списка исключений",
       "group": "legalization",
       "level": "country",
       "categories": [
-        { "code": "accessible", "name": "Есть понятный путь" },
-        { "code": "hard", "name": "Сложно" },
-        { "code": "closed", "name": "Практически недоступна" }
+        {
+          "code": "accessible",
+          "name": "Есть понятный путь"
+        },
+        {
+          "code": "hard",
+          "name": "Сложно"
+        },
+        {
+          "code": "closed",
+          "name": "Практически недоступна"
+        }
       ]
     },
     {
       "id": "nomad-visa",
       "kind": "categorical",
       "name": "Виза цифрового кочевника",
+      "definition": "Есть ли действующая виза цифрового кочевника, доступная гражданам РФ",
       "group": "legalization",
       "level": "country",
       "categories": [
-        { "code": "yes", "name": "Есть" },
-        { "code": "no", "name": "Нет" }
+        {
+          "code": "yes",
+          "name": "Есть"
+        },
+        {
+          "code": "no",
+          "name": "Нет"
+        }
       ]
     },
     {
-      "id": "time-to-residence",
+      "id": "time-to-citizenship",
       "kind": "numeric",
-      "name": "Срок до ВНЖ",
+      "name": "Срок до гражданства",
+      "definition": "Лет легального проживания до права подать на гражданство в общем порядке",
       "group": "legalization",
       "level": "country",
-      "scoring": { "type": "lower-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
@@ -158,9 +241,12 @@
       "id": "english",
       "kind": "numeric",
       "name": "Английский в стране",
+      "definition": "EF English Proficiency Index, баллы",
       "group": "adaptation",
       "level": "country",
-      "scoring": { "type": "higher-better" },
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 5,
       "defaultEnabled": true
     },
@@ -168,9 +254,12 @@
       "id": "internet-speed",
       "kind": "numeric",
       "name": "Скорость интернета",
+      "definition": "Медианная скорость фиксированного интернета на скачивание, Мбит/с",
       "group": "remote",
-      "level": "city",
-      "scoring": { "type": "higher-better" },
+      "level": "country",
+      "scoring": {
+        "type": "higher-better"
+      },
       "defaultWeight": 4,
       "defaultEnabled": true
     },
@@ -178,9 +267,12 @@
       "id": "moscow-time-diff",
       "kind": "numeric",
       "name": "Разница во времени с Москвой",
+      "definition": "Модуль разницы стандартного (зимнего) времени с Москвой, часов",
       "group": "remote",
       "level": "city",
-      "scoring": { "type": "lower-better" },
+      "scoring": {
+        "type": "lower-better"
+      },
       "defaultWeight": 3,
       "defaultEnabled": true
     }

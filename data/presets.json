@@ -4,15 +4,15 @@
     "kind": "duration",
     "name": "На месяц",
     "weights": { "rent": 9, "healthcare": 2 },
-    "enabled": { "time-to-residence": false },
+    "enabled": { "time-to-citizenship": false },
     "filters": { "entry-visa": { "allowed": ["visa-free", "visa-on-arrival", "e-visa"] } }
   },
   {
     "id": "long-term",
     "kind": "duration",
     "name": "Насовсем",
-    "weights": { "time-to-residence": 8, "healthcare": 7 },
-    "enabled": { "time-to-residence": true }
+    "weights": { "time-to-citizenship": 8, "healthcare": 7 },
+    "enabled": { "time-to-citizenship": true }
   },
   {
     "id": "remote",

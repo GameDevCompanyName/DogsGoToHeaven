@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { rank } from './rank';
+import { MIN_CITY_COVERAGE, rank } from './rank';
 import type { Dataset, DatasetCity, RankingSettings } from './types';
 
 function makeCity(id: string, values: DatasetCity['values']): DatasetCity {
-  return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values };
+  return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values, coverage: 1 };
 }
 
 /**
@@ -20,6 +20,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'rent',
         kind: 'numeric',
         name: 'Аренда',
+        definition: 'Тест',
         group: 'g',
         level: 'city',
         scoring: { type: 'lower-better' },
@@ -30,6 +31,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'safety',
         kind: 'numeric',
         name: 'Безопасность',
+        definition: 'Тест',
         group: 'g',
         level: 'city',
         scoring: { type: 'higher-better' },
@@ -40,6 +42,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
         id: 'visa',
         kind: 'categorical',
         name: 'Виза',
+        definition: 'Тест',
         group: 'g',
         level: 'country',
         categories: [
@@ -107,14 +110,18 @@ describe('rank', () => {
 
   it('excludes cities failing a numeric filter and keeps ones without data', () => {
     const result = rank(makeDataset(), makeSettings({ filters: { safety: { min: 60 } } }));
-    expect(result.excluded).toEqual([{ cityId: 'beta', failedFilterIds: ['safety'] }]);
+    expect(result.excluded).toEqual([
+      { cityId: 'beta', reason: 'filter', failedFilterIds: ['safety'] },
+    ]);
     expect(result.ranked.map((city) => city.cityId)).toEqual(['alpha', 'gamma']);
     expect(find(result, 'gamma').missingFactorIds).toEqual(['safety']);
   });
 
   it('excludes cities failing a categorical filter', () => {
     const result = rank(makeDataset(), makeSettings({ filters: { visa: { allowed: ['free'] } } }));
-    expect(result.excluded).toEqual([{ cityId: 'beta', failedFilterIds: ['visa'] }]);
+    expect(result.excluded).toEqual([
+      { cityId: 'beta', reason: 'filter', failedFilterIds: ['visa'] },
+    ]);
   });
 
   it('lists a filtered factor without data in missingFactorIds even when inactive', () => {
@@ -156,5 +163,54 @@ describe('rank', () => {
     const alpha = find(rank(dataset, makeSettings()), 'alpha');
     expect(alpha.contributions[0]).toMatchObject({ value: null, normalized: null, weightShare: 0 });
     expect(alpha.missingFactorIds).toEqual(['rent']);
+  });
+});
+
+describe('rank coverage threshold', () => {
+  function withCoverage(coverage: number): Dataset {
+    const dataset = makeDataset();
+    dataset.cities = dataset.cities.map((city) =>
+      city.id === 'gamma' ? { ...city, coverage } : city,
+    );
+    return dataset;
+  }
+
+  it('exports the default threshold', () => {
+    expect(MIN_CITY_COVERAGE).toBe(0.6);
+  });
+
+  it('excludes a city below the threshold with reason coverage', () => {
+    const result = rank(withCoverage(0.5), makeSettings());
+    expect(result.excluded).toEqual([{ cityId: 'gamma', reason: 'coverage', failedFilterIds: [] }]);
+    expect(result.ranked.map((city) => city.cityId)).toEqual(['alpha', 'beta']);
+  });
+
+  it('keeps a city exactly at the threshold', () => {
+    const result = rank(withCoverage(0.6), makeSettings());
+    expect(result.excluded).toEqual([]);
+  });
+
+  it('marks filter exclusions with reason filter', () => {
+    const result = rank(makeDataset(), makeSettings({ filters: { visa: { allowed: ['free'] } } }));
+    expect(result.excluded).toEqual([
+      { cityId: 'beta', reason: 'filter', failedFilterIds: ['visa'] },
+    ]);
+  });
+
+  it('shows everyone when minCoverage is zero', () => {
+    const result = rank(withCoverage(0), makeSettings(), { minCoverage: 0 });
+    expect(result.ranked).toHaveLength(3);
+  });
+
+  it('excludes every city when no factor has data', () => {
+    const dataset = makeDataset();
+    dataset.cities = dataset.cities.map((city) => ({ ...city, coverage: 0 }));
+    const result = rank(dataset, makeSettings());
+    expect(result.ranked).toEqual([]);
+    expect(result.excluded.map((city) => city.reason)).toEqual([
+      'coverage',
+      'coverage',
+      'coverage',
+    ]);
   });
 });
