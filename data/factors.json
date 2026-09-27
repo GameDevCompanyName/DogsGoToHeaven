@@ -37,7 +37,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 8,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "cost-of-living.numbeo-2026"
     },
     {
       "id": "rent",
@@ -50,7 +51,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 7,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "rent.numbeo-2026"
     },
     {
       "id": "it-salary",
@@ -63,7 +65,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "it-salary.stackoverflow-2025"
     },
     {
       "id": "tax-burden",
@@ -76,7 +79,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 4,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "tax-burden.wikipedia-2026"
     },
     {
       "id": "safety",
@@ -89,7 +93,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 7,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "safety.numbeo-2026"
     },
     {
       "id": "healthcare",
@@ -102,7 +107,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "healthcare.numbeo-2026"
     },
     {
       "id": "air-quality",
@@ -115,7 +121,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 4,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "air-quality.who-2026"
     },
     {
       "id": "winter-temp",
@@ -129,7 +136,8 @@
         "defaultRange": [5, 20]
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "winter-temp.open-meteo-2020-2024"
     },
     {
       "id": "summer-temp",
@@ -143,20 +151,22 @@
         "defaultRange": [18, 28]
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "summer-temp.open-meteo-2020-2024"
     },
     {
       "id": "sunshine",
       "kind": "numeric",
       "name": "Солнечные дни",
-      "definition": "Часов солнечного сияния в год",
+      "definition": "Часов солнечного сияния в год по модельным данным ERA5 (Open-Meteo); выше наблюдаемых станционных норм примерно в полтора раза, сравнимо между городами",
       "group": "climate",
       "level": "city",
       "scoring": {
         "type": "higher-better"
       },
       "defaultWeight": 4,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "sunshine.open-meteo-2020-2024"
     },
     {
       "id": "entry-visa",
@@ -165,6 +175,7 @@
       "definition": "Визовый режим въезда для граждан РФ с обычным паспортом на краткий срок",
       "group": "legalization",
       "level": "country",
+      "activeSample": "entry-visa.wikipedia-2026",
       "categories": [
         {
           "code": "visa-free",
@@ -181,6 +192,10 @@
         {
           "code": "consular",
           "name": "Виза в консульстве"
+        },
+        {
+          "code": "refused",
+          "name": "Въезд закрыт"
         }
       ]
     },
@@ -213,6 +228,7 @@
       "definition": "Есть ли действующая виза цифрового кочевника, доступная гражданам РФ",
       "group": "legalization",
       "level": "country",
+      "activeSample": "nomad-visa.wikipedia-2026",
       "categories": [
         {
           "code": "yes",
@@ -235,7 +251,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "time-to-citizenship.wikipedia-2026"
     },
     {
       "id": "english",
@@ -244,6 +261,7 @@
       "definition": "EF English Proficiency Index, баллы",
       "group": "adaptation",
       "level": "country",
+      "activeSample": "english.ef-epi-2025",
       "scoring": {
         "type": "higher-better"
       },
@@ -257,6 +275,7 @@
       "definition": "Медианная скорость фиксированного интернета на скачивание, Мбит/с",
       "group": "remote",
       "level": "country",
+      "activeSample": "internet-speed.speedtest-2026",
       "scoring": {
         "type": "higher-better"
       },
@@ -274,7 +293,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 3,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "moscow-time-diff.iana-2026"
     }
   ]
 }
