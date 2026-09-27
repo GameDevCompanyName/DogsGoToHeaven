@@ -15,6 +15,7 @@
     "test": "vitest --run --passWithNoTests",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "data:report": "tsx scripts/data-report.ts",
     "verify": "npm run lint && npm run check && npm run test && npm run test:e2e"
   },
   "devDependencies": {
