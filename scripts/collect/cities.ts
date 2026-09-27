@@ -1,0 +1,610 @@
+/**
+ * Собирает data/cities.json и data/countries.json.
+ *
+ * Три списка кандидатов, объединённые без дублей (единственный критерий отбора —
+ * город не в России):
+ *   1. Качество жизни — первые 100 городов таблицы Numbeo Quality of Life Index
+ *      (https://www.numbeo.com/quality-of-life/rankings.jsp, текущая редакция страницы).
+ *   2. Направления переезда из РФ 2022–2025 — страны назначения из статей Википедии
+ *      «Russian emigration during the Russo-Ukrainian war (2022–present)» (раздел
+ *      Destinations) и «Эмиграция из России после вторжения России на Украину» (раздел
+ *      «Основные направления» и таблица оценок The Bell / FIIA); для каждой страны —
+ *      столица и четыре крупнейших по населению города по данным Wikidata.
+ *   3. Мировая популярность — Euromonitor Top 100 City Destinations (полный список
+ *      2018 года и топ-10 за 2023–2025) в изложении статьи Википедии
+ *      «List of cities by international visitors».
+ *
+ * Для каждого города из Wikidata берутся русское название, страна (ISO 3166-1 alpha-2)
+ * и координаты; для каждой страны — русское название.
+ *
+ * Запуск: npx tsx scripts/collect/cities.ts
+ */
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { z } from 'zod';
+
+const DATA_DIR = join(import.meta.dirname, '..', '..', 'data');
+const USER_AGENT = 'DogsGoToHeaven/0.1 (https://github.com/GameDevCompanyName; 9440533@gmail.com)';
+const REQUEST_DELAY_MS = 200;
+const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
+
+const NUMBEO_URL = 'https://www.numbeo.com/quality-of-life/rankings.jsp';
+const NUMBEO_TOP = 100;
+
+const EN_EMIGRATION_PAGE = 'Russian emigration during the Russo-Ukrainian war (2022–present)';
+const RU_EMIGRATION_PAGE = 'Эмиграция из России после вторжения России на Украину';
+const VISITORS_PAGE = 'List of cities by international visitors';
+
+/** Сколько крупнейших городов брать в каждой стране назначения (плюс столица). */
+const CITIES_PER_DESTINATION_COUNTRY = 4;
+const MIN_DESTINATION_CITY_POPULATION = 100_000;
+
+/** Классы Wikidata, которые считаем «городом» при выборке по населению. */
+const CITY_CLASSES = [
+  'Q515', // city
+  'Q1549591', // big city
+  'Q5119', // capital city
+  'Q1637706', // city with millions of inhabitants
+  'Q3957', // town
+  'Q7930989', // city/town
+  'Q1093829', // city in the United States
+  'Q2074737', // municipality of Spain
+];
+
+/** Два элемента с одной страной и координатами ближе этого порога — один и тот же город. */
+const DUPLICATE_DISTANCE_DEG = 0.05;
+
+const RUSSIA = 'RU';
+const WIKIDATA_ENTITY_PREFIX = 'http://www.wikidata.org/entity/';
+
+interface City {
+  id: string;
+  name: string;
+  countryId: string;
+  lat: number;
+  lon: number;
+}
+
+interface Country {
+  id: string;
+  name: string;
+}
+
+/** Кандидат: либо уже известный элемент Wikidata, либо название для поиска. */
+interface Candidate {
+  label: string;
+  qid?: string;
+  /** Английское название и ISO alpha-2 страны для поиска по названию. */
+  countryHint?: string;
+}
+
+interface CountryRef {
+  qid: string;
+  iso: string;
+}
+
+interface Place {
+  qid: string;
+  en?: string;
+  ru?: string;
+  /** Страны из P17 и из административной цепочки P131 (только с ISO-кодом). */
+  direct?: CountryRef[];
+  admin?: CountryRef[];
+  /** Страна, выбранная при сопоставлении с кандидатом. */
+  country?: CountryRef;
+  lat?: number;
+  lon?: number;
+  isDisambiguation: boolean;
+}
+
+// --- HTTP ---------------------------------------------------------------------
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchText(url: string): Promise<string> {
+  await sleep(REQUEST_DELAY_MS);
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json, text/html;q=0.9' },
+    });
+    if (response.ok) return response.text();
+    if (attempt >= 2 || (response.status < 500 && response.status !== 429)) {
+      throw new Error(`${response.status} ${response.statusText}: ${url}`);
+    }
+    await sleep(2000 * (attempt + 1));
+  }
+}
+
+async function fetchJson<T>(url: string, schema: z.ZodType<T>): Promise<T> {
+  return schema.parse(JSON.parse(await fetchText(url)));
+}
+
+const sparqlSchema = z.object({
+  results: z.object({
+    bindings: z.array(z.record(z.object({ value: z.string() }))),
+  }),
+});
+
+/** Возвращает строки результата как объекты «переменная → значение». */
+async function sparql(query: string): Promise<Record<string, string>[]> {
+  const url = `${SPARQL_ENDPOINT}?format=json&query=${encodeURIComponent(query)}`;
+  const data = await fetchJson(url, sparqlSchema);
+  return data.results.bindings.map((row) =>
+    Object.fromEntries(Object.entries(row).map(([key, cell]) => [key, cell.value])),
+  );
+}
+
+function qidOf(entityUrl: string): string {
+  return entityUrl.replace(WIKIDATA_ENTITY_PREFIX, '');
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));
+  return result;
+}
+
+// --- Wikipedia ----------------------------------------------------------------
+
+type WikiLang = 'en' | 'ru';
+
+const parseSchema = z.object({ parse: z.object({ wikitext: z.string() }) });
+
+async function fetchWikitext(lang: WikiLang, page: string): Promise<string> {
+  const url = `https://${lang}.wikipedia.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&page=${encodeURIComponent(page)}`;
+  return (await fetchJson(url, parseSchema)).parse.wikitext;
+}
+
+const pagePropsSchema = z.object({
+  query: z.object({
+    normalized: z.array(z.object({ from: z.string(), to: z.string() })).optional(),
+    redirects: z.array(z.object({ from: z.string(), to: z.string() })).optional(),
+    pages: z.array(
+      z.object({
+        title: z.string(),
+        pageprops: z.object({ wikibase_item: z.string().optional() }).optional(),
+      }),
+    ),
+  }),
+});
+
+/** Сопоставляет заголовки статей с элементами Wikidata, следуя редиректам. */
+async function resolveTitles(lang: WikiLang, titles: string[]): Promise<Map<string, string>> {
+  const resolved = new Map<string, string>();
+  for (const batch of chunk([...new Set(titles)], 50)) {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=pageprops&ppprop=wikibase_item&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(batch.join('|'))}`;
+    const { query } = await fetchJson(url, pagePropsSchema);
+    const forward = new Map<string, string>();
+    for (const { from, to } of [...(query.normalized ?? []), ...(query.redirects ?? [])]) {
+      forward.set(from, to);
+    }
+    const byTitle = new Map(query.pages.map((page) => [page.title, page.pageprops?.wikibase_item]));
+    for (const title of batch) {
+      let current = title;
+      for (let hops = 0; hops < 3 && forward.has(current); hops += 1) {
+        current = forward.get(current) ?? current;
+      }
+      const qid = byTitle.get(current);
+      if (qid) resolved.set(title, qid);
+    }
+  }
+  return resolved;
+}
+
+/** Цели вики-ссылок `[[Цель|текст]]` в куске викитекста, без файлов и категорий. */
+function wikiLinks(wikitext: string): string[] {
+  const targets = [...wikitext.matchAll(/\[\[([^\]|#]+)/g)].map((match) => match[1].trim());
+  return [
+    ...new Set(targets.filter((target) => !/^(File|Файл|Category|Категория):/i.test(target))),
+  ];
+}
+
+/** Викитекст одного раздела по заголовку, до следующего заголовка того же или более высокого уровня. */
+function section(wikitext: string, heading: string): string {
+  const match = new RegExp(`^(=+)\\s*${heading}\\s*\\1\\s*$`, 'm').exec(wikitext);
+  if (!match) throw new Error(`Раздел «${heading}» не найден`);
+  const level = match[1].length;
+  const rest = wikitext.slice(match.index + match[0].length);
+  const end = rest.search(new RegExp(`^={2,${level}}[^=]`, 'm'));
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
+/** Строки таблиц викитекста как массивы ячеек. */
+function wikiTables(wikitext: string): string[][][] {
+  return [...wikitext.matchAll(/\{\|[\s\S]*?\n\|\}/g)].map((match) =>
+    match[0]
+      .split(/^\|-.*$/m)
+      .slice(1)
+      .map((row) =>
+        row
+          .split('\n')
+          .filter((line) => line.startsWith('|') && !/^\|[}+]/.test(line))
+          .flatMap((line) => line.slice(1).split('||'))
+          .map((cell) => cell.trim()),
+      )
+      .filter((row) => row.length > 0),
+  );
+}
+
+// --- Список 1: Numbeo Quality of Life ------------------------------------------
+
+async function collectNumbeo(): Promise<Candidate[]> {
+  const html = await fetchText(NUMBEO_URL);
+  const tableStart = html.indexOf('id="t2"');
+  if (tableStart < 0) throw new Error('Numbeo: таблица t2 не найдена');
+  const table = html.slice(tableStart, html.indexOf('</table>', tableStart));
+  const entries = [...table.matchAll(/class="cityOrCountryInIndicesTable">([^<]+)</g)]
+    .map((match) => match[1].trim())
+    .slice(0, NUMBEO_TOP);
+  if (entries.length < NUMBEO_TOP) throw new Error(`Numbeo: только ${entries.length} строк`);
+
+  const parsed = entries.map((entry) => {
+    const comma = entry.lastIndexOf(', ');
+    const stripParens = (text: string) => text.replace(/\s*\([^)]*\)/g, '').trim();
+    return {
+      city: stripParens(entry.slice(0, comma)),
+      country: stripParens(entry.slice(comma + 2)),
+    };
+  });
+
+  const countryNames = [...new Set(parsed.map((item) => item.country))];
+  const countryQids = await resolveTitles('en', countryNames);
+  const isoByQid = await countryIsoCodes([...countryQids.values()]);
+  const isoByName = new Map<string, string>();
+  for (const name of countryNames) {
+    const qid = countryQids.get(name);
+    const iso = qid ? isoByQid.get(qid) : undefined;
+    if (iso) isoByName.set(name, iso);
+    else {
+      const found = await searchCountry(name);
+      if (found) isoByName.set(name, found);
+      else console.warn(`Numbeo: страна «${name}» не распознана`);
+    }
+  }
+
+  return parsed.map(({ city, country }) => ({ label: city, countryHint: isoByName.get(country) }));
+}
+
+/** ISO alpha-2 для элементов Wikidata, которые являются странами. */
+async function countryIsoCodes(qids: string[]): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  for (const batch of chunk(qids, 100)) {
+    const rows = await sparql(`SELECT ?item ?iso WHERE {
+      VALUES ?item { ${batch.map((qid) => `wd:${qid}`).join(' ')} }
+      ?item wdt:P297 ?iso .
+      FILTER(?iso != "EU")
+    }`);
+    for (const row of rows) result.set(qidOf(row.item), row.iso);
+  }
+  return result;
+}
+
+const searchSchema = z.object({ search: z.array(z.object({ id: z.string() })) });
+
+async function searchEntities(text: string, language: WikiLang = 'en'): Promise<string[]> {
+  const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&type=item&limit=7&language=${language}&uselang=${language}&search=${encodeURIComponent(text)}`;
+  return (await fetchJson(url, searchSchema)).search.map((hit) => hit.id);
+}
+
+async function searchCountry(name: string): Promise<string | undefined> {
+  const hits = await searchEntities(name);
+  const codes = await countryIsoCodes(hits);
+  return hits.map((qid) => codes.get(qid)).find((iso) => iso !== undefined);
+}
+
+// --- Список 2: направления переезда из РФ ----------------------------------------
+
+async function collectRelocationDestinations(): Promise<Candidate[]> {
+  const en = await fetchWikitext('en', EN_EMIGRATION_PAGE);
+  const ru = await fetchWikitext('ru', RU_EMIGRATION_PAGE);
+
+  const enTitles = wikiLinks(section(en, 'Destinations'));
+  const ruTitles = wikiLinks(section(ru, 'Основные направления'));
+  const ruTableTitles = wikiTables(ru)
+    .flat()
+    .map((row) => row[0].replace(/'''/g, '').trim())
+    .filter((cell) => cell.length > 0);
+
+  const enQids = await resolveTitles('en', enTitles);
+  const ruQids = await resolveTitles('ru', [...ruTitles, ...ruTableTitles]);
+  const linked = [...new Set([...enQids.values(), ...ruQids.values()])];
+  const isoByQid = await countryIsoCodes(linked);
+  const countries = [...isoByQid.entries()]
+    .filter(([, iso]) => iso !== RUSSIA)
+    .map(([qid]) => qid)
+    .sort();
+  console.log(`Направления переезда из РФ: ${countries.length} стран`);
+
+  const candidates: Candidate[] = [];
+  for (const country of countries) {
+    const rows =
+      await sparql(`SELECT ?city (MAX(?population) AS ?pop) (MAX(?capital) AS ?isCapital) WHERE {
+      { wd:${country} wdt:P36 ?city . BIND(0 AS ?population) BIND(1 AS ?capital) }
+      UNION
+      {
+        ?city wdt:P17 wd:${country}; wdt:P1082 ?population; wdt:P31 ?class .
+        VALUES ?class { ${CITY_CLASSES.map((qid) => `wd:${qid}`).join(' ')} }
+        FILTER(?population >= ${MIN_DESTINATION_CITY_POPULATION})
+        # Спорные города с несколькими странами в P17 по населению не берём.
+        FILTER NOT EXISTS { ?city wdt:P17 ?other . FILTER(?other != wd:${country}) }
+        BIND(0 AS ?capital)
+      }
+    } GROUP BY ?city ORDER BY DESC(?pop)`);
+    const capital = rows.filter((row) => row.isCapital === '1').map((row) => qidOf(row.city));
+    const largest = rows.slice(0, CITIES_PER_DESTINATION_COUNTRY).map((row) => qidOf(row.city));
+    for (const qid of new Set([...capital, ...largest])) candidates.push({ label: qid, qid });
+  }
+  return candidates;
+}
+
+// --- Список 3: Euromonitor Top 100 City Destinations -----------------------------
+
+async function collectEuromonitor(): Promise<Candidate[]> {
+  const wikitext = await fetchWikitext('en', VISITORS_PAGE);
+  const titles: string[] = [];
+  for (const table of wikiTables(wikitext)) {
+    for (const row of table) {
+      // Первая ячейка — ранг Euromonitor; строки только с рангом Mastercard пропускаем.
+      if (!/^\d+$/.test(row[0])) continue;
+      const link = row.map((cell) => cell.match(/\[\[([^\]|#]+)/)?.[1]).find((t) => t);
+      if (link) titles.push(link.trim());
+    }
+  }
+  const unique = [...new Set(titles)];
+  const qids = await resolveTitles('en', unique);
+  const missing = unique.filter((title) => !qids.has(title));
+  if (missing.length > 0)
+    console.warn(`Euromonitor: без элемента Wikidata — ${missing.join(', ')}`);
+  return [...new Set(qids.values())].map((qid) => ({ label: qid, qid }));
+}
+
+// --- Wikidata: детали городов ---------------------------------------------------
+
+function parsePoint(wkt: string): { lat: number; lon: number } | undefined {
+  const match = wkt.match(/Point\((-?[\d.]+) (-?[\d.]+)\)/);
+  if (!match) return undefined;
+  const round = (value: string) => Math.round(Number(value) * 100) / 100;
+  return { lon: round(match[1]), lat: round(match[2]) };
+}
+
+function qNumber(qid: string): number {
+  return Number(qid.slice(1));
+}
+
+/** Порядок «старший элемент первым»: единственный нейтральный способ разрешать ничьи. */
+function byQNumber(a: CountryRef, b: CountryRef): number {
+  return qNumber(a.qid) - qNumber(b.qid);
+}
+
+/**
+ * Страна элемента. Если источник назвал страну (hint), берём её, когда она есть среди
+ * P17 или в административной цепочке. Иначе: значение P17, которое встречается и в цепочке
+ * (у спорных городов вроде Иерусалима P17 несколько), иначе первое P17, иначе первая страна
+ * из цепочки (у нидерландских городов P17 — элемент без ISO-кода).
+ */
+function pickCountry(
+  direct: CountryRef[],
+  admin: CountryRef[],
+  hint?: string,
+): CountryRef | undefined {
+  const all = [...direct, ...admin].sort(byQNumber);
+  if (hint !== undefined) return all.find((ref) => ref.iso === hint);
+  const adminIsos = new Set(admin.map((ref) => ref.iso));
+  const sorted = [...direct].sort(byQNumber);
+  return sorted.find((ref) => adminIsos.has(ref.iso)) ?? sorted[0] ?? [...admin].sort(byQNumber)[0];
+}
+
+/** Метки, страна и координаты элементов Wikidata. */
+async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
+  const places = new Map<string, Place>();
+  for (const batch of chunk(qids, 60)) {
+    const rows =
+      await sparql(`SELECT ?item ?en ?mul ?ru ?country ?iso ?admin ?adminIso ?coord ?disambiguation WHERE {
+      VALUES ?item { ${batch.map((qid) => `wd:${qid}`).join(' ')} }
+      OPTIONAL { ?item rdfs:label ?en FILTER(LANG(?en) = "en") }
+      OPTIONAL { ?item rdfs:label ?mul FILTER(LANG(?mul) = "mul") }
+      OPTIONAL { ?item rdfs:label ?ru FILTER(LANG(?ru) = "ru") }
+      OPTIONAL { ?item wdt:P17 ?country . OPTIONAL { ?country wdt:P297 ?iso } }
+      OPTIONAL { ?item wdt:P131+ ?admin . ?admin wdt:P297 ?adminIso }
+      OPTIONAL { ?item wdt:P625 ?coord }
+      BIND(EXISTS { ?item wdt:P31 wd:Q4167410 } AS ?disambiguation)
+    }`);
+    const direct = new Map<string, CountryRef[]>();
+    const admin = new Map<string, CountryRef[]>();
+    const push = (map: Map<string, CountryRef[]>, qid: string, ref: CountryRef) => {
+      const refs = map.get(qid) ?? [];
+      if (!refs.some((known) => known.qid === ref.qid)) map.set(qid, [...refs, ref]);
+    };
+    for (const row of rows) {
+      const qid = qidOf(row.item);
+      const place = places.get(qid) ?? { qid, isDisambiguation: row.disambiguation === 'true' };
+      place.en ??= row.en ?? row.mul;
+      place.ru ??= row.ru;
+      if (row.iso) push(direct, qid, { qid: qidOf(row.country), iso: row.iso });
+      if (row.adminIso) push(admin, qid, { qid: qidOf(row.admin), iso: row.adminIso });
+      if (place.lat === undefined && row.coord) {
+        const point = parsePoint(row.coord);
+        if (point) Object.assign(place, point);
+      }
+      places.set(qid, place);
+    }
+    for (const place of places.values()) {
+      place.direct ??= direct.get(place.qid) ?? [];
+      place.admin ??= admin.get(place.qid) ?? [];
+    }
+  }
+  return places;
+}
+
+/** Пригоден ли элемент как город кандидата; при успехе фиксирует выбранную страну. */
+function accept(place: Place | undefined, countryHint?: string): Place | undefined {
+  if (place === undefined || place.isDisambiguation || place.lat === undefined) return undefined;
+  const country = place.country ?? pickCountry(place.direct ?? [], place.admin ?? [], countryHint);
+  if (country === undefined || (countryHint !== undefined && country.iso !== countryHint)) {
+    return undefined;
+  }
+  place.country = country;
+  return place;
+}
+
+/** Ищет элементы для кандидатов без qid: сначала по заголовку статьи, потом поиском. */
+async function resolveCandidates(candidates: Candidate[]): Promise<Map<string, Place>> {
+  const named = candidates.filter((candidate) => candidate.qid === undefined);
+  const byTitle = await resolveTitles(
+    'en',
+    named.map((candidate) => candidate.label),
+  );
+  const direct = [...new Set([...candidates.flatMap((c) => c.qid ?? []), ...byTitle.values()])];
+  const places = await fetchPlaces(direct);
+
+  const resolved = new Map<string, Place>();
+  for (const candidate of candidates) {
+    const key = candidate.qid ?? candidate.label;
+    const guess = accept(
+      places.get(candidate.qid ?? byTitle.get(candidate.label) ?? ''),
+      candidate.countryHint,
+    );
+    if (guess) {
+      resolved.set(key, guess);
+      continue;
+    }
+    const hits = await searchEntities(candidate.label);
+    const found = await fetchPlaces(hits);
+    for (const qid of hits) {
+      const match = accept(found.get(qid), candidate.countryHint);
+      if (match) {
+        resolved.set(key, match);
+        break;
+      }
+    }
+  }
+  return resolved;
+}
+
+// --- Сборка -------------------------------------------------------------------
+
+const TRANSLITERATION: Record<string, string> = {
+  ł: 'l',
+  ø: 'o',
+  đ: 'd',
+  ß: 'ss',
+  æ: 'ae',
+  œ: 'oe',
+  ı: 'i',
+  þ: 'th',
+  ð: 'd',
+};
+
+function slugify(text: string): string {
+  return text
+    .replace(/['’.]/g, '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[łøđßæœıþð]/g, (char) => TRANSLITERATION[char] ?? char)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Убирает элементы-двойники одного города (в Wikidata Мадрид — и муниципалитет, и «город»):
+ * одна страна, координаты ближе порога. Остаётся элемент с русской меткой,
+ * при равенстве — с более коротким английским названием, при равенстве — первый.
+ */
+function dedupePlaces(places: Place[]): Place[] {
+  const kept: Place[] = [];
+  for (const place of places) {
+    const twin = kept.findIndex(
+      (other) =>
+        other.country?.iso === place.country?.iso &&
+        other.lat !== undefined &&
+        place.lat !== undefined &&
+        Math.abs(other.lat - place.lat) < DUPLICATE_DISTANCE_DEG &&
+        Math.abs((other.lon ?? 0) - (place.lon ?? 0)) < DUPLICATE_DISTANCE_DEG,
+    );
+    if (twin < 0) {
+      kept.push(place);
+      continue;
+    }
+    const other = kept[twin];
+    const score = (p: Place) => (p.ru ? 1000 : 0) - (p.en ?? p.qid).length;
+    if (score(place) > score(other)) kept[twin] = place;
+  }
+  return kept;
+}
+
+async function main(): Promise<void> {
+  const numbeo = await collectNumbeo();
+  console.log(`Numbeo Quality of Life: ${numbeo.length} городов`);
+  const relocation = await collectRelocationDestinations();
+  console.log(`Направления переезда из РФ: ${relocation.length} городов`);
+  const euromonitor = await collectEuromonitor();
+  console.log(`Euromonitor Top 100: ${euromonitor.length} городов`);
+
+  const candidates = [...numbeo, ...relocation, ...euromonitor];
+  const resolved = await resolveCandidates(candidates);
+
+  const notFound = candidates
+    .filter((candidate) => !resolved.has(candidate.qid ?? candidate.label))
+    .map((candidate) => candidate.label);
+  const noRussianLabel: string[] = [];
+
+  const places = dedupePlaces(
+    [...new Map([...resolved.values()].map((place) => [place.qid, place])).values()].filter(
+      (place) => place.country?.iso !== RUSSIA,
+    ),
+  );
+
+  const bySlug = new Map<string, Place[]>();
+  for (const place of places) {
+    const slug = slugify(place.en ?? place.qid);
+    bySlug.set(slug, [...(bySlug.get(slug) ?? []), place]);
+  }
+
+  const cities: City[] = [];
+  const countryRefs = new Map<string, CountryRef[]>();
+  for (const [slug, group] of bySlug) {
+    for (const place of group) {
+      if (place.country === undefined || place.lat === undefined || place.lon === undefined) {
+        continue;
+      }
+      if (!place.ru) noRussianLabel.push(place.en ?? place.qid);
+      const iso = place.country.iso.toLowerCase();
+      countryRefs.set(iso, [...(countryRefs.get(iso) ?? []), place.country]);
+      cities.push({
+        id: group.length > 1 ? `${slug}-${iso}` : slug,
+        name: place.ru ?? place.en ?? place.qid,
+        countryId: iso,
+        lat: place.lat,
+        lon: place.lon,
+      });
+    }
+  }
+  cities.sort((a, b) => (a.id < b.id ? -1 : 1));
+
+  // У одного кода может быть несколько элементов: берём старший.
+  const countryQids = new Map<string, string>();
+  for (const [iso, refs] of countryRefs) countryQids.set(iso, refs.sort(byQNumber)[0].qid);
+  const countryPlaces = await fetchPlaces([...countryQids.values()]);
+  const countries: Country[] = [...countryQids.entries()]
+    .map(([iso, qid]) => {
+      const place = countryPlaces.get(qid);
+      if (!place?.ru) noRussianLabel.push(place?.en ?? qid);
+      return { id: iso, name: place?.ru ?? place?.en ?? qid };
+    })
+    .sort((a, b) => (a.id < b.id ? -1 : 1));
+
+  writeFileSync(join(DATA_DIR, 'cities.json'), `${JSON.stringify(cities, null, 2)}\n`);
+  writeFileSync(join(DATA_DIR, 'countries.json'), `${JSON.stringify(countries, null, 2)}\n`);
+
+  console.log(`\nГородов: ${cities.length}, стран: ${countries.length}`);
+  console.log(`Wikidata ничего не нашла (${notFound.length}): ${notFound.join(', ') || '—'}`);
+  console.log(
+    `Без русского названия, оставлено английское (${noRussianLabel.length}): ${noRussianLabel.join(', ') || '—'}`,
+  );
+}
+
+await main();
