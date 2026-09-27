@@ -67,6 +67,7 @@ interface WhoRow {
   cityName: string;
   year: number;
   pm25: number | null;
+  pm10: number | null;
 }
 
 /** Стандартный справочник ISO 3166-1: alpha-2 (как в cities.json) → alpha-3 (как в источнике). */
@@ -355,6 +356,7 @@ async function loadWhoRows(): Promise<WhoRow[]> {
     city: header.indexOf('city'),
     year: header.indexOf('year'),
     pm25: header.indexOf('pm25_concentration'),
+    pm10: header.indexOf('pm10_concentration'),
   };
   if (Object.values(idx).some((i) => i === -1)) {
     throw new Error(`Не найдены ожидаемые колонки в заголовке источника: ${header.join(',')}`);
@@ -368,6 +370,8 @@ async function loadWhoRows(): Promise<WhoRow[]> {
     const year = Number.parseInt(fields[idx.year], 10);
     const pm25Text = fields[idx.pm25];
     const pm25 = pm25Text && pm25Text !== 'NA' ? Number.parseFloat(pm25Text) : null;
+    const pm10Text = fields[idx.pm10];
+    const pm10 = pm10Text && pm10Text !== 'NA' ? Number.parseFloat(pm10Text) : null;
     const cityName = cityRaw.replace(/\s*\/[A-Za-z]{2,4}$/, '').trim();
     rows.push({
       iso3,
@@ -376,6 +380,7 @@ async function loadWhoRows(): Promise<WhoRow[]> {
       cityName,
       year: Number.isFinite(year) ? year : 0,
       pm25: pm25 !== null && Number.isFinite(pm25) ? pm25 : null,
+      pm10: pm10 !== null && Number.isFinite(pm10) ? pm10 : null,
     });
   }
   return rows;
@@ -393,13 +398,23 @@ function matchesCity(citySlug: string, sourceCityName: string): boolean {
   return sourceSlug === citySlug || sourceSlug.startsWith(`${citySlug}-`);
 }
 
+/**
+ * PM2.5 — подмножество PM10, поэтому строка, где PM2.5 выше PM10 того же года,
+ * содержит ошибку источника (пример: Каир 2018, pm25 = 285 при pm10 = 283.5).
+ * Такие строки отбрасываются, город остаётся без значения.
+ */
+function isPhysicallyConsistent(row: WhoRow): boolean {
+  return row.pm10 === null || row.pm25 === null || row.pm25 <= row.pm10;
+}
+
 function pickBestValue(rows: WhoRow[], iso3: string, citySlug: string): number | null {
   const candidates = rows.filter(
     (r) =>
       r.iso3 === iso3 &&
       matchesCity(citySlug, r.cityName) &&
       r.pm25 !== null &&
-      r.year >= MIN_MEASUREMENT_YEAR,
+      r.year >= MIN_MEASUREMENT_YEAR &&
+      isPhysicallyConsistent(r),
   );
   if (candidates.length === 0) return null;
   candidates.sort((a, b) => b.year - a.year);
@@ -466,12 +481,9 @@ async function main(): Promise<void> {
         'Среднегодовая PM2.5 по данным станций, агрегированная WHO на уровне города. ' +
         'Для города берётся самый свежий год из версии 2026 v8, для которого источник ' +
         'приводит значение (NA пропущены), не старше 2018 года — записи старше отбрасываются ' +
-        'как устаревшие. Гонконг, Макао, Тайвань и Оман источник не покрывает. Каир: 285 мкг/м³ — ' +
-        'это собственное значение источника за 2018 год (последний год с непустым pm25 у Каира; ' +
-        'более новых лет для него нет), оно неправдоподобно высоко и почти равно (даже выше) ' +
-        'значению PM10 того же года (283.5), что физически невозможно (PM2.5 — подмножество ' +
-        'PM10) — вероятная ошибка измерения или агрегации на стороне WHO. Значение оставлено ' +
-        'как есть, потому что это буквально то, что сообщает источник, а не ошибка разбора.',
+        'как устаревшие. Строки, где PM2.5 выше PM10 того же года, отбрасываются как ошибка ' +
+        'источника (PM2.5 — подмножество PM10; так выпал Каир 2018: 285 при PM10 283.5). ' +
+        'Гонконг, Макао, Тайвань и Оман источник не покрывает.',
     },
     unit: 'мкг/м³',
     values,
