@@ -9,7 +9,8 @@
  *      «Russian emigration during the Russo-Ukrainian war (2022–present)» (раздел
  *      Destinations) и «Эмиграция из России после вторжения России на Украину» (раздел
  *      «Основные направления» и таблица оценок The Bell / FIIA); для каждой страны —
- *      столица и четыре крупнейших по населению города по данным Wikidata.
+ *      столица и города с населением от миллиона по данным Wikidata, плюс города,
+ *      на которые сами разделы о направлениях ссылаются напрямую.
  *   3. Мировая популярность — Euromonitor Top 100 City Destinations (полный список
  *      2018 года и топ-10 за 2023–2025) в изложении статьи Википедии
  *      «List of cities by international visitors».
@@ -36,9 +37,34 @@ const EN_EMIGRATION_PAGE = 'Russian emigration during the Russo-Ukrainian war (2
 const RU_EMIGRATION_PAGE = 'Эмиграция из России после вторжения России на Украину';
 const VISITORS_PAGE = 'List of cities by international visitors';
 
-/** Сколько крупнейших городов брать в каждой стране назначения (плюс столица). */
-const CITIES_PER_DESTINATION_COUNTRY = 4;
-const MIN_DESTINATION_CITY_POPULATION = 100_000;
+/** Из каждой страны назначения берём столицу и города с населением не меньше этого. */
+const MIN_DESTINATION_CITY_POPULATION = 1_000_000;
+
+/** Разделы статей о направлениях: города, на которые они ссылаются, берём как кандидатов. */
+const DESTINATION_SECTIONS: Record<WikiLang, string[]> = {
+  en: ['Destinations'],
+  ru: ['Основные направления', 'Направления', 'Осевшие в разных странах'],
+};
+
+/**
+ * Явные элементы Wikidata для названий, которые автоматика сопоставляет не с тем, что
+ * имеет в виду источник. Ключ — название из источника (Numbeo или заголовок статьи).
+ */
+const TITLE_QID_OVERRIDES: Record<string, string> = {
+  // Статья «Brussels» привязана к Брюссельскому столичному региону, источники говорят о городе.
+  Brussels: 'Q239',
+  // Статья «Ha Long» привязана к району после реформы 2025 года, а не к городу Халонг.
+  'Ha Long': 'Q36077',
+  // Numbeo: «Victoria, Canada» — в Википедии «Victoria» неоднозначность, а поиск не находит город.
+  Victoria: 'Q2132',
+};
+
+/** Русские названия стран, где метка Wikidata — официальное, а не обиходное имя. */
+const COUNTRY_NAME_OVERRIDES: Record<string, string> = {
+  nl: 'Нидерланды', // Wikidata: только «Королевство Нидерландов» имеет код NL
+  kr: 'Южная Корея', // Wikidata: «Республика Корея»
+  tw: 'Тайвань', // Wikidata: «Китайская Республика (Тайвань)»
+};
 
 /** Классы Wikidata, которые считаем «городом» при выборке по населению. */
 const CITY_CLASSES = [
@@ -96,6 +122,8 @@ interface Place {
   lat?: number;
   lon?: number;
   isDisambiguation: boolean;
+  /** Экземпляр подкласса «населённый пункт» (Q486972). */
+  isSettlement: boolean;
 }
 
 // --- HTTP ---------------------------------------------------------------------
@@ -174,7 +202,12 @@ const pagePropsSchema = z.object({
 /** Сопоставляет заголовки статей с элементами Wikidata, следуя редиректам. */
 async function resolveTitles(lang: WikiLang, titles: string[]): Promise<Map<string, string>> {
   const resolved = new Map<string, string>();
-  for (const batch of chunk([...new Set(titles)], 50)) {
+  for (const title of titles) {
+    const override = TITLE_QID_OVERRIDES[title];
+    if (override) resolved.set(title, override);
+  }
+  const pending = [...new Set(titles)].filter((title) => !resolved.has(title));
+  for (const batch of chunk(pending, 50)) {
     const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=pageprops&ppprop=wikibase_item&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(batch.join('|'))}`;
     const { query } = await fetchJson(url, pagePropsSchema);
     const forward = new Map<string, string>();
@@ -316,13 +349,13 @@ async function collectRelocationDestinations(): Promise<Candidate[]> {
     .filter(([, iso]) => iso !== RUSSIA)
     .map(([qid]) => qid)
     .sort();
+  const countryIsos = new Set(countries.map((qid) => isoByQid.get(qid)));
   console.log(`Направления переезда из РФ: ${countries.length} стран`);
 
-  const candidates: Candidate[] = [];
+  const qids = new Set<string>();
   for (const country of countries) {
-    const rows =
-      await sparql(`SELECT ?city (MAX(?population) AS ?pop) (MAX(?capital) AS ?isCapital) WHERE {
-      { wd:${country} wdt:P36 ?city . BIND(0 AS ?population) BIND(1 AS ?capital) }
+    const rows = await sparql(`SELECT DISTINCT ?city WHERE {
+      { wd:${country} wdt:P36 ?city . }
       UNION
       {
         ?city wdt:P17 wd:${country}; wdt:P1082 ?population; wdt:P31 ?class .
@@ -330,14 +363,31 @@ async function collectRelocationDestinations(): Promise<Candidate[]> {
         FILTER(?population >= ${MIN_DESTINATION_CITY_POPULATION})
         # Спорные города с несколькими странами в P17 по населению не берём.
         FILTER NOT EXISTS { ?city wdt:P17 ?other . FILTER(?other != wd:${country}) }
-        BIND(0 AS ?capital)
       }
-    } GROUP BY ?city ORDER BY DESC(?pop)`);
-    const capital = rows.filter((row) => row.isCapital === '1').map((row) => qidOf(row.city));
-    const largest = rows.slice(0, CITIES_PER_DESTINATION_COUNTRY).map((row) => qidOf(row.city));
-    for (const qid of new Set([...capital, ...largest])) candidates.push({ label: qid, qid });
+    }`);
+    for (const row of rows) qids.add(qidOf(row.city));
   }
-  return candidates;
+  const fromWikidata = qids.size;
+
+  // Города, на которые разделы о направлениях ссылаются напрямую.
+  const wikitexts: Record<WikiLang, string> = { en, ru };
+  for (const lang of ['en', 'ru'] as const) {
+    const titles = DESTINATION_SECTIONS[lang].flatMap((heading) =>
+      wikiLinks(section(wikitexts[lang], heading)),
+    );
+    const resolved = await resolveTitles(lang, titles);
+    const places = await fetchPlaces([...new Set(resolved.values())]);
+    for (const place of places.values()) {
+      const country = pickCountry(place.direct ?? [], place.admin ?? []);
+      if (place.isSettlement && place.lat !== undefined && countryIsos.has(country?.iso)) {
+        qids.add(place.qid);
+      }
+    }
+  }
+  console.log(
+    `Направления переезда из РФ: ${fromWikidata} столиц и городов-миллионников, ${qids.size - fromWikidata} городов по ссылкам из статей`,
+  );
+  return [...qids].map((qid) => ({ label: qid, qid }));
 }
 
 // --- Список 3: Euromonitor Top 100 City Destinations -----------------------------
@@ -402,7 +452,7 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
   const places = new Map<string, Place>();
   for (const batch of chunk(qids, 60)) {
     const rows =
-      await sparql(`SELECT ?item ?en ?mul ?ru ?country ?iso ?admin ?adminIso ?coord ?disambiguation WHERE {
+      await sparql(`SELECT ?item ?en ?mul ?ru ?country ?iso ?admin ?adminIso ?coord ?disambiguation ?settlement WHERE {
       VALUES ?item { ${batch.map((qid) => `wd:${qid}`).join(' ')} }
       OPTIONAL { ?item rdfs:label ?en FILTER(LANG(?en) = "en") }
       OPTIONAL { ?item rdfs:label ?mul FILTER(LANG(?mul) = "mul") }
@@ -411,6 +461,7 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
       OPTIONAL { ?item wdt:P131+ ?admin . ?admin wdt:P297 ?adminIso }
       OPTIONAL { ?item wdt:P625 ?coord }
       BIND(EXISTS { ?item wdt:P31 wd:Q4167410 } AS ?disambiguation)
+      BIND(EXISTS { ?item wdt:P31/wdt:P279* wd:Q486972 } AS ?settlement)
     }`);
     const direct = new Map<string, CountryRef[]>();
     const admin = new Map<string, CountryRef[]>();
@@ -420,7 +471,11 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
     };
     for (const row of rows) {
       const qid = qidOf(row.item);
-      const place = places.get(qid) ?? { qid, isDisambiguation: row.disambiguation === 'true' };
+      const place = places.get(qid) ?? {
+        qid,
+        isDisambiguation: row.disambiguation === 'true',
+        isSettlement: row.settlement === 'true',
+      };
       place.en ??= row.en ?? row.mul;
       place.ru ??= row.ru;
       if (row.iso) push(direct, qid, { qid: qidOf(row.country), iso: row.iso });
@@ -593,7 +648,7 @@ async function main(): Promise<void> {
     .map(([iso, qid]) => {
       const place = countryPlaces.get(qid);
       if (!place?.ru) noRussianLabel.push(place?.en ?? qid);
-      return { id: iso, name: place?.ru ?? place?.en ?? qid };
+      return { id: iso, name: COUNTRY_NAME_OVERRIDES[iso] ?? place?.ru ?? place?.en ?? qid };
     })
     .sort((a, b) => (a.id < b.id ? -1 : 1));
 
