@@ -6,7 +6,7 @@
     "url": "https://www.numbeo.com/crime/rankings.jsp",
     "period": "2026 mid-year",
     "collectedAt": "2026-09-28",
-    "notes": "Индекс относительно Нью-Йорка = 100, если не указано иное."
+    "notes": "Индекс безопасности Numbeo, 0–100, больше — безопаснее."
   },
   "unit": "индекс",
   "values": {

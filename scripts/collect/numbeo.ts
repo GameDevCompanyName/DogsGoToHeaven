@@ -355,10 +355,20 @@ function writeSample(
   sourceUrl: string,
   period: string,
   unit: string,
+  notes: string,
   cityIds: string[],
   values: Map<string, number>,
+  limit: number | undefined,
 ): void {
   const id = `${factorId}.${suffix}`;
+  const sampleValues = Object.fromEntries(
+    cityIds.filter((cid) => values.has(cid)).map((cid) => [cid, values.get(cid)!]),
+  );
+  if (limit !== undefined) {
+    console.log(`--limit ${limit}: файл ${id}.json не записан, значения (would-be):`);
+    console.log(JSON.stringify(sampleValues, null, 2));
+    return;
+  }
   const sample: Sample = {
     id,
     factorId,
@@ -367,12 +377,10 @@ function writeSample(
       url: sourceUrl,
       period,
       collectedAt: COLLECTED_AT,
-      notes: 'Индекс относительно Нью-Йорка = 100, если не указано иное.',
+      notes,
     },
     unit,
-    values: Object.fromEntries(
-      cityIds.filter((cid) => values.has(cid)).map((cid) => [cid, values.get(cid)!]),
-    ),
+    values: sampleValues,
   };
   mkdirSync(SAMPLES_DIR, { recursive: true });
   writeFileSync(join(SAMPLES_DIR, `${id}.json`), `${JSON.stringify(sample, null, 2)}\n`, 'utf-8');
@@ -415,8 +423,10 @@ async function main(): Promise<void> {
     COST_OF_LIVING_URL,
     costOfLivingTable.period,
     'индекс',
+    'Индекс относительно Нью-Йорка = 100.',
     cityIds,
     costOfLivingValues,
+    limit,
   );
   writeSample(
     'rent',
@@ -425,8 +435,10 @@ async function main(): Promise<void> {
     COST_OF_LIVING_URL,
     costOfLivingTable.period,
     'индекс',
+    'Индекс относительно Нью-Йорка = 100.',
     cityIds,
     rentValues,
+    limit,
   );
   writeSample(
     'safety',
@@ -435,8 +447,10 @@ async function main(): Promise<void> {
     CRIME_URL,
     crimeTable.period,
     'индекс',
+    'Индекс безопасности Numbeo, 0–100, больше — безопаснее.',
     cityIds,
     safetyValues,
+    limit,
   );
   timings.write = Date.now() - mark;
   timings.total = Date.now() - started;
