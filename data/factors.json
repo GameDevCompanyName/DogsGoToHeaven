@@ -37,7 +37,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 8,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "cost-of-living.numbeo-2026"
     },
     {
       "id": "rent",
@@ -50,7 +51,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 7,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "rent.numbeo-2026"
     },
     {
       "id": "it-salary",
@@ -89,7 +91,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 7,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "safety.numbeo-2026"
     },
     {
       "id": "healthcare",
