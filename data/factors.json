@@ -213,6 +213,7 @@
       "definition": "Есть ли действующая виза цифрового кочевника, доступная гражданам РФ",
       "group": "legalization",
       "level": "country",
+      "activeSample": "nomad-visa.wikipedia-2026",
       "categories": [
         {
           "code": "yes",
