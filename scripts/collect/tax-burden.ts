@@ -15,13 +15,18 @@
  *  - `<ref>...</ref>` (в том числе многострочные, с параметрами `{{cite web|...}}` на
  *    отдельных строках) вырезаются из строки целиком ДО разбиения на ячейки — иначе
  *    строки вида `| url = ...` внутри сноски принимаются за новые ячейки;
- *  - из очищенной ячейки «Highest» берётся наибольшее упомянутое число перед знаком `%`.
- *    Ячейка нередко даёт не одно число: диапазон («48% to 54%»), альтернативы
- *    («41% or 45%»), резидент/нерезидент («10% / 15%») или разбивку составляющих
- *    итоговой ставки («60.45% (13.07% соцвзнос + 50% федеральный + 3–9% муниципальный)»).
- *    Правило источника (docs/collect.md, п.1) — в таких случаях брать наибольшую
- *    национальную ставку; местные/кантональные надбавки не отбрасываются, если сама
- *    таблица включает их в итоговое число столбца «Highest» (как у Бельгии и Швейцарии).
+ *  - `{{small|...}}`/`{{smalldiv|...}}` разворачиваются в свой текст (а не вырезаются) —
+ *    именно в них источник помечает «(residents)», «(federal)», «(non-residents)» и т.п.,
+ *    без этого текста нечем отличить национальную ставку от надбавки.
+ *  - если очищенная ячейка «Highest» содержит ровно одно число перед `%` — это и есть
+ *    ставка («0%»/«none» → 0). Если чисел больше одного (диапазон, альтернативы,
+ *    резидент/нерезидент, разбивка итога на составляющие) — автоматика не угадывает
+ *    наибольшее число: у каждой такой страны из data/countries.json есть отдельная,
+ *    вручную проверенная запись в HIGHEST_OVERRIDES с цитатой ячейки и обоснованием,
+ *    почему взято именно это число (docs/collect.md, п.1: «наибольшая ставка налога на
+ *    доходы», а не наибольшее число вообще — социальные взносы, пенсионные и страховые
+ *    надбавки, местные/кантональные/муниципальные надбавки в неё не входят). Ячейка без
+ *    записи в HIGHEST_OVERRIDES — ошибка скрипта, а не тихое приближение.
  *  - названия страны в статье сопоставляются с id из data/countries.json через явную
  *    таблицу COUNTRY_LABELS — точное название `{{flagcountry|...}}`, а не машинный
  *    слаг: у Тайваня, Чехии, Южной Кореи, ОАЭ и Великобритании оно не совпадает с
@@ -49,11 +54,133 @@ const SOURCE = {
   period: '2026',
   collectedAt: '2026-09-28',
   notes:
-    'Столбец Individual income tax → Highest. Диапазоны, альтернативные ставки ' +
-    '(резидент/нерезидент, «X% or Y%», «X% to Y%») и разбивки итоговой ставки на ' +
-    'составляющие (соцвзносы, муниципальный/кантональный компонент) сведены к ' +
-    'наибольшему упомянутому числу — так, как эта же ячейка таблицы приводит итоговую ' +
-    'ставку у Бельгии (60.45%) и Швейцарии (62.855%). Ставки «0%»/«none» записаны как 0.',
+    'Столбец Individual income tax → Highest. Для стран, где эта ячейка даёт диапазон, ' +
+    'альтернативные ставки (резидент/нерезидент) или разбивку итога на составляющие — ' +
+    'взята именно ставка налога на доходы, без обязательных социальных/пенсионных/ ' +
+    'страховых взносов и без местных/муниципальных/кантональных надбавок, даже если ' +
+    'источник складывает их в одно «итоговое» число. Список таких стран и точная цитата ' +
+    'ячейки — в HIGHEST_OVERRIDES скрипта scripts/collect/tax-burden.ts. Чехия исключена: ' +
+    'единственные числа в её ячейке помечены в статье как {{Citation needed}} с прямой ' +
+    'оговоркой редактора о неясном составе. Ставки «0%»/«none» записаны как 0.',
+};
+
+/**
+ * Ставка налога на доходы для ячеек «Highest» с более чем одним числом перед `%` —
+ * диапазон, альтернативные ставки, резидент/нерезидент или разбивка итога на
+ * составляющие. Ключ — то же название статьи, что в COUNTRY_LABELS. Для однозначных
+ * ячеек (одно число) правило не нужно — берётся это число напрямую.
+ *
+ * Значение `undefined` — сознательно не сопоставляем: у источника нет надёжного числа
+ * именно для налога на доходы физических лиц (см. Czechia).
+ *
+ * Правила выбора (docs/collect.md, п.1 — только источник, наибольшая ставка налога, а
+ * не наибольшее число в ячейке вообще):
+ *  - резидент/нерезидент → ставка для резидентов;
+ *  - национальная ставка + местная/кантональная/муниципальная надбавка → национальная;
+ *  - национальный налог + отдельный общенациональный надналог на высокие доходы
+ *    (не местный и не социальный взнос, например французский CEHR, португальская
+ *    «solidarity rate», польский «solidarity tax») → сумма налога и такого надналога;
+ *  - обязательные социальные/пенсионные/страховые/медицинские взносы (social security,
+ *    health insurance, unemployment fund, EPF/SOCSO и т.п.) — не налог на доходы, в
+ *    сумму не входят;
+ *  - диапазон одной и той же прогрессивной шкалы («X% to Y%») → верхняя граница Y.
+ */
+const HIGHEST_OVERRIDES: Record<string, number | undefined> = {
+  // «43.37% (12% + 1% mandatory insurance + 35% social security)» — налог на доходы —
+  // 12%, 1% и 35% — обязательные страховые/социальные взносы.
+  Belarus: 12,
+  // «45% (+ 39.2% social security contributions up to €90,600 per year, half paid by
+  // employer (14.6% health + 18.6% pension + 3.4% care + 2.6% unemployment))» — «+»
+  // явно отделяет налог (45%) от перечисленных дальше страховых взносов.
+  Germany: 45,
+  // «20% (5% on dividend, interest and royalty)» — 5% — ставка для другого вида
+  // дохода (дивиденды/проценты/роялти), не более высокая ставка на обычный доход.
+  Georgia: 20,
+  // «15% (+ 18.5% social security + 13% social contribution tax)» — «+» явно отделяет
+  // налог (15%, плоская ставка) от страховых взносов.
+  Hungary: 15,
+  // «43% (+ municipal and local taxes (0-3%))» — «+» явно отделяет национальную ставку
+  // от местной надбавки.
+  Italy: 43,
+  // «30% (+ 11% for EPF + 0.5% for SOCSO)» — EPF/SOCSO — пенсионный и страховой фонды,
+  // не налог на доходы.
+  Malaysia: 30,
+  // «22% (+20% tax on pension)» — 20% — отдельная ставка на пенсионный доход, не более
+  // высокая ставка на обычный доход.
+  Singapore: 22,
+  // «60.45% (13.07% (mandatory social security tax), 50% (federal), 3–9% (municipal))» —
+  // национальная (федеральная) ставка налога — 50%; муниципальная надбавка и соцвзнос
+  // в неё не входят.
+  Belgium: 50,
+  // «54.8% (33% federal + 21.8% in Newfoundland and Labrador)» — федеральная ставка —
+  // 33%; провинциальная надбавка — местная.
+  Canada: 33,
+  // «62.855% 10.6% (mandatory social security) 11.5% (federal) 28.025% (cantonal,
+  // Geneva) 9.69% (communal, Avully and Chancy) 3.04% (church tax, Geneva)» —
+  // федеральная ставка — 11.5%; кантональная/коммунальная/церковная — местные надбавки
+  // конкретно Женевы, соцвзнос — не налог на доходы.
+  Switzerland: 11.5,
+  // «45.7% (peaks for gross annual income $90,000+) / 39% (for $450,000+)» с пометкой
+  // статьи {{Citation needed|reason=...The actual tax rate is 15 percent to 23 percent,
+  // so this likely includes social and healthcare contributions, but need to be
+  // cited... I'm not clear on which of these are included}} — источник сам считает эти
+  // числа непроверенными и явно смешанными с соцвзносами; не сопоставляем.
+  Czechia: undefined,
+  // «23.6% (for employees earning over €25,200/year: 20% flat income tax + 2%
+  // mandatory pension contribution + 1.6% unemployment insurance paid by employee)» —
+  // налог на доходы — 20% (плоская ставка), пенсионный и страховой взносы — не налог.
+  Estonia: 20,
+  // «53.61% (in Halsua for members of the Orthodox Church of Finland: 31.25% national
+  // tax rate + 23.5% municipal tax + 9.9% social security tax + 2.1% church tax)» —
+  // берём явно помеченную «national tax rate» — 31.25%; муниципальный, социальный и
+  // церковный компоненты — не общенациональный налог на доходы.
+  Finland: 31.25,
+  // «55.34% (45% IR + 4% CEHR + 9.2% CSG + 0.5% CRDS + 0.4% Old-age insurance + 6%
+  // PER)» — IR (impôt sur le revenu, сам налог на доходы) + CEHR (общенациональная
+  // надбавка на высокие доходы) = 45+4 = 49%; CSG/CRDS/страхование по старости/PER —
+  // обязательные социальные взносы, не налог.
+  France: 49,
+  // «47% (45% + 2% employee National Insurance, Scotland is even 48%+2%)» — National
+  // Insurance — обязательный социальный взнос, не налог на доходы; наибольшая именно
+  // налоговая ставка (а не 47%=45+2 или 50%=48+2) — шотландская additional rate 48%.
+  'United Kingdom': 48,
+  // «52.1% (40% + 12.1% social insurance contributions on incomes above €44,000)» —
+  // налог на доходы — 40%; USC/PRSI (12.1%) — социальное страхование, не налог.
+  Ireland: 40,
+  // «50.5% (45% national + 10% local)» — берём явно помеченную «national» ставку —
+  // 45%; местный (inhabitant) налог в неё не входит.
+  Japan: 45,
+  // «53.4% (42% + 11.4%)», 11.4% — местная надбавка (ref о применении местного
+  // налогового законодательства, taxrateenfmnt) — берём национальную ставку 42%.
+  'Korea, South': 42,
+  // «10% (residents) 15% (non-residents)» — ставка для резидентов — 10%.
+  Kazakhstan: 10,
+  // «44.2% (42% + 3.78% unemployment fund surcharge)» — надбавка в фонд занятости —
+  // не налог на доходы; берём базовую ставку 42%.
+  Luxembourg: 42,
+  // «12.65% (11% national tax + 15% municipality surtax on income tax)» — берём явно
+  // помеченный «national tax» — 11%; муниципальная надбавка не входит.
+  Montenegro: 11,
+  // «41% or 45% (32% + 9% health insurance + 4% solidarity tax above 1,000,000 złotych
+  // per year)» — 9% медицинского страхования — не налог на доходы; налог на доходы —
+  // базовая ставка 32% + надбавка солидарности 4% = 36%.
+  Poland: 36,
+  // «56.03% (48% income tax + 5% solidarity rate + 11% social security)» — «income
+  // tax» (48%) + общенациональная надбавка на высокие доходы «solidarity rate» (5%) =
+  // 53%; social security (11%) — обязательный взнос, не налог.
+  Portugal: 53,
+  // «45% (25% social security (CAS) + 10% health insurance (CASS) + 10% income tax
+  // after CAS and CASS)» — сам налог на доходы явно назван: «10% income tax»; CAS и
+  // CASS — социальное и медицинское страхование.
+  Romania: 10,
+  // «48% to 54% (depending on municipality)» — диапазон одной и той же прогрессивной
+  // шкалы по муниципалитетам — берём верхнюю границу 54%.
+  Sweden: 54,
+  // «13% (residents) 25% (non-residents)» — ставка для резидентов — 13%.
+  Tajikistan: 13,
+  // «51.776% New York City (37% (federal) + 10.9% (state)) + 3.876% (city))» —
+  // федеральная ставка — 37%; ставки штата и города — местные надбавки Нью-Йорка.
+  'United States': 37,
 };
 
 /**
@@ -212,6 +339,13 @@ function rowCells(rowText: string): Cell[] {
 function cleanCellText(text: string): string {
   let out = text;
   let prev: string;
+  // {{small|...}}/{{smalldiv|...}} разворачиваются в содержимое: в них — пометки вида
+  // «(residents)», «(federal)», «(non-residents)», без которых нельзя выбрать нужное
+  // число. Остальные шаблоны (если сноска не вырезалась целиком) — просто убираются.
+  do {
+    prev = out;
+    out = out.replace(/\{\{\s*[Ss]mall(?:div)?\s*\|([^{}]*)\}\}/g, '$1');
+  } while (out !== prev);
   do {
     prev = out;
     out = out.replace(/\{\{[^{}]*\}\}/g, '');
@@ -221,20 +355,36 @@ function cleanCellText(text: string): string {
   // Внешние ссылки `[url текст]` — оставляем текст, ссылка сама может содержать «%NN».
   out = out.replace(/\[https?:\/\/\S+?\s+([^\]]*)\]/g, '$1');
   out = out.replace(/\[https?:\/\/[^\]]*\]/g, '');
-  return out;
+  return out.replace(/\s+/g, ' ').trim();
 }
 
-/** Наибольшее число перед знаком `%` в очищенном тексте ячейки; `0%`/`none` → 0. */
-function maxPercent(cleaned: string): number | undefined {
-  const numbers = [...cleaned.matchAll(/(\d+(?:\.\d+)?)\s*%/g)].map((m) => Number(m[1]));
-  if (numbers.length > 0) return Math.max(...numbers);
-  if (/\bnone\b/i.test(cleaned)) return 0;
-  return undefined;
+/**
+ * Ставка налога на доходы из очищенного текста ячейки «Highest». Одно число — берём
+ * его напрямую. Больше одного — только по записи в HIGHEST_OVERRIDES (см. её
+ * комментарий): для стран, которые нам нужны, автоматика не выбирает «наибольшее число
+ * в ячейке» — это и было источником ошибки, например, ставка Польши раньше бралась как
+ * 45% (с учётом медстрахования) вместо верной ставки налога на доходы 36% (32% база +
+ * 4% надбавка солидарности). Для строк, которые нам не нужны (не входят в
+ * COUNTRY_LABELS), несколько чисел в ячейке не разбираются — этот случай в `values` не
+ * попадает в любом случае.
+ */
+function resolveHighest(label: string, cleaned: string): number | undefined {
+  const percentSigns = cleaned.match(/%/g) ?? [];
+  if (percentSigns.length <= 1) {
+    const match = /(\d+(?:\.\d+)?)\s*%/.exec(cleaned);
+    if (match) return Number(match[1]);
+    return /\bnone\b/i.test(cleaned) ? 0 : undefined;
+  }
+  if (Object.hasOwn(HIGHEST_OVERRIDES, label)) return HIGHEST_OVERRIDES[label];
+  throw new Error(
+    `«${label}»: в ячейке Highest несколько ставок и нет записи в HIGHEST_OVERRIDES — ${cleaned}`,
+  );
 }
 
+/** Строка таблицы: точное название страны из {{flagcountry|...}} и очищенная ячейка Highest. */
 interface ParsedRow {
   label: string;
-  highest: number | undefined;
+  highestCell: string | undefined;
 }
 
 function parseRows(wikitext: string): ParsedRow[] {
@@ -255,7 +405,7 @@ function parseRows(wikitext: string): ParsedRow[] {
     const highCell = cells[2]?.colspan2 ? cells[2] : cells[3];
     rows.push({
       label: countryMatch[1].trim(),
-      highest: highCell ? maxPercent(cleanCellText(highCell.text)) : undefined,
+      highestCell: highCell ? cleanCellText(highCell.text) : undefined,
     });
   }
   return rows;
@@ -279,7 +429,7 @@ async function main(): Promise<void> {
   console.log('Этапы:');
   const wikitext = await timeitAsync('загрузка', fetchWikitext);
   const rows = timeit('разбор таблицы', () => parseRows(wikitext));
-  const byLabel = new Map(rows.map((row) => [row.label, row.highest]));
+  const byLabel = new Map(rows.map((row) => [row.label, row.highestCell]));
 
   const countries: { id: string }[] = JSON.parse(
     readFileSync(join(DATA_DIR, 'countries.json'), 'utf8'),
@@ -292,9 +442,13 @@ async function main(): Promise<void> {
   timeit('сопоставление', () => {
     for (const id of targetIds) {
       const label = COUNTRY_LABELS[id];
-      const value = label === undefined ? undefined : byLabel.get(label);
-      if (value === undefined)
+      const cell = label === undefined ? undefined : byLabel.get(label);
+      if (label === undefined || cell === undefined) {
         unmatched.push(label === undefined ? `${id} (нет в COUNTRY_LABELS)` : `${id} (${label})`);
+        continue;
+      }
+      const value = resolveHighest(label, cell);
+      if (value === undefined) unmatched.push(`${id} (${label}) — источник ненадёжен`);
       else values[id] = value;
     }
   });
