@@ -15,6 +15,7 @@ export default defineConfig({
       adapter: adapter(),
       alias: {
         '@': 'src',
+        '@data': 'data',
       },
     }),
   ],

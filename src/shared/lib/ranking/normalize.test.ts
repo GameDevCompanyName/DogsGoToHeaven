@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { normalizeFactor, percentile } from './normalize';
+import type { NumericScoring } from './schemas';
 
 describe('percentile', () => {
   it('interpolates linearly over a sorted array', () => {
@@ -21,9 +22,9 @@ describe('percentile', () => {
 });
 
 describe('normalizeFactor', () => {
-  const higher = { type: 'higher-better' } as const;
-  const lower = { type: 'lower-better' } as const;
-  const range = { type: 'range', defaultRange: [10, 20] } as const;
+  const higher: NumericScoring = { type: 'higher-better' };
+  const lower: NumericScoring = { type: 'lower-better' };
+  const range: NumericScoring = { type: 'range', defaultRange: [10, 20] };
 
   it('maps higher-better to ascending 0..1', () => {
     const result = normalizeFactor([0, 10, 20, 30, 40], higher);
