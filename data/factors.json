@@ -63,7 +63,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "it-salary.stackoverflow-2025"
     },
     {
       "id": "tax-burden",
