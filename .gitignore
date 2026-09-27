@@ -26,3 +26,6 @@ test-results
 
 # Superpowers scratch
 .superpowers
+
+# Кэш сырых загрузок сборщиков данных
+scripts/collect/.cache
