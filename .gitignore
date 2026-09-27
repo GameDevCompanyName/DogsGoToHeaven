@@ -29,3 +29,6 @@ test-results
 
 # Кэш сырых загрузок сборщиков данных
 scripts/collect/.cache
+
+# Worktrees агентов
+.claude/worktrees
