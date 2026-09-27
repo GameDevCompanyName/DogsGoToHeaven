@@ -15,10 +15,13 @@
  *   - «eVisa», «Online Visa», «Electronic Travel Authorization»/
  *     «Electronic Travel Authorisation», «Electronic Authorization», «ETA» → e-visa
  *   - «Visa required»                                          → consular
+ *   - «Admission refused», «Entry banned»                      → refused (туристический
+ *     въезд гражданам РФ запрещён; это реальная информация, а не пропуск)
  * Если в ячейке перечислено несколько вариантов через «/» (например «eVisa / Visa on
- * arrival»), берётся самый мягкий в порядке visa-free > visa-on-arrival > e-visa > consular.
- * Сноски про срок пребывания игнорируются. Формулировки вне этого списка (например,
- * «Admission refused») не сопоставляются: ключ остаётся пустым, значение не придумывается.
+ * arrival»), берётся самый мягкий в порядке
+ * visa-free > visa-on-arrival > e-visa > consular > refused.
+ * Сноски про срок пребывания игнорируются. Формулировки вне этого списка не
+ * сопоставляются: ключ остаётся пустым, значение не придумывается.
  *
  * Визовые данные для РФ меняются часто — это справочная информация, а не юридическая
  * консультация; period и collectedAt в выборке фиксируют момент сбора.
@@ -41,10 +44,16 @@ const API_URL =
   '&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&formatversion=2';
 const PAGE_URL = 'https://en.wikipedia.org/wiki/Visa_requirements_for_Russian_citizens';
 
-type CategoryCode = 'visa-free' | 'visa-on-arrival' | 'e-visa' | 'consular';
+type CategoryCode = 'visa-free' | 'visa-on-arrival' | 'e-visa' | 'consular' | 'refused';
 
 /** Порядок мягкости категорий, самая мягкая первая. */
-const LENIENCY_ORDER: CategoryCode[] = ['visa-free', 'visa-on-arrival', 'e-visa', 'consular'];
+const LENIENCY_ORDER: CategoryCode[] = [
+  'visa-free',
+  'visa-on-arrival',
+  'e-visa',
+  'consular',
+  'refused',
+];
 
 /**
  * Фразы источника, встречающиеся в первом шаблоне-обёртке ячейки «Visa requirement»,
@@ -64,6 +73,9 @@ const PHRASE_TO_CATEGORY: Array<{ phrase: string; category: CategoryCode }> = [
   { phrase: 'electronic authorization', category: 'e-visa' },
   { phrase: 'eta', category: 'e-visa' },
   { phrase: 'visa required', category: 'consular' },
+  { phrase: 'admission refused', category: 'refused' },
+  { phrase: 'entry banned', category: 'refused' },
+  { phrase: 'refused', category: 'refused' },
 ];
 
 /**
@@ -314,7 +326,9 @@ async function main(): Promise<void> {
         'Колонка "Visa requirement" основной таблицы. Сопоставление: "Visa not required"/' +
         '"Freedom of movement" → visa-free; "Visa on arrival"/"e-VOA" → visa-on-arrival; ' +
         '"eVisa"/"Online Visa"/"Electronic Travel Authorization" → e-visa; "Visa required" → ' +
-        'consular; при нескольких вариантах через "/" берётся самый мягкий. Ревизия статьи ' +
+        'consular; "Admission refused"/"Entry banned" → refused (туристический въезд запрещён); ' +
+        'при нескольких вариантах через "/" берётся самый мягкий в порядке visa-free > ' +
+        'visa-on-arrival > e-visa > consular > refused. Ревизия статьи ' +
         `от ${revisionDate}. Справочная информация, не юридическая консультация: визовые ` +
         'правила для граждан РФ меняются часто, перед поездкой сверяйтесь с консульством или ' +
         'официальным порталом.',
