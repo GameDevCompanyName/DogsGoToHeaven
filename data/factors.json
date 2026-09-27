@@ -76,7 +76,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 4,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "tax-burden.wikipedia-2026"
     },
     {
       "id": "safety",
