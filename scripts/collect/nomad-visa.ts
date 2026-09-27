@@ -2,27 +2,64 @@
  * Собирает data/samples/nomad-visa.wikipedia-2026.json — фактор `nomad-visa`
  * (страна, категориальный, коды `yes`/`no`).
  *
- * Источник — английская Википедия, статья «Digital nomad», раздел
- * «Digital nomad visas» (страница «Digital nomad visa» на неё перенаправляет,
- * см. #REDIRECT в кэше). Раздел устроен как подзаголовок на каждую страну плюс
- * подраздел «Other countries» для стран без отдельного подзаголовка.
+ * Источник A (основной, «читающий») — английская Википедия, статья
+ * «Digital nomad», раздел «Digital nomad visas» (страница «Digital nomad
+ * visa» на неё перенаправляет, см. #REDIRECT в кэше). Раздел устроен как
+ * подзаголовок на каждую страну плюс подраздел «Other countries» для стран
+ * без отдельного подзаголовка.
  *
- * Правило: страна из data/countries.json получает `yes`, если в разделе явно
- * сказано, что виза цифрового кочевника (или эквивалентная программа удалённой
- * работы) уже действует — глагол совершенного вида про закон/визу как факт
- * («launched», «introduced», «opened applications», «signed», «passed a law
- * granting», настоящее время вида «is a visa issued by», подтверждение числом
- * выданных разрешений). Страна получает `no`, если раздел только анонсирует
- * планы («announced plans to introduce», «would be implementing», «draft
- * amendments», «will start a pilot») без подтверждения запуска, либо прямо
- * говорит, что это не отдельная виза кочевника (Германия, Канада, Британия).
- * Решение по каждой стране в COUNTRY_STATUS ниже — с цитатой из источника.
- * Страна из нашего списка, не упомянутая в разделе вовсе, получает `no`:
- * отсутствие в источнике — тоже утверждение источника.
+ * Правило A: страна из data/countries.json получает `yes`, если в разделе
+ * явно сказано, что виза цифрового кочевника (или эквивалентная программа
+ * удалённой работы) уже действует — глагол совершенного вида про закон/визу
+ * как факт («launched», «introduced», «opened applications», «signed»,
+ * «passed a law granting», настоящее время вида «is a visa issued by»,
+ * подтверждение числом выданных разрешений). Страна получает `no`, если
+ * раздел только анонсирует планы («announced plans to introduce», «would be
+ * implementing», «draft amendments», «will start a pilot») без подтверждения
+ * запуска, либо прямо говорит, что это не отдельная виза кочевника (Германия,
+ * Канада, Британия). Решение по каждой стране в COUNTRY_STATUS ниже — с
+ * цитатой из источника. Проза одной статьи неполна (пропускает реальные
+ * программы, которые не попали в её текст), поэтому она дополняется вторым,
+ * механическим источником.
+ *
+ * Источник B (механический, «по стране») — для каждой страны своя статья
+ * «Visa policy of <Country>» (redirects=1, кэш на диске, пауза между
+ * запросами, --limit ограничивает и его). У многих стран Шенгена такая
+ * статья — редирект на общую «Visa policy of the Schengen Area»: это тоже
+ * ответ источника (нет отдельного текста про эту страну), не ошибка.
+ *
+ * Правило B: ищем в викитексте (без <ref>...</ref>) фразы «digital nomad»,
+ * «nomad visa», «remote work visa», «remote worker» — в заголовке раздела
+ * (сильный сигнал, разбору отрицаний не подвергается) или в тексте. Для
+ * текстового совпадения проверяем ~90 символов вокруг на отрицающие фразы
+ * («does not», «proposed», «planned», «would ...», «will ...», «considering»
+ * и т.п.) — если они рядом, совпадение не считается. Отступление от брифа:
+ * слово «announced» само по себе НЕ считается отрицанием, хотя бриф просил
+ * игнорировать такую формулировку — на статье South Korea фраза «Ministry of
+ * Justice announced the Digital Nomad Visa (F-1-D), ... which allows» описывает
+ * уже действующую визу через слово «announced», и буквальное игнорирование
+ * дало бы ложный `no` там, где заголовок раздела ==Digital Nomad Visa (F-1-D)==
+ * и сам текст говорят об обратном. Отдельно действующие условные фразы для
+ * будущего времени («would», «will», «plans to», «proposed», «considering» и
+ * так далее) отрицание всё равно ловят.
+ *
+ * Итог: страна получает `yes`, если `yes` дал источник A ИЛИ источник B.
+ * Известное сомнительное совпадение источника B — Великобритания (gb): её
+ * статья о визовой политике описывает разрешение быть цифровым кочевником на
+ * обычной туристической визе («Being a digital nomad is explicitly allowed on
+ * a standard visitor visa»), а не отдельную визу/резидентство, то есть по
+ * смыслу это тот же случай, что источник A уже разобрал для Канады — но
+ * механическое правило его не отличает от настоящей визы. Значение оставлено
+ * как есть (`yes`), это отмечено в выводе скрипта и в отчёте для ручной
+ * проверки, а не переопределено вручную.
+ *
+ * Страна из нашего списка, не упомянутая ни в одном из источников, получает
+ * `no`: отсутствие в источнике — тоже утверждение источника.
  *
  * Виза цифрового кочевника не гарантирует, что программа открыта гражданам РФ;
  * если источник прямо пишет об исключении граждан России, значение — `no`
- * с пояснением в notes (для этого источника такой оговорки не встретилось).
+ * с пояснением в notes (для обоих источников такой оговорки не встретилось;
+ * для Турции источник B прямо перечисляет Россию среди подходящих гражданств).
  *
  * Запуск: npx tsx scripts/collect/nomad-visa.ts [--limit N]
  */
@@ -242,6 +279,214 @@ const OTHER_COUNTRIES_STATUS: CountryStatus[] = [
 
 const ALL_STATUS = [...COUNTRY_STATUS, ...OTHER_COUNTRIES_STATUS];
 
+/**
+ * Английские названия стран для заголовков «Visa policy of <Country>» —
+ * источник B. Названия без «the»: Википедия резолвит редиректом
+ * («Visa policy of Netherlands» → «Visa policy of the Netherlands»).
+ */
+const VISA_POLICY_COUNTRY_NAMES: Record<string, string> = {
+  ae: 'United Arab Emirates',
+  am: 'Armenia',
+  ar: 'Argentina',
+  at: 'Austria',
+  au: 'Australia',
+  az: 'Azerbaijan',
+  be: 'Belgium',
+  bg: 'Bulgaria',
+  br: 'Brazil',
+  by: 'Belarus',
+  ca: 'Canada',
+  ch: 'Switzerland',
+  cn: 'China',
+  cy: 'Cyprus',
+  cz: 'Czech Republic',
+  de: 'Germany',
+  dk: 'Denmark',
+  ee: 'Estonia',
+  eg: 'Egypt',
+  es: 'Spain',
+  fi: 'Finland',
+  fr: 'France',
+  gb: 'United Kingdom',
+  ge: 'Georgia',
+  gr: 'Greece',
+  hr: 'Croatia',
+  hu: 'Hungary',
+  id: 'Indonesia',
+  ie: 'Ireland',
+  il: 'Israel',
+  in: 'India',
+  is: 'Iceland',
+  it: 'Italy',
+  jp: 'Japan',
+  kg: 'Kyrgyzstan',
+  kr: 'South Korea',
+  kz: 'Kazakhstan',
+  lt: 'Lithuania',
+  lu: 'Luxembourg',
+  lv: 'Latvia',
+  ma: 'Morocco',
+  me: 'Montenegro',
+  mn: 'Mongolia',
+  mt: 'Malta',
+  mx: 'Mexico',
+  my: 'Malaysia',
+  nl: 'Netherlands',
+  no: 'Norway',
+  nz: 'New Zealand',
+  om: 'Oman',
+  pe: 'Peru',
+  ph: 'Philippines',
+  pl: 'Poland',
+  pt: 'Portugal',
+  ro: 'Romania',
+  rs: 'Serbia',
+  sa: 'Saudi Arabia',
+  se: 'Sweden',
+  sg: 'Singapore',
+  si: 'Slovenia',
+  sk: 'Slovakia',
+  th: 'Thailand',
+  tj: 'Tajikistan',
+  tr: 'Turkey',
+  tw: 'Taiwan',
+  us: 'United States',
+  uz: 'Uzbekistan',
+  vn: 'Vietnam',
+  za: 'South Africa',
+};
+
+const VISA_POLICY_KEYWORDS = ['digital nomad', 'nomad visa', 'remote work visa', 'remote worker'];
+
+/**
+ * Отрицающие формулировки: если рядом с ключевой фразой встречается что-то
+ * из этого списка, совпадение не считается активной программой. «announced»
+ * намеренно не включено — см. пояснение про Южную Корею в шапке файла.
+ */
+const VISA_POLICY_NEGATIONS = [
+  'does not',
+  'do not',
+  "doesn't",
+  "don't",
+  'not currently',
+  'not yet',
+  'no plan',
+  'no plans',
+  'proposed',
+  'planned',
+  'plans to',
+  'plan to',
+  'considering',
+  'would allow',
+  'would introduce',
+  'would be',
+  'will introduce',
+  'will launch',
+  'may introduce',
+  'is expected to',
+  'is set to',
+  'has yet to',
+  'yet to introduce',
+];
+
+const VISA_POLICY_HEADING_RE = /^={2,5}\s*([^=]+?)\s*={2,5}\s*$/gm;
+
+function stripWikiRefs(wikitext: string): string {
+  return wikitext.replace(/<ref[^>]*\/>/gi, ' ').replace(/<ref[^>]*>[\s\S]*?<\/ref>/gis, ' ');
+}
+
+interface VisaPolicyHit {
+  keyword: string;
+  context: string;
+}
+
+/** Заголовки разделов, называющие визу/программу кочевника — сильный сигнал. */
+function findHeadingHits(wikitext: string): string[] {
+  return [...wikitext.matchAll(VISA_POLICY_HEADING_RE)]
+    .map((match) => match[1].trim())
+    .filter((heading) => VISA_POLICY_KEYWORDS.some((k) => heading.toLowerCase().includes(k)));
+}
+
+/** Совпадения ключевых фраз в тексте, без отрицания в окне ~90 символов. */
+function findSentenceHits(wikitext: string): VisaPolicyHit[] {
+  const lower = wikitext.toLowerCase();
+  const hits: VisaPolicyHit[] = [];
+  for (const keyword of VISA_POLICY_KEYWORDS) {
+    let from = 0;
+    for (;;) {
+      const idx = lower.indexOf(keyword, from);
+      if (idx === -1) break;
+      from = idx + keyword.length;
+      const windowStart = Math.max(0, idx - 90);
+      const windowEnd = Math.min(wikitext.length, idx + keyword.length + 90);
+      const window = lower.slice(windowStart, windowEnd);
+      if (VISA_POLICY_NEGATIONS.some((n) => window.includes(n))) continue;
+      hits.push({
+        keyword,
+        context: wikitext
+          .slice(Math.max(0, idx - 100), idx + keyword.length + 160)
+          .replace(/\s+/g, ' ')
+          .trim(),
+      });
+    }
+  }
+  return hits;
+}
+
+interface VisaPolicyPage {
+  missing: boolean;
+  resolvedTitle?: string;
+  wikitext?: string;
+}
+
+/** Загружает викитекст «Visa policy of <Country>» с кэшем на диске, следуя редиректам. */
+async function fetchVisaPolicyPage(countryName: string): Promise<VisaPolicyPage> {
+  const title = `Visa policy of ${countryName}`;
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const cachePath = join(CACHE_DIR, `visa-policy-${slug}.json`);
+  if (existsSync(cachePath)) {
+    return JSON.parse(readFileSync(cachePath, 'utf-8')) as VisaPolicyPage;
+  }
+  mkdirSync(CACHE_DIR, { recursive: true });
+  const url = `https://en.wikipedia.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&redirects=1&page=${encodeURIComponent(title)}`;
+  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+  const body = (await response.json()) as {
+    error?: { info: string };
+    parse?: { title: string; wikitext: string };
+  };
+  const page: VisaPolicyPage = body.error
+    ? { missing: true }
+    : { missing: false, resolvedTitle: body.parse?.title, wikitext: body.parse?.wikitext };
+  writeFileSync(cachePath, JSON.stringify(page));
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  return page;
+}
+
+interface VisaPolicySignal {
+  fired: boolean;
+  missing: boolean;
+  resolvedTitle?: string;
+  evidence?: string;
+}
+
+/** Источник B для одной страны: заголовок или предложение о визе кочевника без отрицания рядом. */
+async function checkVisaPolicySource(countryId: string): Promise<VisaPolicySignal> {
+  const countryName = VISA_POLICY_COUNTRY_NAMES[countryId];
+  if (!countryName) return { fired: false, missing: true };
+  const page = await fetchVisaPolicyPage(countryName);
+  if (page.missing || !page.wikitext) return { fired: false, missing: true };
+  const clean = stripWikiRefs(page.wikitext);
+  const headingHits = findHeadingHits(clean);
+  const sentenceHits = findSentenceHits(clean);
+  const fired = headingHits.length > 0 || sentenceHits.length > 0;
+  const evidence = headingHits[0]
+    ? `заголовок «${headingHits[0]}»`
+    : sentenceHits[0]
+      ? sentenceHits[0].context
+      : undefined;
+  return { fired, missing: false, resolvedTitle: page.resolvedTitle, evidence };
+}
+
 function now(): number {
   return performance.now();
 }
@@ -373,24 +618,37 @@ async function main() {
     statusById.set(entry.countryId, entry);
   }
 
-  const values: Record<string, Status> = {};
-  for (const id of limitedIds) {
-    values[id] = statusById.get(id)?.status ?? 'no';
-  }
+  const sourceAById = new Map<string, Status>();
+  for (const id of limitedIds) sourceAById.set(id, statusById.get(id)?.status ?? 'no');
   const tMatch = now() - tMatchStart;
 
+  // Источник B: одна страница «Visa policy of <Country>» на страну, с кэшем и паузой между сетевыми запросами.
+  const tSourceBStart = now();
+  const sourceBById = new Map<string, VisaPolicySignal>();
+  for (const id of limitedIds) {
+    sourceBById.set(id, await checkVisaPolicySource(id));
+  }
+  const tSourceB = now() - tSourceBStart;
+
   const tWriteStart = now();
+  const values: Record<string, Status> = {};
+  for (const id of limitedIds) {
+    const fromA = sourceAById.get(id) ?? 'no';
+    const fromB = sourceBById.get(id)?.fired ?? false;
+    values[id] = fromA === 'yes' || fromB ? 'yes' : 'no';
+  }
+
   const outPath = join(DATA_DIR, 'samples', `${SAMPLE_ID}.json`);
   const sample = {
     id: SAMPLE_ID,
     factorId: 'nomad-visa',
     source: {
-      name: 'Wikipedia: Digital nomad — Digital nomad visas',
+      name: 'Wikipedia: Digital nomad (§ Digital nomad visas) + Visa policy of <Country> per country',
       url: 'https://en.wikipedia.org/wiki/Digital_nomad#Digital_nomad_visas',
       period: revisionDate,
       collectedAt: COLLECTED_AT,
       notes:
-        'Страна получает "yes", только если раздел явно описывает уже действующую визу/программу цифрового кочевника (запущена, законом или на практике), а не только анонс или проект. Страна из нашего списка, не упомянутая в разделе, получает "no" — отсутствие в источнике тоже его утверждение. Явных оговорок про исключение граждан РФ в источнике не встретилось. Визовые данные для РФ меняются часто, перед поездкой их нужно перепроверять у консульства или у иммиграционного юриста.',
+        'Два источника, значение "yes" при срабатывании любого. A — статья "Digital nomad", раздел "Digital nomad visas" (та же ссылка, что в source.url): "yes", только если явно описана уже действующая виза/программа (запущена, законом или на практике), а не анонс или проект. B — механический: для каждой страны отдельная статья "Visa policy of <Country>" (redirects=1; у стран Шенгена это общая статья "Visa policy of the Schengen Area" без сведений по конкретной стране); "yes", если в викитексте (без <ref>) есть заголовок раздела или фраза "digital nomad" / "nomad visa" / "remote work visa" / "remote worker" без отрицания рядом ("does not", "proposed", "planned", "would ...", "will ...", "considering" и т.п.). Известное сомнительное совпадение источника B: Великобритания (gb) — фраза про допустимость быть цифровым кочевником на обычной туристической визе, не про отдельную визу, как в случае Канады у источника A; оставлено как "yes" для ручной проверки. Страна из нашего списка, не упомянутая ни в одном источнике, получает "no" — отсутствие в источнике тоже его утверждение. Явных оговорок про исключение граждан РФ не встретилось ни у одного источника; у Турции источник B прямо перечисляет Россию среди подходящих гражданств. Визовые данные для РФ меняются часто, перед поездкой их нужно перепроверять у консульства или у иммиграционного юриста.',
     },
     values,
   };
@@ -400,18 +658,39 @@ async function main() {
   const filled = Object.entries(values);
   const yesCount = filled.filter(([, status]) => status === 'yes').length;
   const noCount = filled.filter(([, status]) => status === 'no').length;
+  const yesIds = filled.filter(([, status]) => status === 'yes').map(([id]) => id);
+  const noIds = filled.filter(([, status]) => status === 'no').map(([id]) => id);
+  const missingSourceB = limitedIds.filter((id) => sourceBById.get(id)?.missing);
 
-  console.log(`Загрузка: ${formatMs(tLoad)}`);
-  console.log(`Разбор: ${formatMs(tParse)}`);
-  console.log(`Сопоставление: ${formatMs(tMatch)}`);
+  console.log(`Загрузка A: ${formatMs(tLoad)}`);
+  console.log(`Разбор A: ${formatMs(tParse)}`);
+  console.log(`Сопоставление A: ${formatMs(tMatch)}`);
+  console.log(`Источник B (${limitedIds.length} стран): ${formatMs(tSourceB)}`);
   console.log(`Запись: ${formatMs(tWrite)}`);
-  console.log(`Ревизия страницы: ${revisionDate}`);
+  console.log(`Ревизия страницы A: ${revisionDate}`);
   console.log(`Стран заполнено: ${filled.length} из ${limitedSet.size}`);
   console.log(`yes: ${yesCount}, no: ${noCount}`);
   console.log(
-    `Ненайденные названия из источника (${unmatched.length}): ${unmatched.slice(0, 10).join(', ') || '—'}`,
+    `Ненайденные названия из источника A (${unmatched.length}): ${unmatched.slice(0, 10).join(', ') || '—'}`,
   );
-  console.log(`Записано: ${outPath}`);
+  console.log(
+    `\nСтраница источника B не нашлась (${missingSourceB.length}): ${missingSourceB.join(', ') || '—'}`,
+  );
+  console.log('\nПо каждой стране, какой источник дал "yes":');
+  for (const id of limitedIds) {
+    const fromA = sourceAById.get(id) === 'yes';
+    const bSignal = sourceBById.get(id);
+    const fromB = bSignal?.fired ?? false;
+    if (!fromA && !fromB) continue;
+    const via = [fromA && 'A', fromB && 'B'].filter(Boolean).join('+');
+    const bNote = fromB
+      ? ` [B: ${bSignal?.resolvedTitle ?? '?'} — ${bSignal?.evidence ?? ''}]`
+      : '';
+    console.log(`  ${id}: ${via}${bNote}`);
+  }
+  console.log(`\nОстались "no" (${noIds.length}): ${noIds.join(', ')}`);
+  console.log(`\n"yes" (${yesIds.length}): ${yesIds.join(', ')}`);
+  console.log(`\nЗаписано: ${outPath}`);
 }
 
 await main();
