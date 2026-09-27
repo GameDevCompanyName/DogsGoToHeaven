@@ -8,11 +8,15 @@
  * Метод:
  *   1. Для координат города (data/cities.json) определяем IANA-зону через
  *      бесплатный API без ключа https://timeapi.io/api/timezone/coordinate.
- *   2. Для найденной зоны считаем смещение относительно UTC на 2026-01-15T12:00Z
- *      через Intl.DateTimeFormat с timeZoneName: 'longOffset' — январь берётся
- *      как опорная дата для всех городов независимо от полушария, чтобы
- *      смещение было воспроизводимым и не зависело от даты запуска скрипта.
- *   3. Значение — |смещение_города − 3|.
+ *   2. Для найденной зоны считаем смещение относительно UTC на две опорные даты —
+ *      2026-01-15T12:00Z и 2026-07-15T12:00Z (через Intl.DateTimeFormat с
+ *      timeZoneName: 'longOffset') — и берём меньшее из двух как стандартное
+ *      (зимнее) смещение. Одной январской даты недостаточно: для южного полушария
+ *      январь — это летнее (DST) время, а не зимнее (пример: Сидней в январе
+ *      показывает бы +11 вместо стандартных +10). DST всегда добавляет +1 час к
+ *      стандартному смещению, поэтому меньшее из двух значений — это и есть
+ *      стандартное смещение независимо от полушария и знака.
+ *   3. Значение — |стандартное_смещение_города − 3|.
  *
  * Запрос к timeapi.io — один на город, ответ кэшируется в
  * scripts/collect/.cache/moscow-time-diff/<cityId>.json, повторный запуск
@@ -34,8 +38,9 @@ const USER_AGENT = 'DogsGoToHeaven/0.1 (https://github.com/GameDevCompanyName; 9
 const REQUEST_DELAY_MS = 300;
 const TIMEAPI_URL = 'https://timeapi.io/api/timezone/coordinate';
 
-/** Опорная дата: 2026-01-15 полдень UTC, зима в Москве. */
-const REFERENCE_DATE = new Date('2026-01-15T12:00:00Z');
+/** Опорные даты: середина января и середина июля 2026, полдень UTC. */
+const REFERENCE_DATE_JAN = new Date('2026-01-15T12:00:00Z');
+const REFERENCE_DATE_JUL = new Date('2026-07-15T12:00:00Z');
 const MOSCOW_OFFSET_HOURS = 3;
 
 interface City {
@@ -85,12 +90,10 @@ async function timeZoneOf(city: City): Promise<string> {
   return parsed.timeZone;
 }
 
-/** Смещение IANA-зоны относительно UTC на REFERENCE_DATE, в часах (дробное). */
-function utcOffsetHours(timeZone: string): number {
+/** Смещение IANA-зоны относительно UTC на заданную дату, в часах (дробное). */
+function utcOffsetHours(timeZone: string, referenceDate: Date): number {
   const formatter = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' });
-  const part = formatter
-    .formatToParts(REFERENCE_DATE)
-    .find((p) => p.type === 'timeZoneName')?.value;
+  const part = formatter.formatToParts(referenceDate).find((p) => p.type === 'timeZoneName')?.value;
   if (part === 'GMT') return 0;
   const match = part?.match(/^GMT([+-])(\d{2}):(\d{2})$/);
   if (!match) throw new Error(`Не удалось разобрать смещение зоны ${timeZone}: «${part}»`);
@@ -98,11 +101,27 @@ function utcOffsetHours(timeZone: string): number {
   return sign * (Number(match[2]) + Number(match[3]) / 60);
 }
 
+/** Стандартное (зимнее) смещение — меньшее из двух опорных дат (DST всегда добавляет +1 ч). */
+function standardOffsetHours(timeZone: string): number {
+  const offsetJan = utcOffsetHours(timeZone, REFERENCE_DATE_JAN);
+  const offsetJul = utcOffsetHours(timeZone, REFERENCE_DATE_JUL);
+  return Math.min(offsetJan, offsetJul);
+}
+
+function parseLimit(args: string[]): number | undefined {
+  const limitArg = args.indexOf('--limit');
+  if (limitArg === -1) return undefined;
+  const value = Number(args[limitArg + 1]);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`--limit ожидает положительное целое число, получено: ${args[limitArg + 1]}`);
+  }
+  return value;
+}
+
 async function main(): Promise<void> {
   const t0 = performance.now();
   const args = process.argv.slice(2);
-  const limitArg = args.indexOf('--limit');
-  const limit = limitArg >= 0 ? Number(args[limitArg + 1]) : undefined;
+  const limit = parseLimit(args);
 
   const allCities: City[] = JSON.parse(readFileSync(join(DATA_DIR, 'cities.json'), 'utf-8'));
   const cities = limit !== undefined ? allCities.slice(0, limit) : allCities;
@@ -116,7 +135,7 @@ async function main(): Promise<void> {
   for (const city of cities) {
     try {
       const zone = await timeZoneOf(city);
-      const offset = utcOffsetHours(zone);
+      const offset = standardOffsetHours(zone);
       values[city.id] = Math.abs(offset - MOSCOW_OFFSET_HOURS);
     } catch (error) {
       failed.push(city.id);
@@ -138,17 +157,26 @@ async function main(): Promise<void> {
       collectedAt: '2026-09-28',
       notes:
         'Зона определена по координатам города через timeapi.io (данные IANA tzdata). ' +
-        'Смещение от UTC взято на 2026-01-15T12:00Z (Intl.DateTimeFormat, timeZoneName: longOffset) ' +
-        'как опорную «зимнюю» дату для всех городов. Значение — модуль разницы с Москвой (UTC+3).',
+        'Стандартное (зимнее) смещение от UTC — минимум смещений на 2026-01-15T12:00Z и ' +
+        '2026-07-15T12:00Z (Intl.DateTimeFormat, timeZoneName: longOffset): DST всегда добавляет ' +
+        '+1 ч к стандартному смещению, поэтому меньшее из двух — стандартное независимо от ' +
+        'полушария. Значение — модуль разницы стандартного смещения с Москвой (UTC+3).',
     },
     unit: 'ч',
     values,
   };
 
-  mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
-  writeFileSync(OUTPUT_FILE, `${JSON.stringify(sample, null, 2)}\n`);
-  const tWrite = performance.now();
-  console.log(`Запись файла: ${(tWrite - tFetch).toFixed(0)} мс`);
+  let tWrite: number;
+  if (limit !== undefined) {
+    console.log(`\n--limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+    tWrite = performance.now();
+  } else {
+    mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
+    writeFileSync(OUTPUT_FILE, `${JSON.stringify(sample, null, 2)}\n`);
+    tWrite = performance.now();
+    console.log(`Запись файла: ${(tWrite - tFetch).toFixed(0)} мс`);
+  }
 
   const filled = Object.keys(values).length;
   console.log(`\nЗаполнено ${filled} из ${cities.length}`);
