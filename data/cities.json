@@ -28,6 +28,13 @@
     "lon": 78.02
   },
   {
+    "id": "alanya",
+    "name": "Аланья",
+    "countryId": "tr",
+    "lat": 36.54,
+    "lon": 32
+  },
+  {
     "id": "almaty",
     "name": "Алма-Ата",
     "countryId": "kz",
@@ -91,18 +98,18 @@
     "lon": 49.84
   },
   {
-    "id": "balikesir",
-    "name": "Балыкесир",
-    "countryId": "tr",
-    "lat": 39.65,
-    "lon": 27.88
-  },
-  {
     "id": "bangkok",
     "name": "Бангкок",
     "countryId": "th",
     "lat": 13.75,
     "lon": 100.52
+  },
+  {
+    "id": "bar",
+    "name": "Бар",
+    "countryId": "me",
+    "lat": 42.1,
+    "lon": 19.1
   },
   {
     "id": "barcelona",
@@ -124,6 +131,13 @@
     "countryId": "id",
     "lat": 1.13,
     "lon": 104.05
+  },
+  {
+    "id": "batumi",
+    "name": "Батуми",
+    "countryId": "ge",
+    "lat": 41.65,
+    "lon": 41.64
   },
   {
     "id": "beijing",
@@ -229,6 +243,13 @@
     "countryId": "hu",
     "lat": 47.5,
     "lon": 19.04
+  },
+  {
+    "id": "budva",
+    "name": "Будва",
+    "countryId": "me",
+    "lat": 42.28,
+    "lon": 18.85
   },
   {
     "id": "buenos-aires",
@@ -399,13 +420,6 @@
     "lon": 128.6
   },
   {
-    "id": "daejeon",
-    "name": "Тэджон",
-    "countryId": "kr",
-    "lat": 36.35,
-    "lon": 127.39
-  },
-  {
     "id": "dallas",
     "name": "Даллас",
     "countryId": "us",
@@ -427,25 +441,11 @@
     "lon": 77.22
   },
   {
-    "id": "denizli",
-    "name": "Денизли",
-    "countryId": "tr",
-    "lat": 37.78,
-    "lon": 29.1
-  },
-  {
     "id": "denpasar",
     "name": "Денпасар",
     "countryId": "id",
     "lat": -8.67,
     "lon": 115.23
-  },
-  {
-    "id": "diyarbakir",
-    "name": "Диярбакыр",
-    "countryId": "tr",
-    "lat": 37.92,
-    "lon": 40.22
   },
   {
     "id": "dubai",
@@ -525,13 +525,6 @@
     "lon": 130.4
   },
   {
-    "id": "gaziantep",
-    "name": "Газиантеп",
-    "countryId": "tr",
-    "lat": 37.06,
-    "lon": 37.38
-  },
-  {
     "id": "geneva",
     "name": "Женева",
     "countryId": "ch",
@@ -565,13 +558,6 @@
     "countryId": "se",
     "lat": 57.71,
     "lon": 11.97
-  },
-  {
-    "id": "goyang",
-    "name": "Коян",
-    "countryId": "kr",
-    "lat": 37.66,
-    "lon": 126.84
   },
   {
     "id": "graz",
@@ -707,6 +693,13 @@
     "lon": 28.96
   },
   {
+    "id": "izmir",
+    "name": "Измир",
+    "countryId": "tr",
+    "lat": 38.41,
+    "lon": 27.14
+  },
+  {
     "id": "jacksonville",
     "name": "Джэксонвилл",
     "countryId": "us",
@@ -770,13 +763,6 @@
     "lon": 23.93
   },
   {
-    "id": "kayseri",
-    "name": "Кайсери",
-    "countryId": "tr",
-    "lat": 38.72,
-    "lon": 35.49
-  },
-  {
     "id": "kolkata",
     "name": "Калькутта",
     "countryId": "in",
@@ -784,11 +770,11 @@
     "lon": 88.37
   },
   {
-    "id": "konya",
-    "name": "Конья",
-    "countryId": "tr",
-    "lat": 37.85,
-    "lon": 32.52
+    "id": "kotor",
+    "name": "Котор",
+    "countryId": "me",
+    "lat": 42.43,
+    "lon": 18.77
   },
   {
     "id": "krabi",
@@ -812,11 +798,25 @@
     "lon": 101.7
   },
   {
+    "id": "kutaisi",
+    "name": "Кутаиси",
+    "countryId": "ge",
+    "lat": 42.27,
+    "lon": 42.71
+  },
+  {
     "id": "kyoto",
     "name": "Киото",
     "countryId": "jp",
     "lat": 35.01,
     "lon": 135.77
+  },
+  {
+    "id": "larnaca",
+    "name": "Ларнака",
+    "countryId": "cy",
+    "lat": 34.92,
+    "lon": 33.63
   },
   {
     "id": "las-vegas",
@@ -845,6 +845,13 @@
     "countryId": "pe",
     "lat": -12.06,
     "lon": -77.04
+  },
+  {
+    "id": "limassol",
+    "name": "Лимасол",
+    "countryId": "cy",
+    "lat": 34.67,
+    "lon": 33.04
   },
   {
     "id": "lisbon",
@@ -917,20 +924,6 @@
     "lon": -7.98
   },
   {
-    "id": "mecca",
-    "name": "Мекка",
-    "countryId": "sa",
-    "lat": 21.42,
-    "lon": 39.83
-  },
-  {
-    "id": "medina",
-    "name": "Медина",
-    "countryId": "sa",
-    "lat": 24.47,
-    "lon": 39.61
-  },
-  {
     "id": "melbourne",
     "name": "Мельбурн",
     "countryId": "au",
@@ -943,6 +936,13 @@
     "countryId": "tr",
     "lat": 36.8,
     "lon": 34.62
+  },
+  {
+    "id": "mexico-city",
+    "name": "Мехико",
+    "countryId": "mx",
+    "lat": 19.35,
+    "lon": -99.14
   },
   {
     "id": "miami",
@@ -1015,11 +1015,32 @@
     "lon": -1.61
   },
   {
+    "id": "nha-trang",
+    "name": "Нячанг",
+    "countryId": "vn",
+    "lat": 12.25,
+    "lon": 109.19
+  },
+  {
     "id": "nice",
     "name": "Ницца",
     "countryId": "fr",
     "lat": 43.7,
     "lon": 7.27
+  },
+  {
+    "id": "nicosia",
+    "name": "Никосия",
+    "countryId": "cy",
+    "lat": 35.17,
+    "lon": 33.37
+  },
+  {
+    "id": "novi-sad",
+    "name": "Нови-Сад",
+    "countryId": "rs",
+    "lat": 45.26,
+    "lon": 19.83
   },
   {
     "id": "nuremberg",
@@ -1069,6 +1090,13 @@
     "countryId": "ca",
     "lat": 45.42,
     "lon": -75.69
+  },
+  {
+    "id": "paphos",
+    "name": "Пафос",
+    "countryId": "cy",
+    "lat": 34.78,
+    "lon": 32.43
   },
   {
     "id": "paris",
@@ -1253,11 +1281,11 @@
     "lon": -121.49
   },
   {
-    "id": "samsun",
-    "name": "Самсун",
-    "countryId": "tr",
-    "lat": 41.29,
-    "lon": 36.33
+    "id": "samarkand",
+    "name": "Самарканд",
+    "countryId": "uz",
+    "lat": 39.65,
+    "lon": 66.98
   },
   {
     "id": "san-antonio",
@@ -1286,13 +1314,6 @@
     "countryId": "us",
     "lat": 37.3,
     "lon": -121.87
-  },
-  {
-    "id": "sanliurfa",
-    "name": "Шанлыурфа",
-    "countryId": "tr",
-    "lat": 37.16,
-    "lon": 38.79
   },
   {
     "id": "seattle",
@@ -1386,13 +1407,6 @@
     "lon": 9.18
   },
   {
-    "id": "suwon",
-    "name": "Сувон",
-    "countryId": "kr",
-    "lat": 37.29,
-    "lon": 127.01
-  },
-  {
     "id": "sydney",
     "name": "Сидней",
     "countryId": "au",
@@ -1449,6 +1463,13 @@
     "lon": 4.31
   },
   {
+    "id": "thessaloniki",
+    "name": "Салоники",
+    "countryId": "gr",
+    "lat": 40.64,
+    "lon": 22.94
+  },
+  {
     "id": "tokyo",
     "name": "Токио",
     "countryId": "jp",
@@ -1498,13 +1519,6 @@
     "lon": 106.91
   },
   {
-    "id": "ulsan",
-    "name": "Ульсан",
-    "countryId": "kr",
-    "lat": 35.55,
-    "lon": 129.32
-  },
-  {
     "id": "utrecht",
     "name": "Утрехт",
     "countryId": "nl",
@@ -1517,13 +1531,6 @@
     "countryId": "es",
     "lat": 39.47,
     "lon": -0.38
-  },
-  {
-    "id": "van",
-    "name": "Ван",
-    "countryId": "tr",
-    "lat": 38.5,
-    "lon": 43.42
   },
   {
     "id": "vancouver",

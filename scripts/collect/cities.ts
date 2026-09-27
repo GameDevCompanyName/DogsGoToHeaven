@@ -59,6 +59,52 @@ const TITLE_QID_OVERRIDES: Record<string, string> = {
   Victoria: 'Q2132',
 };
 
+/**
+ * Ручная валидация владельцем проекта, 2026-09-28: хабы релокации, не покрытые источниками /
+ * шум из механических правил. Хабы разрешаются через Wikidata как и остальные кандидаты
+ * (английское название статьи + ISO-код страны).
+ */
+const CURATED_HUBS: Candidate[] = [
+  { label: 'Batumi', countryHint: 'GE' },
+  { label: 'Kutaisi', countryHint: 'GE' },
+  { label: 'Novi Sad', countryHint: 'RS' },
+  { label: 'Thessaloniki', countryHint: 'GR' },
+  { label: 'Limassol', countryHint: 'CY' },
+  { label: 'Larnaca', countryHint: 'CY' },
+  { label: 'Paphos', countryHint: 'CY' },
+  { label: 'Nicosia', countryHint: 'CY' },
+  { label: 'Alanya', countryHint: 'TR' },
+  { label: 'Izmir', countryHint: 'TR' },
+  { label: 'Budva', countryHint: 'ME' },
+  { label: 'Bar, Montenegro', countryHint: 'ME' },
+  { label: 'Kotor', countryHint: 'ME' },
+  { label: 'Samarkand', countryHint: 'UZ' },
+  { label: 'Nha Trang', countryHint: 'VN' },
+  { label: 'Mexico City', countryHint: 'MX' },
+];
+
+/**
+ * Ручная валидация владельцем проекта, 2026-09-28: хабы релокации, не покрытые источниками /
+ * шум из механических правил. Эти id убираются из результата, из какого бы списка ни пришли.
+ */
+const EXCLUDED_IDS = new Set([
+  'van',
+  'sanliurfa',
+  'diyarbakir',
+  'balikesir',
+  'denizli',
+  'kayseri',
+  'konya',
+  'samsun',
+  'gaziantep',
+  'daejeon',
+  'goyang',
+  'suwon',
+  'ulsan',
+  'mecca',
+  'medina',
+]);
+
 /** Русские названия стран, где метка Wikidata — официальное, а не обиходное имя. */
 const COUNTRY_NAME_OVERRIDES: Record<string, string> = {
   nl: 'Нидерланды', // Wikidata: только «Королевство Нидерландов» имеет код NL
@@ -599,7 +645,7 @@ async function main(): Promise<void> {
   const euromonitor = await collectEuromonitor();
   console.log(`Euromonitor Top 100: ${euromonitor.length} городов`);
 
-  const candidates = [...numbeo, ...relocation, ...euromonitor];
+  const candidates = [...numbeo, ...relocation, ...euromonitor, ...CURATED_HUBS];
   const resolved = await resolveCandidates(candidates);
 
   const notFound = candidates
@@ -626,11 +672,13 @@ async function main(): Promise<void> {
       if (place.country === undefined || place.lat === undefined || place.lon === undefined) {
         continue;
       }
-      if (!place.ru) noRussianLabel.push(place.en ?? place.qid);
       const iso = place.country.iso.toLowerCase();
+      const id = group.length > 1 ? `${slug}-${iso}` : slug;
+      if (EXCLUDED_IDS.has(id)) continue;
+      if (!place.ru) noRussianLabel.push(place.en ?? place.qid);
       countryRefs.set(iso, [...(countryRefs.get(iso) ?? []), place.country]);
       cities.push({
-        id: group.length > 1 ? `${slug}-${iso}` : slug,
+        id,
         name: place.ru ?? place.en ?? place.qid,
         countryId: iso,
         lat: place.lat,
