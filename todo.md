@@ -6,9 +6,9 @@
 
 ## Инициализация проекта
 
-- [ ] Инициализировать каркас SvelteKit (adapter-static) + TypeScript.
-- [ ] Подключить shadcn-svelte (Bits UI + Tailwind).
-- [ ] Настроить ESLint, Prettier, Steiger (FSD), Vitest, Playwright — под команды из `CLAUDE.md` (`npm run lint/check/test/test:e2e/verify`).
+- [x] Инициализировать каркас SvelteKit (adapter-static) + TypeScript.
+- [x] Подключить shadcn-svelte (Bits UI + Tailwind).
+- [x] Настроить ESLint, Prettier, Steiger (FSD), Vitest, Playwright — под команды из `CLAUDE.md` (`npm run lint/check/test/test:e2e/verify`).
 - [ ] Выбрать open-source источник тайлов для MapLibre GL — решает агент, который будет разрабатывать карту.
 
 ## Типы данных и структура JSON
