@@ -241,6 +241,19 @@
       ]
     },
     {
+      "id": "legalization-ease",
+      "kind": "numeric",
+      "name": "Лёгкость легализации",
+      "definition": "Оценка Claude по открытым источникам: насколько просто гражданину РФ въехать и получить ВНЖ, 1 — практически недоступно, 5 — просто; рубрика в docs/collect-legalization.md",
+      "group": "legalization",
+      "level": "country",
+      "scoring": {
+        "type": "higher-better"
+      },
+      "defaultWeight": 6,
+      "defaultEnabled": true
+    },
+    {
       "id": "time-to-citizenship",
       "kind": "numeric",
       "name": "Срок до гражданства",
