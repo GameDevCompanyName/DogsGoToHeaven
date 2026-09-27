@@ -106,12 +106,15 @@ const EXCLUDED_IDS = new Set([
 ]);
 
 /**
- * Ручная валидация владельцем проекта, 2026-09-28: из США оставляем только столько
- * крупнейших по населению (Wikidata) городов среди кандидатов; остальные отбрасываем
- * после объединения списков и до вывода стран.
+ * Ручная валидация владельцем проекта, 2026-09-28: все кандидаты из США заменяются
+ * главными городами US_METRO_COUNT крупнейших метрополитенских статистических ареалов.
+ * Источник — таблица «List of metropolitan statistical areas» статьи Википедии
+ * «Metropolitan statistical area», столбец последней оценки населения; главный город —
+ * первый в названии ареала («Dallas–Fort Worth–Arlington» → Dallas).
  */
-const US_CITY_CAP = 15;
+const US_METRO_COUNT = 15;
 const UNITED_STATES = 'US';
+const MSA_PAGE = 'Metropolitan statistical area';
 
 /**
  * Ручная валидация владельцем проекта, 2026-09-28: столицы всех стран ЕС гарантированно
@@ -616,25 +619,33 @@ async function collectEuCapitals(): Promise<Candidate[]> {
   return rows.map((row) => ({ label: qidOf(row.capital), qid: qidOf(row.capital) }));
 }
 
-/** Оставляет среди городов США только US_CITY_CAP крупнейших по населению Wikidata. */
-async function capUsCities(places: Place[]): Promise<Place[]> {
-  const us = places.filter((place) => place.country?.iso === UNITED_STATES);
-  if (us.length <= US_CITY_CAP) return places;
-  const population = new Map<string, number>();
-  for (const batch of chunk(us, 60)) {
-    const rows = await sparql(`SELECT ?item (MAX(?p) AS ?population) WHERE {
-      VALUES ?item { ${batch.map((place) => `wd:${place.qid}`).join(' ')} }
-      ?item wdt:P1082 ?p .
-    } GROUP BY ?item`);
-    for (const row of rows) population.set(qidOf(row.item), Number(row.population));
+/**
+ * Главные города крупнейших метроареалов США из таблицы Википедии. Название для поиска —
+ * «Город, ШТ» (первый штат из названия ареала): такие заголовки в Википедии ведут на город,
+ * а не на одноимённый штат («New York, NY» → Нью-Йорк).
+ */
+async function collectUsMetroCities(): Promise<Candidate[]> {
+  const wikitext = await fetchWikitext('en', MSA_PAGE);
+  const table = wikiTables(wikitext).reduce((a, b) => (a.length >= b.length ? a : b));
+  const metros: { city: string; state: string; population: number }[] = [];
+  for (const row of table) {
+    const title =
+      row[0]?.match(/\[\[[^\]|]*\|([^\]]+)\]\]/)?.[1] ?? row[0]?.match(/\[\[([^\]]+)\]\]/)?.[1];
+    const name = title?.match(/^(.+?), ([A-Z]{2})/);
+    const estimate = row[1]?.match(/\{\{change\|(?:[^|}]*=[^|}]*\|)*([\d,]+)\|/)?.[1];
+    if (!name || !estimate) continue;
+    metros.push({
+      city: name[1].split('–')[0].trim(),
+      state: name[2],
+      population: Number(estimate.replace(/,/g, '')),
+    });
   }
-  const kept = new Set(
-    [...us]
-      .sort((a, b) => (population.get(b.qid) ?? 0) - (population.get(a.qid) ?? 0))
-      .slice(0, US_CITY_CAP)
-      .map((place) => place.qid),
-  );
-  return places.filter((place) => place.country?.iso !== UNITED_STATES || kept.has(place.qid));
+  if (metros.length < US_METRO_COUNT)
+    throw new Error(`MSA: разобрано только ${metros.length} строк`);
+  return metros
+    .sort((a, b) => b.population - a.population)
+    .slice(0, US_METRO_COUNT)
+    .map((metro) => ({ label: `${metro.city}, ${metro.state}`, countryHint: UNITED_STATES }));
 }
 
 // --- Сборка -------------------------------------------------------------------
@@ -700,7 +711,17 @@ async function main(): Promise<void> {
   const euCapitals = await collectEuCapitals();
   console.log(`Столицы ЕС: ${euCapitals.length}`);
 
-  const candidates = [...numbeo, ...relocation, ...euromonitor, ...CURATED_HUBS, ...euCapitals];
+  const usMetro = await collectUsMetroCities();
+  console.log(`Метроареалы США: ${usMetro.length}`);
+
+  const candidates = [
+    ...numbeo,
+    ...relocation,
+    ...euromonitor,
+    ...CURATED_HUBS,
+    ...euCapitals,
+    ...usMetro,
+  ];
   const resolved = await resolveCandidates(candidates);
 
   const notFound = candidates
@@ -708,11 +729,15 @@ async function main(): Promise<void> {
     .map((candidate) => candidate.label);
   const noRussianLabel: string[] = [];
 
-  const places = await capUsCities(
-    dedupePlaces(
-      [...new Map([...resolved.values()].map((place) => [place.qid, place])).values()].filter(
-        (place) => place.country?.iso !== RUSSIA,
-      ),
+  // Из США остаются только главные города метроареалов, из каких бы списков ни пришли остальные.
+  const usMetroQids = new Set(
+    usMetro.flatMap((candidate) => resolved.get(candidate.label)?.qid ?? []),
+  );
+  const places = dedupePlaces(
+    [...new Map([...resolved.values()].map((place) => [place.qid, place])).values()].filter(
+      (place) =>
+        place.country?.iso !== RUSSIA &&
+        (place.country?.iso !== UNITED_STATES || usMetroQids.has(place.qid)),
     ),
   );
 

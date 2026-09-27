@@ -77,18 +77,18 @@
     "lon": 23.73
   },
   {
+    "id": "atlanta",
+    "name": "Атланта",
+    "countryId": "us",
+    "lat": 33.75,
+    "lon": -84.39
+  },
+  {
     "id": "auckland",
     "name": "Окленд",
     "countryId": "nz",
     "lat": -36.85,
     "lon": 174.77
-  },
-  {
-    "id": "austin",
-    "name": "Остин",
-    "countryId": "us",
-    "lat": 30.3,
-    "lon": -97.73
   },
   {
     "id": "baku",
@@ -203,6 +203,13 @@
     "lon": 74.57
   },
   {
+    "id": "boston",
+    "name": "Бостон",
+    "countryId": "us",
+    "lat": 42.36,
+    "lon": -71.06
+  },
+  {
     "id": "bratislava",
     "name": "Братислава",
     "countryId": "sk",
@@ -308,13 +315,6 @@
     "lon": 123.9
   },
   {
-    "id": "charlotte",
-    "name": "Шарлотт",
-    "countryId": "us",
-    "lat": 35.23,
-    "lon": -80.84
-  },
-  {
     "id": "chennai",
     "name": "Ченнаи",
     "countryId": "in",
@@ -355,13 +355,6 @@
     "countryId": "de",
     "lat": 50.94,
     "lon": 6.96
-  },
-  {
-    "id": "columbus",
-    "name": "Колумбус",
-    "countryId": "us",
-    "lat": 39.96,
-    "lon": -83
   },
   {
     "id": "copenhagen",
@@ -420,6 +413,13 @@
     "lon": 115.23
   },
   {
+    "id": "detroit",
+    "name": "Детройт",
+    "countryId": "us",
+    "lat": 42.33,
+    "lon": -83.05
+  },
+  {
     "id": "dubai",
     "name": "Дубай",
     "countryId": "ae",
@@ -474,13 +474,6 @@
     "countryId": "it",
     "lat": 43.77,
     "lon": 11.25
-  },
-  {
-    "id": "fort-worth",
-    "name": "Форт-Уэрт",
-    "countryId": "us",
-    "lat": 32.76,
-    "lon": -97.33
   },
   {
     "id": "frankfurt",
@@ -644,13 +637,6 @@
     "lon": 33.81
   },
   {
-    "id": "indianapolis",
-    "name": "Индианаполис",
-    "countryId": "us",
-    "lat": 39.77,
-    "lon": -86.16
-  },
-  {
     "id": "istanbul",
     "name": "Стамбул",
     "countryId": "tr",
@@ -663,13 +649,6 @@
     "countryId": "tr",
     "lat": 38.41,
     "lon": 27.14
-  },
-  {
-    "id": "jacksonville",
-    "name": "Джэксонвилл",
-    "countryId": "us",
-    "lat": 30.32,
-    "lon": -81.65
   },
   {
     "id": "jaipur",
@@ -896,6 +875,13 @@
     "lon": -99.14
   },
   {
+    "id": "miami",
+    "name": "Майами",
+    "countryId": "us",
+    "lat": 25.77,
+    "lon": -80.19
+  },
+  {
     "id": "milan",
     "name": "Милан",
     "countryId": "it",
@@ -1050,6 +1036,13 @@
     "lon": 115.86
   },
   {
+    "id": "philadelphia",
+    "name": "Филадельфия",
+    "countryId": "us",
+    "lat": 39.95,
+    "lon": -75.16
+  },
+  {
     "id": "phoenix",
     "name": "Финикс",
     "countryId": "us",
@@ -1141,6 +1134,13 @@
     "lon": -43.21
   },
   {
+    "id": "riverside",
+    "name": "Риверсайд",
+    "countryId": "us",
+    "lat": 33.98,
+    "lon": -117.37
+  },
+  {
     "id": "riyadh",
     "name": "Эр-Рияд",
     "countryId": "sa",
@@ -1169,25 +1169,18 @@
     "lon": 66.98
   },
   {
-    "id": "san-antonio",
-    "name": "Сан-Антонио",
+    "id": "san-francisco",
+    "name": "Сан-Франциско",
     "countryId": "us",
-    "lat": 29.43,
-    "lon": -98.49
+    "lat": 37.78,
+    "lon": -122.42
   },
   {
-    "id": "san-diego",
-    "name": "Сан-Диего",
+    "id": "seattle",
+    "name": "Сиэтл",
     "countryId": "us",
-    "lat": 32.72,
-    "lon": -117.16
-  },
-  {
-    "id": "san-jose",
-    "name": "Сан-Хосе",
-    "countryId": "us",
-    "lat": 37.3,
-    "lon": -121.87
+    "lat": 47.61,
+    "lon": -122.33
   },
   {
     "id": "seoul",
@@ -1419,6 +1412,13 @@
     "countryId": "pl",
     "lat": 52.23,
     "lon": 21.01
+  },
+  {
+    "id": "washington-dc",
+    "name": "Вашингтон",
+    "countryId": "us",
+    "lat": 38.9,
+    "lon": -77.04
   },
   {
     "id": "wellington",
