@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
+@import '@fontsource-variable/inter';
+
+/* Тёмной темы нет. Без этой строки `dark:`-классы внутри компонентов shadcn
+   срабатывали бы по системной теме поверх светлых токенов. */
+@custom-variant dark (&:is(.dark *));
+
+/* Семантические токены, на которые завязаны компоненты shadcn-svelte
+   (`bg-primary`, `border-input` и т. д.). Значения — палитра Tailwind. */
+@theme inline {
+  --font-sans: 'Inter Variable', sans-serif;
+
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-neutral-950);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-neutral-950);
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-neutral-950);
+  --color-primary: var(--color-neutral-900);
+  --color-primary-foreground: var(--color-neutral-50);
+  --color-secondary: var(--color-neutral-100);
+  --color-secondary-foreground: var(--color-neutral-900);
+  --color-muted: var(--color-neutral-100);
+  --color-muted-foreground: var(--color-neutral-500);
+  --color-accent: var(--color-neutral-100);
+  --color-accent-foreground: var(--color-neutral-900);
+  --color-destructive: var(--color-red-600);
+  --color-border: var(--color-neutral-200);
+  --color-input: var(--color-neutral-200);
+  --color-ring: var(--color-neutral-400);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
