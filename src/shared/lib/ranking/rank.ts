@@ -11,14 +11,23 @@ import type {
   RankedCity,
   RankingResult,
   RankingSettings,
+  RankOptions,
 } from './types';
+
+/** Город виден в выдаче, если у него есть значения не менее чем по этой доле факторов с данными. */
+export const MIN_CITY_COVERAGE = 0.6;
 
 /**
  * Ранжирует города датасета по настройкам: жёсткие фильтры отсекают,
  * активные числовые факторы дают взвешенную сумму нормализованных оценок.
  * Чистая функция: ни датасет, ни настройки не меняются.
  */
-export function rank(dataset: Dataset, settings: RankingSettings): RankingResult {
+export function rank(
+  dataset: Dataset,
+  settings: RankingSettings,
+  options: RankOptions = {},
+): RankingResult {
+  const minCoverage = options.minCoverage ?? MIN_CITY_COVERAGE;
   const activeFactors = dataset.factors.filter(
     (factor): factor is NumericFactor =>
       factor.kind === 'numeric' &&
@@ -44,11 +53,15 @@ export function rank(dataset: Dataset, settings: RankingSettings): RankingResult
   const excluded: ExcludedCity[] = [];
 
   dataset.cities.forEach((city, cityIndex) => {
+    if (city.coverage < minCoverage) {
+      excluded.push({ cityId: city.id, reason: 'coverage', failedFilterIds: [] });
+      return;
+    }
     const failedFilterIds = filters
       .filter(([factorId, filter]) => !passesFilter(city.values[factorId] ?? null, filter))
       .map(([factorId]) => factorId);
     if (failedFilterIds.length > 0) {
-      excluded.push({ cityId: city.id, failedFilterIds });
+      excluded.push({ cityId: city.id, reason: 'filter', failedFilterIds });
       return;
     }
     ranked.push(scoreCity(city, cityIndex, activeFactors, normalizedByFactor, settings, filters));
