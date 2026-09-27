@@ -43,18 +43,30 @@
  * будущего времени («would», «will», «plans to», «proposed», «considering» и
  * так далее) отрицание всё равно ловят.
  *
- * Итог: страна получает `yes`, если `yes` дал источник A ИЛИ источник B, если
- * её не переопределяет вручную MANUAL_OVERRIDES. Единственное переопределение
- * — Великобритания (gb): её статья о визовой политике заставляет источник B
- * сработать по фразе «Being a digital nomad is explicitly allowed on a
- * standard visitor visa», но это разрешение работать удалённо на обычной
- * туристической визе, а не отдельная виза/резидентство — тот же случай, что
- * источник A уже разобрал для Канады как `no`. Механическое правило B не
- * отличает такую формулировку от настоящей визы, поэтому после ручной
- * проверки значение для gb исправлено на `no` явным переопределением.
+ * Итог: отсутствие в источнике — не факт, а пробел, поэтому страна получает
+ * ключ ТОЛЬКО когда источник явно что-то утверждает:
+ *   - `yes` — источник A ИЛИ источник B описывает уже действующую программу;
+ *   - `no` — ТОЛЬКО когда источник явно говорит, что отдельной визы кочевника
+ *     нет / удалённая работа разрешена лишь на туристической визе / программа
+ *     приостановлена. Это утверждение даёт только источник A (см.
+ *     EXPLICIT_NO_COUNTRY_IDS: Германия и Канада — обе статьи прямо говорят,
+ *     что это не отдельная виза) и ручное переопределение для gb. Источник B
+ *     сам по себе никогда не даёт `no` — непопадание ключевой фразы значит
+ *     «неясно», а не «явно нет», поэтому механическое правило B участвует
+ *     только в получении `yes`.
+ *   - страна, о которой ни A, ни B не сказали ничего определённого (в т.ч.
+ *     анонсы и законопроекты без подтверждённого запуска — Аргентина,
+ *     Индонезия, Италия, Латвия, ЮАР), остаётся без ключа вовсе — значение не
+ *     придумывается.
  *
- * Страна из нашего списка, не упомянутая ни в одном из источников, получает
- * `no`: отсутствие в источнике — тоже утверждение источника.
+ * Единственное ручное переопределение — Великобритания (gb): её статья о
+ * визовой политике заставляет источник B сработать по фразе «Being a digital
+ * nomad is explicitly allowed on a standard visitor visa», но это разрешение
+ * работать удалённо на обычной туристической визе, а не отдельная виза/
+ * резидентство — тот же случай, что источник A уже разобрал для Канады как
+ * явный `no`. Механическое правило B не отличает такую формулировку от
+ * настоящей визы, поэтому после ручной проверки значение для gb исправлено на
+ * `no` явным переопределением.
  *
  * Виза цифрового кочевника не гарантирует, что программа открыта гражданам РФ;
  * если источник прямо пишет об исключении граждан России, значение — `no`
@@ -278,6 +290,17 @@ const OTHER_COUNTRIES_STATUS: CountryStatus[] = [
 ];
 
 const ALL_STATUS = [...COUNTRY_STATUS, ...OTHER_COUNTRIES_STATUS];
+
+/**
+ * Страны, для которых COUNTRY_STATUS/OTHER_COUNTRIES_STATUS с `status: 'no'`
+ * — это именно явное утверждение источника A («нет отдельной визы, есть
+ * X вместо неё» / «удалённая работа разрешена только на туристической
+ * визе»), а не просто наблюдение скрипта. Остальные записи со `status: 'no'`
+ * в тех таблицах описывают анонс или законопроект без подтверждённого
+ * запуска — это не явное «нет», такая страна остаётся без ключа (см. шапку
+ * файла).
+ */
+const EXPLICIT_NO_COUNTRY_IDS = new Set(['de', 'ca']);
 
 /**
  * Ручные переопределения поверх «A ИЛИ B», после ручной проверки владельцем
@@ -564,9 +587,20 @@ function loadCountryIds(): Set<string> {
   return new Set(countries.map((country) => country.id));
 }
 
-async function main() {
+function parseLimit(): number | undefined {
   const limitArg = process.argv.findIndex((arg) => arg === '--limit');
-  const limit = limitArg >= 0 ? Number(process.argv[limitArg + 1]) : undefined;
+  if (limitArg === -1) return undefined;
+  const value = Number(process.argv[limitArg + 1]);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `--limit ожидает положительное целое число, получено: ${process.argv[limitArg + 1]}`,
+    );
+  }
+  return value;
+}
+
+async function main() {
+  const limit = parseLimit();
 
   const tLoadStart = now();
   const { wikitext, revisionDate } = await fetchPage(PAGE);
@@ -630,8 +664,8 @@ async function main() {
     statusById.set(entry.countryId, entry);
   }
 
-  const sourceAById = new Map<string, Status>();
-  for (const id of limitedIds) sourceAById.set(id, statusById.get(id)?.status ?? 'no');
+  const sourceAById = new Map<string, Status | undefined>();
+  for (const id of limitedIds) sourceAById.set(id, statusById.get(id)?.status);
   const tMatch = now() - tMatchStart;
 
   // Источник B: одна страница «Visa policy of <Country>» на страну, с кэшем и паузой между сетевыми запросами.
@@ -643,12 +677,24 @@ async function main() {
   const tSourceB = now() - tSourceBStart;
 
   const tWriteStart = now();
+  // Ключ выставляется только когда источник явно что-то утверждает: `yes`, если
+  // сработал A или B; `no` только для стран из EXPLICIT_NO_COUNTRY_IDS (плюс
+  // ручные переопределения); иначе — без ключа (см. шапку файла).
   const values: Record<string, Status> = {};
+  const absent: string[] = [];
   for (const id of limitedIds) {
-    const fromA = sourceAById.get(id) ?? 'no';
+    const fromA = sourceAById.get(id);
     const fromB = sourceBById.get(id)?.fired ?? false;
-    const combined = fromA === 'yes' || fromB ? 'yes' : 'no';
-    values[id] = MANUAL_OVERRIDES[id]?.status ?? combined;
+    const explicitNo = fromA === 'no' && EXPLICIT_NO_COUNTRY_IDS.has(id);
+    const combined: Status | undefined =
+      fromA === 'yes' || fromB ? 'yes' : explicitNo ? 'no' : undefined;
+    const override = MANUAL_OVERRIDES[id]?.status;
+    const finalStatus = override ?? combined;
+    if (finalStatus === undefined) {
+      absent.push(id);
+    } else {
+      values[id] = finalStatus;
+    }
   }
 
   const outPath = join(DATA_DIR, 'samples', `${SAMPLE_ID}.json`);
@@ -661,12 +707,20 @@ async function main() {
       period: revisionDate,
       collectedAt: COLLECTED_AT,
       notes:
-        'Два источника, значение "yes" при срабатывании любого, поверх них — ручные переопределения. A — статья "Digital nomad", раздел "Digital nomad visas" (та же ссылка, что в source.url): "yes", только если явно описана уже действующая виза/программа (запущена, законом или на практике), а не анонс или проект. B — механический: для каждой страны отдельная статья "Visa policy of <Country>" (redirects=1; у стран Шенгена это общая статья "Visa policy of the Schengen Area" без сведений по конкретной стране); "yes", если в викитексте (без <ref>) есть заголовок раздела или фраза "digital nomad" / "nomad visa" / "remote work visa" / "remote worker" без отрицания рядом ("does not", "proposed", "planned", "would ...", "will ...", "considering" и т.п.). Ручное переопределение: Великобритания (gb) — источник B засчитал "yes" по фразе "Being a digital nomad is explicitly allowed on a standard visitor visa", но это разрешение работать удалённо на обычной туристической визе, а не отдельная виза/резидентство, как и у источника A для Канады; значение исправлено на "no" той же логикой. Страна из нашего списка, не упомянутая ни в одном источнике, получает "no" — отсутствие в источнике тоже его утверждение. Явных оговорок про исключение граждан РФ не встретилось ни у одного источника; у Турции источник B прямо перечисляет Россию среди подходящих гражданств. Визовые данные для РФ меняются часто, перед поездкой их нужно перепроверять у консульства или у иммиграционного юриста.',
+        'Ключ выставляется только когда источник явно что-то утверждает — отсутствие в источнике не факт, а пробел, ключ в таком случае не заполняется. "yes" — источник A ИЛИ источник B описывает уже действующую программу. A — статья "Digital nomad", раздел "Digital nomad visas" (та же ссылка, что в source.url): "yes", только если явно описана уже действующая виза/программа (запущена, законом или на практике), а не анонс или проект. B — механический: для каждой страны отдельная статья "Visa policy of <Country>" (redirects=1; у стран Шенгена это общая статья "Visa policy of the Schengen Area" без сведений по конкретной стране); "yes", если в викитексте (без <ref>) есть заголовок раздела или фраза "digital nomad" / "nomad visa" / "remote work visa" / "remote worker" без отрицания рядом ("does not", "proposed", "planned", "would ...", "will ...", "considering" и т.п.). "no" выставляется ТОЛЬКО когда источник A прямо говорит, что отдельной визы кочевника нет и вместо неё — другой механизм (Германия: вид на жительство для фрилансеров) или что удалённая работа разрешена лишь на туристической визе (Канада); источник B сам по себе "no" не даёт, только "yes" или ничего. Страны, для которых источник лишь анонсировал планы или законопроект без подтверждённого запуска (Аргентина, Индонезия, Италия, Латвия, ЮАР и т.п.), остаются без ключа — это не то же самое, что "no". Ручное переопределение: Великобритания (gb) — источник B засчитал "yes" по фразе "Being a digital nomad is explicitly allowed on a standard visitor visa", но это разрешение работать удалённо на обычной туристической визе, а не отдельная виза/резидентство, как и у источника A для Канады; значение исправлено на "no" той же логикой. Явных оговорок про исключение граждан РФ не встретилось ни у одного источника; у Турции источник B прямо перечисляет Россию среди подходящих гражданств. Визовые данные для РФ меняются часто, перед поездкой их нужно перепроверять у консульства или у иммиграционного юриста.',
     },
     values,
   };
-  writeFileSync(outPath, `${JSON.stringify(sample, null, 2)}\n`);
-  const tWrite = now() - tWriteStart;
+
+  let tWrite: number;
+  if (limit !== undefined) {
+    console.log(`\n--limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+    tWrite = now() - tWriteStart;
+  } else {
+    writeFileSync(outPath, `${JSON.stringify(sample, null, 2)}\n`);
+    tWrite = now() - tWriteStart;
+  }
 
   const filled = Object.entries(values);
   const yesCount = filled.filter(([, status]) => status === 'yes').length;
@@ -682,7 +736,7 @@ async function main() {
   console.log(`Запись: ${formatMs(tWrite)}`);
   console.log(`Ревизия страницы A: ${revisionDate}`);
   console.log(`Стран заполнено: ${filled.length} из ${limitedSet.size}`);
-  console.log(`yes: ${yesCount}, no: ${noCount}`);
+  console.log(`yes: ${yesCount}, no: ${noCount}, без ключа: ${absent.length}`);
   console.log(
     `Ненайденные названия из источника A (${unmatched.length}): ${unmatched.slice(0, 10).join(', ') || '—'}`,
   );
@@ -704,9 +758,10 @@ async function main() {
     console.log(`  ${id}: ${via}${bNote}${overrideNote}`);
   }
   console.log(`\nРучные переопределения: ${Object.keys(MANUAL_OVERRIDES).join(', ') || '—'}`);
-  console.log(`\nОстались "no" (${noIds.length}): ${noIds.join(', ')}`);
+  console.log(`\n"no" (${noIds.length}): ${noIds.join(', ') || '—'}`);
   console.log(`\n"yes" (${yesIds.length}): ${yesIds.join(', ')}`);
-  console.log(`\nЗаписано: ${outPath}`);
+  console.log(`\nБез ключа (${absent.length}): ${absent.join(', ') || '—'}`);
+  if (limit === undefined) console.log(`\nЗаписано: ${outPath}`);
 }
 
 await main();
