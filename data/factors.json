@@ -244,6 +244,7 @@
       "definition": "EF English Proficiency Index, баллы",
       "group": "adaptation",
       "level": "country",
+      "activeSample": "english.ef-epi-2025",
       "scoring": {
         "type": "higher-better"
       },
