@@ -257,6 +257,7 @@
       "definition": "Медианная скорость фиксированного интернета на скачивание, Мбит/с",
       "group": "remote",
       "level": "country",
+      "activeSample": "internet-speed.speedtest-2026",
       "scoring": {
         "type": "higher-better"
       },
