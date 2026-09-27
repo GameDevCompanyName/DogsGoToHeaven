@@ -105,6 +105,20 @@ const EXCLUDED_IDS = new Set([
   'medina',
 ]);
 
+/**
+ * Ручная валидация владельцем проекта, 2026-09-28: из США оставляем только столько
+ * крупнейших по населению (Wikidata) городов среди кандидатов; остальные отбрасываем
+ * после объединения списков и до вывода стран.
+ */
+const US_CITY_CAP = 15;
+const UNITED_STATES = 'US';
+
+/**
+ * Ручная валидация владельцем проекта, 2026-09-28: столицы всех стран ЕС гарантированно
+ * в списке. Состав ЕС берём из Wikidata (P463 «член» Q458 без даты окончания), столицу — P36.
+ */
+const EUROPEAN_UNION = 'Q458';
+
 /** Русские названия стран, где метка Wikidata — официальное, а не обиходное имя. */
 const COUNTRY_NAME_OVERRIDES: Record<string, string> = {
   nl: 'Нидерланды', // Wikidata: только «Королевство Нидерландов» имеет код NL
@@ -170,6 +184,8 @@ interface Place {
   isDisambiguation: boolean;
   /** Экземпляр подкласса «населённый пункт» (Q486972). */
   isSettlement: boolean;
+  /** Сам элемент — страна с кодом ISO 3166-1 (P297). */
+  isCountry: boolean;
 }
 
 // --- HTTP ---------------------------------------------------------------------
@@ -498,7 +514,7 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
   const places = new Map<string, Place>();
   for (const batch of chunk(qids, 60)) {
     const rows =
-      await sparql(`SELECT ?item ?en ?mul ?ru ?country ?iso ?admin ?adminIso ?coord ?disambiguation ?settlement WHERE {
+      await sparql(`SELECT ?item ?en ?mul ?ru ?country ?iso ?admin ?adminIso ?coord ?disambiguation ?settlement ?isCountry WHERE {
       VALUES ?item { ${batch.map((qid) => `wd:${qid}`).join(' ')} }
       OPTIONAL { ?item rdfs:label ?en FILTER(LANG(?en) = "en") }
       OPTIONAL { ?item rdfs:label ?mul FILTER(LANG(?mul) = "mul") }
@@ -508,6 +524,7 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
       OPTIONAL { ?item wdt:P625 ?coord }
       BIND(EXISTS { ?item wdt:P31 wd:Q4167410 } AS ?disambiguation)
       BIND(EXISTS { ?item wdt:P31/wdt:P279* wd:Q486972 } AS ?settlement)
+      BIND(EXISTS { ?item wdt:P297 ?ownIso } AS ?isCountry)
     }`);
     const direct = new Map<string, CountryRef[]>();
     const admin = new Map<string, CountryRef[]>();
@@ -521,6 +538,7 @@ async function fetchPlaces(qids: string[]): Promise<Map<string, Place>> {
         qid,
         isDisambiguation: row.disambiguation === 'true',
         isSettlement: row.settlement === 'true',
+        isCountry: row.isCountry === 'true',
       };
       place.en ??= row.en ?? row.mul;
       place.ru ??= row.ru;
@@ -568,21 +586,55 @@ async function resolveCandidates(candidates: Candidate[]): Promise<Map<string, P
       places.get(candidate.qid ?? byTitle.get(candidate.label) ?? ''),
       candidate.countryHint,
     );
-    if (guess) {
+    // Статья с названием страны («Luxembourg») ведёт на элемент страны: ищем сам город,
+    // а элемент страны оставляем только городам-государствам вроде Сингапура.
+    if (guess && !guess.isCountry) {
       resolved.set(key, guess);
       continue;
     }
     const hits = await searchEntities(candidate.label);
     const found = await fetchPlaces(hits);
-    for (const qid of hits) {
-      const match = accept(found.get(qid), candidate.countryHint);
-      if (match) {
-        resolved.set(key, match);
-        break;
-      }
-    }
+    const match = hits
+      .map((qid) => accept(found.get(qid), candidate.countryHint))
+      .find((place) => place !== undefined && !place.isCountry && (!guess || place.isSettlement));
+    const chosen = match ?? guess;
+    if (chosen) resolved.set(key, chosen);
   }
   return resolved;
+}
+
+// --- Правила владельца: столицы ЕС и лимит городов США -----------------------------
+
+/** Столицы действующих членов ЕС как кандидаты с известным элементом Wikidata. */
+async function collectEuCapitals(): Promise<Candidate[]> {
+  const rows = await sparql(`SELECT DISTINCT ?capital WHERE {
+    ?state p:P463 ?membership .
+    ?membership ps:P463 wd:${EUROPEAN_UNION} .
+    FILTER NOT EXISTS { ?membership pq:P582 ?end }
+    ?state wdt:P36 ?capital .
+  }`);
+  return rows.map((row) => ({ label: qidOf(row.capital), qid: qidOf(row.capital) }));
+}
+
+/** Оставляет среди городов США только US_CITY_CAP крупнейших по населению Wikidata. */
+async function capUsCities(places: Place[]): Promise<Place[]> {
+  const us = places.filter((place) => place.country?.iso === UNITED_STATES);
+  if (us.length <= US_CITY_CAP) return places;
+  const population = new Map<string, number>();
+  for (const batch of chunk(us, 60)) {
+    const rows = await sparql(`SELECT ?item (MAX(?p) AS ?population) WHERE {
+      VALUES ?item { ${batch.map((place) => `wd:${place.qid}`).join(' ')} }
+      ?item wdt:P1082 ?p .
+    } GROUP BY ?item`);
+    for (const row of rows) population.set(qidOf(row.item), Number(row.population));
+  }
+  const kept = new Set(
+    [...us]
+      .sort((a, b) => (population.get(b.qid) ?? 0) - (population.get(a.qid) ?? 0))
+      .slice(0, US_CITY_CAP)
+      .map((place) => place.qid),
+  );
+  return places.filter((place) => place.country?.iso !== UNITED_STATES || kept.has(place.qid));
 }
 
 // --- Сборка -------------------------------------------------------------------
@@ -645,7 +697,10 @@ async function main(): Promise<void> {
   const euromonitor = await collectEuromonitor();
   console.log(`Euromonitor Top 100: ${euromonitor.length} городов`);
 
-  const candidates = [...numbeo, ...relocation, ...euromonitor, ...CURATED_HUBS];
+  const euCapitals = await collectEuCapitals();
+  console.log(`Столицы ЕС: ${euCapitals.length}`);
+
+  const candidates = [...numbeo, ...relocation, ...euromonitor, ...CURATED_HUBS, ...euCapitals];
   const resolved = await resolveCandidates(candidates);
 
   const notFound = candidates
@@ -653,9 +708,11 @@ async function main(): Promise<void> {
     .map((candidate) => candidate.label);
   const noRussianLabel: string[] = [];
 
-  const places = dedupePlaces(
-    [...new Map([...resolved.values()].map((place) => [place.qid, place])).values()].filter(
-      (place) => place.country?.iso !== RUSSIA,
+  const places = await capUsCities(
+    dedupePlaces(
+      [...new Map([...resolved.values()].map((place) => [place.qid, place])).values()].filter(
+        (place) => place.country?.iso !== RUSSIA,
+      ),
     ),
   );
 

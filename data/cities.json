@@ -203,18 +203,11 @@
     "lon": 74.57
   },
   {
-    "id": "boise",
-    "name": "Бойсе",
-    "countryId": "us",
-    "lat": 43.61,
-    "lon": -116.24
-  },
-  {
-    "id": "boston",
-    "name": "Бостон",
-    "countryId": "us",
-    "lat": 42.36,
-    "lon": -71.06
+    "id": "bratislava",
+    "name": "Братислава",
+    "countryId": "sk",
+    "lat": 48.15,
+    "lon": 17.11
   },
   {
     "id": "brisbane",
@@ -257,13 +250,6 @@
     "countryId": "ar",
     "lat": -34.6,
     "lon": -58.38
-  },
-  {
-    "id": "buffalo",
-    "name": "Буффало",
-    "countryId": "us",
-    "lat": 42.89,
-    "lon": -78.88
   },
   {
     "id": "bursa",
@@ -364,25 +350,11 @@
     "lon": 172.64
   },
   {
-    "id": "cincinnati",
-    "name": "Цинциннати",
-    "countryId": "us",
-    "lat": 39.1,
-    "lon": -84.51
-  },
-  {
     "id": "cologne",
     "name": "Кёльн",
     "countryId": "de",
     "lat": 50.94,
     "lon": 6.96
-  },
-  {
-    "id": "colorado-springs",
-    "name": "Колорадо-Спрингс",
-    "countryId": "us",
-    "lat": 38.86,
-    "lon": -104.79
   },
   {
     "id": "columbus",
@@ -658,13 +630,6 @@
     "lon": 114.16
   },
   {
-    "id": "honolulu",
-    "name": "Гонолулу",
-    "countryId": "us",
-    "lat": 21.3,
-    "lon": -157.86
-  },
-  {
     "id": "houston",
     "name": "Хьюстон",
     "countryId": "us",
@@ -749,13 +714,6 @@
     "lon": 103.76
   },
   {
-    "id": "kansas-city",
-    "name": "Канзас-Сити",
-    "countryId": "us",
-    "lat": 39.05,
-    "lon": -94.58
-  },
-  {
     "id": "kaunas",
     "name": "Каунас",
     "countryId": "lt",
@@ -819,13 +777,6 @@
     "lon": 33.63
   },
   {
-    "id": "las-vegas",
-    "name": "Лас-Вегас",
-    "countryId": "us",
-    "lat": 36.17,
-    "lon": -115.15
-  },
-  {
     "id": "lausanne",
     "name": "Лозанна",
     "countryId": "ch",
@@ -868,6 +819,13 @@
     "lon": -2.99
   },
   {
+    "id": "ljubljana",
+    "name": "Любляна",
+    "countryId": "si",
+    "lat": 46.05,
+    "lon": 14.51
+  },
+  {
     "id": "london",
     "name": "Лондон",
     "countryId": "gb",
@@ -885,7 +843,7 @@
     "id": "luxembourg",
     "name": "Люксембург",
     "countryId": "lu",
-    "lat": 49.77,
+    "lat": 49.61,
     "lon": 6.13
   },
   {
@@ -894,13 +852,6 @@
     "countryId": "cn",
     "lat": 22.19,
     "lon": 113.54
-  },
-  {
-    "id": "madison",
-    "name": "Мадисон",
-    "countryId": "us",
-    "lat": 43.07,
-    "lon": -89.38
   },
   {
     "id": "madrid",
@@ -943,13 +894,6 @@
     "countryId": "mx",
     "lat": 19.35,
     "lon": -99.14
-  },
-  {
-    "id": "miami",
-    "name": "Майами",
-    "countryId": "us",
-    "lat": 25.77,
-    "lon": -80.19
   },
   {
     "id": "milan",
@@ -1050,27 +994,6 @@
     "lon": 11.08
   },
   {
-    "id": "oklahoma-city",
-    "name": "Оклахома-Сити",
-    "countryId": "us",
-    "lat": 35.48,
-    "lon": -97.54
-  },
-  {
-    "id": "omaha",
-    "name": "Омаха",
-    "countryId": "us",
-    "lat": 41.26,
-    "lon": -95.94
-  },
-  {
-    "id": "orlando",
-    "name": "Орландо",
-    "countryId": "us",
-    "lat": 28.53,
-    "lon": -81.39
-  },
-  {
     "id": "osaka",
     "name": "Осака",
     "countryId": "jp",
@@ -1141,13 +1064,6 @@
     "lon": 98.4
   },
   {
-    "id": "pittsburgh",
-    "name": "Питтсбург",
-    "countryId": "us",
-    "lat": 40.44,
-    "lon": -80
-  },
-  {
     "id": "plzen",
     "name": "Пльзень",
     "countryId": "cz",
@@ -1160,13 +1076,6 @@
     "countryId": "me",
     "lat": 42.44,
     "lon": 19.26
-  },
-  {
-    "id": "portland",
-    "name": "Портленд",
-    "countryId": "us",
-    "lat": 45.52,
-    "lon": -122.68
   },
   {
     "id": "porto",
@@ -1197,20 +1106,6 @@
     "lon": -71.22
   },
   {
-    "id": "raleigh",
-    "name": "Роли",
-    "countryId": "us",
-    "lat": 35.78,
-    "lon": -78.64
-  },
-  {
-    "id": "reno",
-    "name": "Рино",
-    "countryId": "us",
-    "lat": 39.53,
-    "lon": -119.81
-  },
-  {
     "id": "reykjavik",
     "name": "Рейкьявик",
     "countryId": "is",
@@ -1223,13 +1118,6 @@
     "countryId": "gr",
     "lat": 36.43,
     "lon": 28.22
-  },
-  {
-    "id": "richmond",
-    "name": "Ричмонд",
-    "countryId": "us",
-    "lat": 37.54,
-    "lon": -77.44
   },
   {
     "id": "riga",
@@ -1274,13 +1162,6 @@
     "lon": 4.48
   },
   {
-    "id": "sacramento",
-    "name": "Сакраменто",
-    "countryId": "us",
-    "lat": 38.58,
-    "lon": -121.49
-  },
-  {
     "id": "samarkand",
     "name": "Самарканд",
     "countryId": "uz",
@@ -1302,25 +1183,11 @@
     "lon": -117.16
   },
   {
-    "id": "san-francisco",
-    "name": "Сан-Франциско",
-    "countryId": "us",
-    "lat": 37.78,
-    "lon": -122.42
-  },
-  {
     "id": "san-jose",
     "name": "Сан-Хосе",
     "countryId": "us",
     "lat": 37.3,
     "lon": -121.87
-  },
-  {
-    "id": "seattle",
-    "name": "Сиэтл",
-    "countryId": "us",
-    "lat": 47.61,
-    "lon": -122.33
   },
   {
     "id": "seoul",
@@ -1372,20 +1239,6 @@
     "lon": 23.32
   },
   {
-    "id": "spokane",
-    "name": "Спокан",
-    "countryId": "us",
-    "lat": 47.66,
-    "lon": -117.42
-  },
-  {
-    "id": "st-louis",
-    "name": "Сент-Луис",
-    "countryId": "us",
-    "lat": 38.63,
-    "lon": -90.2
-  },
-  {
     "id": "stavanger",
     "name": "Ставангер",
     "countryId": "no",
@@ -1426,13 +1279,6 @@
     "countryId": "ee",
     "lat": 59.44,
     "lon": 24.75
-  },
-  {
-    "id": "tampa",
-    "name": "Тампа",
-    "countryId": "us",
-    "lat": 27.95,
-    "lon": -82.46
   },
   {
     "id": "tashkent",
@@ -1498,20 +1344,6 @@
     "lon": 10.4
   },
   {
-    "id": "tucson",
-    "name": "Тусон",
-    "countryId": "us",
-    "lat": 32.22,
-    "lon": -110.93
-  },
-  {
-    "id": "tulsa",
-    "name": "Талса",
-    "countryId": "us",
-    "lat": 36.13,
-    "lon": -95.94
-  },
-  {
     "id": "ulaanbaatar",
     "name": "Улан-Батор",
     "countryId": "mn",
@@ -1531,6 +1363,13 @@
     "countryId": "es",
     "lat": 39.47,
     "lon": -0.38
+  },
+  {
+    "id": "valletta",
+    "name": "Валлетта",
+    "countryId": "mt",
+    "lat": 35.9,
+    "lon": 14.51
   },
   {
     "id": "vancouver",
@@ -1582,13 +1421,6 @@
     "lon": 21.01
   },
   {
-    "id": "washington-dc",
-    "name": "Вашингтон",
-    "countryId": "us",
-    "lat": 38.9,
-    "lon": -77.04
-  },
-  {
     "id": "wellington",
     "name": "Веллингтон",
     "countryId": "nz",
@@ -1601,6 +1433,13 @@
     "countryId": "am",
     "lat": 40.18,
     "lon": 44.51
+  },
+  {
+    "id": "zagreb",
+    "name": "Загреб",
+    "countryId": "hr",
+    "lat": 45.81,
+    "lon": 15.98
   },
   {
     "id": "zhuhai",
