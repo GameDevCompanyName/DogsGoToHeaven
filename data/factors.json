@@ -242,7 +242,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "time-to-citizenship.wikipedia-2026"
     },
     {
       "id": "english",
