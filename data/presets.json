@@ -1,0 +1,32 @@
+[
+  {
+    "id": "short-term",
+    "kind": "duration",
+    "name": "На месяц",
+    "weights": { "rent": 9, "healthcare": 2 },
+    "enabled": { "time-to-residence": false },
+    "filters": { "entry-visa": { "allowed": ["visa-free", "visa-on-arrival", "e-visa"] } }
+  },
+  {
+    "id": "long-term",
+    "kind": "duration",
+    "name": "Насовсем",
+    "weights": { "time-to-residence": 8, "healthcare": 7 },
+    "enabled": { "time-to-residence": true }
+  },
+  {
+    "id": "remote",
+    "kind": "income",
+    "name": "Удалённый доход",
+    "weights": { "cost-of-living": 9, "internet-speed": 7, "moscow-time-diff": 6 },
+    "enabled": { "it-salary": false }
+  },
+  {
+    "id": "local",
+    "kind": "income",
+    "name": "Работа на месте",
+    "weights": { "it-salary": 9, "internet-speed": 2 },
+    "enabled": { "moscow-time-diff": false },
+    "filters": { "work-visa": { "allowed": ["accessible"] } }
+  }
+]

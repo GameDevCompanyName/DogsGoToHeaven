@@ -1,0 +1,188 @@
+{
+  "groups": [
+    { "id": "money", "name": "Деньги" },
+    { "id": "safety", "name": "Безопасность и здоровье" },
+    { "id": "climate", "name": "Климат" },
+    { "id": "legalization", "name": "Легализация" },
+    { "id": "adaptation", "name": "Адаптация" },
+    { "id": "remote", "name": "Удалёнка" }
+  ],
+  "factors": [
+    {
+      "id": "cost-of-living",
+      "kind": "numeric",
+      "name": "Стоимость жизни",
+      "group": "money",
+      "level": "city",
+      "scoring": { "type": "lower-better" },
+      "defaultWeight": 8,
+      "defaultEnabled": true
+    },
+    {
+      "id": "rent",
+      "kind": "numeric",
+      "name": "Стоимость аренды",
+      "group": "money",
+      "level": "city",
+      "scoring": { "type": "lower-better" },
+      "defaultWeight": 7,
+      "defaultEnabled": true
+    },
+    {
+      "id": "it-salary",
+      "kind": "numeric",
+      "name": "Зарплата в IT",
+      "group": "money",
+      "level": "city",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "tax-burden",
+      "kind": "numeric",
+      "name": "Налоговая нагрузка",
+      "group": "money",
+      "level": "country",
+      "scoring": { "type": "lower-better" },
+      "defaultWeight": 4,
+      "defaultEnabled": true
+    },
+    {
+      "id": "safety",
+      "kind": "numeric",
+      "name": "Безопасность",
+      "group": "safety",
+      "level": "city",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 7,
+      "defaultEnabled": true
+    },
+    {
+      "id": "healthcare",
+      "kind": "numeric",
+      "name": "Здравоохранение",
+      "group": "safety",
+      "level": "country",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "air-quality",
+      "kind": "numeric",
+      "name": "Качество воздуха",
+      "group": "safety",
+      "level": "city",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 4,
+      "defaultEnabled": true
+    },
+    {
+      "id": "winter-temp",
+      "kind": "numeric",
+      "name": "Температура зимой",
+      "group": "climate",
+      "level": "city",
+      "scoring": { "type": "range", "defaultRange": [5, 20] },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "summer-temp",
+      "kind": "numeric",
+      "name": "Температура летом",
+      "group": "climate",
+      "level": "city",
+      "scoring": { "type": "range", "defaultRange": [18, 28] },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "sunshine",
+      "kind": "numeric",
+      "name": "Солнечные дни",
+      "group": "climate",
+      "level": "city",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 4,
+      "defaultEnabled": true
+    },
+    {
+      "id": "entry-visa",
+      "kind": "categorical",
+      "name": "Визовый режим для въезда",
+      "group": "legalization",
+      "level": "country",
+      "categories": [
+        { "code": "visa-free", "name": "Без визы" },
+        { "code": "visa-on-arrival", "name": "Виза по прибытии" },
+        { "code": "e-visa", "name": "Электронная виза" },
+        { "code": "consular", "name": "Виза в консульстве" }
+      ]
+    },
+    {
+      "id": "work-visa",
+      "kind": "categorical",
+      "name": "Рабочая виза",
+      "group": "legalization",
+      "level": "country",
+      "categories": [
+        { "code": "accessible", "name": "Есть понятный путь" },
+        { "code": "hard", "name": "Сложно" },
+        { "code": "closed", "name": "Практически недоступна" }
+      ]
+    },
+    {
+      "id": "nomad-visa",
+      "kind": "categorical",
+      "name": "Виза цифрового кочевника",
+      "group": "legalization",
+      "level": "country",
+      "categories": [
+        { "code": "yes", "name": "Есть" },
+        { "code": "no", "name": "Нет" }
+      ]
+    },
+    {
+      "id": "time-to-residence",
+      "kind": "numeric",
+      "name": "Срок до ВНЖ",
+      "group": "legalization",
+      "level": "country",
+      "scoring": { "type": "lower-better" },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "english",
+      "kind": "numeric",
+      "name": "Английский в стране",
+      "group": "adaptation",
+      "level": "country",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 5,
+      "defaultEnabled": true
+    },
+    {
+      "id": "internet-speed",
+      "kind": "numeric",
+      "name": "Скорость интернета",
+      "group": "remote",
+      "level": "city",
+      "scoring": { "type": "higher-better" },
+      "defaultWeight": 4,
+      "defaultEnabled": true
+    },
+    {
+      "id": "moscow-time-diff",
+      "kind": "numeric",
+      "name": "Разница во времени с Москвой",
+      "group": "remote",
+      "level": "city",
+      "scoring": { "type": "lower-better" },
+      "defaultWeight": 3,
+      "defaultEnabled": true
+    }
+  ]
+}
