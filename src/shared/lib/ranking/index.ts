@@ -1,6 +1,4 @@
 export { buildDataset } from './build-dataset';
-export { passesFilter } from './filters';
-export { normalizeFactor, percentile } from './normalize';
 export { rank } from './rank';
 export {
   type CategoricalFactor,

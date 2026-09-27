@@ -166,7 +166,7 @@ interface Dataset {
   factors: Factor[]; // из реестра, в порядке файла
   groups: FactorGroup[];
   cities: DatasetCity[];
-  provenance: Record<FactorId, SampleSource & { unit?: string }>;
+  provenance: Record<FactorId, SampleSource & { sampleId: string; unit?: string }>;
 }
 
 type FactorFilter = { min?: number; max?: number } | { allowed: string[] };
@@ -211,7 +211,7 @@ interface RankingResult {
 
 function buildDataset(raw: RawData): Dataset;
 function createDefaultSettings(dataset: Dataset): RankingSettings;
-function applyPresets(base: RankingSettings, presets: Preset[]): RankingSettings;
+function applyPresets(base: RankingSettings, presets: Preset[], factors: Factor[]): RankingSettings;
 function rank(dataset: Dataset, settings: RankingSettings): RankingResult;
 ```
 
@@ -231,7 +231,9 @@ function rank(dataset: Dataset, settings: RankingSettings): RankingResult;
 
 `buildDataset` выбирает активную выборку по реестру, разворачивает значения стран на города, складывает метаданные выборки в `provenance`. Фактор без `activeSample` получает `null` по всем городам. Если `activeSample` задан, но выборка не найдена — ошибка: это ошибка данных, и её ловит тест.
 
-`applyPresets` — поверхностное слияние по каждой из четырёх секций, слева направо.
+`applyPresets` — поверхностное слияние по каждой из четырёх секций, слева направо. Ключи факторов, которых нет в реестре, отбрасываются; диапазоны и фильтры копируются, чтобы правки в настройках не утекали в реестр и пресеты.
+
+Все схемы файлов строгие: неизвестный ключ — ошибка, чтобы опечатка в необязательном поле не превращалась в молчаливый пропуск.
 
 ## Валидация данных
 

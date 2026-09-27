@@ -106,3 +106,37 @@ describe('applyPresets', () => {
     expect(applyPresets(base, [], FACTORS)).toEqual(base);
   });
 });
+
+describe('settings do not alias registry or preset objects', () => {
+  it('copies default ranges so mutating settings leaves the registry intact', () => {
+    const settings = createDefaultSettings({ factors: FACTORS });
+    const range = settings.ranges['winter-temp'];
+    if (!range) throw new Error('range missing');
+    range[0] = -40;
+    const factor = FACTORS[1];
+    expect(
+      factor?.kind === 'numeric' &&
+        factor.scoring.type === 'range' &&
+        factor.scoring.defaultRange[0],
+    ).toBe(5);
+  });
+
+  it('copies preset ranges and filters so mutating settings leaves the preset intact', () => {
+    const preset: Preset = {
+      id: 'p',
+      kind: 'duration',
+      name: 'П',
+      ranges: { 'winter-temp': [0, 10] },
+      filters: { visa: { allowed: ['free'] } },
+    };
+    const base = createDefaultSettings({ factors: FACTORS });
+    const result = applyPresets(base, [preset], FACTORS);
+    const range = result.ranges['winter-temp'];
+    const filter = result.filters.visa;
+    if (!range || !filter || !('allowed' in filter)) throw new Error('missing');
+    range[1] = 99;
+    filter.allowed.push('required');
+    expect(preset.ranges?.['winter-temp']).toEqual([0, 10]);
+    expect(preset.filters?.visa).toEqual({ allowed: ['free'] });
+  });
+});

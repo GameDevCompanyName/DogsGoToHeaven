@@ -15,23 +15,29 @@ export const countryIdSchema = z
 
 const nameSchema = z.string().min(1);
 
-export const countrySchema = z.object({
-  id: countryIdSchema,
-  name: nameSchema,
-});
+export const countrySchema = z
+  .object({
+    id: countryIdSchema,
+    name: nameSchema,
+  })
+  .strict();
 
-export const citySchema = z.object({
-  id: idSchema,
-  name: nameSchema,
-  countryId: countryIdSchema,
-  lat: z.number().min(-90).max(90),
-  lon: z.number().min(-180).max(180),
-});
+export const citySchema = z
+  .object({
+    id: idSchema,
+    name: nameSchema,
+    countryId: countryIdSchema,
+    lat: z.number().min(-90).max(90),
+    lon: z.number().min(-180).max(180),
+  })
+  .strict();
 
-export const factorGroupSchema = z.object({
-  id: idSchema,
-  name: nameSchema,
-});
+export const factorGroupSchema = z
+  .object({
+    id: idSchema,
+    name: nameSchema,
+  })
+  .strict();
 
 export const rangeSchema = z
   .tuple([z.number(), z.number()])
@@ -53,45 +59,55 @@ const factorBaseSchema = z.object({
   activeSample: sampleIdSchema.optional(),
 });
 
-export const numericFactorSchema = factorBaseSchema.extend({
-  kind: z.literal('numeric'),
-  scoring: numericScoringSchema,
-  defaultWeight: weightSchema,
-  defaultEnabled: z.boolean(),
-});
+export const numericFactorSchema = factorBaseSchema
+  .extend({
+    kind: z.literal('numeric'),
+    scoring: numericScoringSchema,
+    defaultWeight: weightSchema,
+    defaultEnabled: z.boolean(),
+  })
+  .strict();
 
-export const categoricalFactorSchema = factorBaseSchema.extend({
-  kind: z.literal('categorical'),
-  categories: z.array(z.object({ code: idSchema, name: nameSchema })).min(1),
-});
+export const categoricalFactorSchema = factorBaseSchema
+  .extend({
+    kind: z.literal('categorical'),
+    categories: z.array(z.object({ code: idSchema, name: nameSchema }).strict()).min(1),
+  })
+  .strict();
 
 export const factorSchema = z.discriminatedUnion('kind', [
   numericFactorSchema,
   categoricalFactorSchema,
 ]);
 
-export const factorRegistrySchema = z.object({
-  groups: z.array(factorGroupSchema),
-  factors: z.array(factorSchema),
-});
+export const factorRegistrySchema = z
+  .object({
+    groups: z.array(factorGroupSchema),
+    factors: z.array(factorSchema),
+  })
+  .strict();
 
-export const sampleSourceSchema = z.object({
-  name: nameSchema,
-  url: z.string().url().optional(),
-  period: nameSchema,
-  collectedAt: z.string().regex(DATE_PATTERN, 'YYYY-MM-DD expected'),
-  notes: z.string().optional(),
-});
+export const sampleSourceSchema = z
+  .object({
+    name: nameSchema,
+    url: z.string().url().optional(),
+    period: nameSchema,
+    collectedAt: z.string().regex(DATE_PATTERN, 'YYYY-MM-DD expected'),
+    notes: z.string().optional(),
+  })
+  .strict();
 
 export const sampleValueSchema = z.union([z.number(), z.string(), z.null()]);
 
-export const sampleSchema = z.object({
-  id: sampleIdSchema,
-  factorId: idSchema,
-  source: sampleSourceSchema,
-  unit: z.string().optional(),
-  values: z.record(idSchema, sampleValueSchema),
-});
+export const sampleSchema = z
+  .object({
+    id: sampleIdSchema,
+    factorId: idSchema,
+    source: sampleSourceSchema,
+    unit: z.string().optional(),
+    values: z.record(idSchema, sampleValueSchema),
+  })
+  .strict();
 
 export const numericFilterSchema = z
   .object({ min: z.number().optional(), max: z.number().optional() })
@@ -101,23 +117,27 @@ export const categoricalFilterSchema = z.object({ allowed: z.array(idSchema) }).
 
 export const factorFilterSchema = z.union([numericFilterSchema, categoricalFilterSchema]);
 
-export const presetSchema = z.object({
-  id: idSchema,
-  kind: z.enum(['duration', 'income']),
-  name: nameSchema,
-  weights: z.record(idSchema, weightSchema).optional(),
-  enabled: z.record(idSchema, z.boolean()).optional(),
-  ranges: z.record(idSchema, rangeSchema).optional(),
-  filters: z.record(idSchema, factorFilterSchema).optional(),
-});
+export const presetSchema = z
+  .object({
+    id: idSchema,
+    kind: z.enum(['duration', 'income']),
+    name: nameSchema,
+    weights: z.record(idSchema, weightSchema).optional(),
+    enabled: z.record(idSchema, z.boolean()).optional(),
+    ranges: z.record(idSchema, rangeSchema).optional(),
+    filters: z.record(idSchema, factorFilterSchema).optional(),
+  })
+  .strict();
 
-export const rawDataSchema = z.object({
-  countries: z.array(countrySchema),
-  cities: z.array(citySchema),
-  registry: factorRegistrySchema,
-  samples: z.array(sampleSchema),
-  presets: z.array(presetSchema),
-});
+export const rawDataSchema = z
+  .object({
+    countries: z.array(countrySchema),
+    cities: z.array(citySchema),
+    registry: factorRegistrySchema,
+    samples: z.array(sampleSchema),
+    presets: z.array(presetSchema),
+  })
+  .strict();
 
 export type Country = z.infer<typeof countrySchema>;
 export type City = z.infer<typeof citySchema>;
