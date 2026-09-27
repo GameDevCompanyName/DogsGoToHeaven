@@ -263,8 +263,14 @@ function writeSample(
   unit: string,
   notes: string,
   values: Record<string, number>,
+  limit: number | undefined,
 ): void {
   const id = `${factorId}.${suffix}`;
+  if (limit !== undefined) {
+    console.log(`--limit ${limit}: файл ${id}.json не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+    return;
+  }
   const sample = {
     id,
     factorId,
@@ -346,6 +352,7 @@ async function main(): Promise<void> {
     'Средняя температура самого холодного календарного месяца: среднесуточная температура ' +
       '(temperature_2m_mean) усреднена по месяцу в каждом году 2020–2024, затем по годам; взят минимум из 12 месяцев.',
     winterTemp,
+    limit,
   );
   writeSample(
     'summer-temp',
@@ -354,13 +361,17 @@ async function main(): Promise<void> {
     'Средняя температура самого тёплого календарного месяца: среднесуточная температура ' +
       '(temperature_2m_mean) усреднена по месяцу в каждом году 2020–2024, затем по годам; взят максимум из 12 месяцев.',
     summerTemp,
+    limit,
   );
   writeSample(
     'sunshine',
     suffix,
     'ч/год',
-    'Сумма sunshine_duration (сек) за календарный год, переведена в часы и усреднена по 2020–2024.',
+    'Сумма sunshine_duration (сек) за календарный год, переведена в часы и усреднена по 2020–2024. ' +
+      'Часов солнечного сияния в год по модельным данным ERA5 (Open-Meteo); выше наблюдаемых ' +
+      'станционных норм примерно в полтора раза, сравнимо между городами.',
     sunshine,
+    limit,
   );
   const writeMs = Date.now() - writeStart;
 
