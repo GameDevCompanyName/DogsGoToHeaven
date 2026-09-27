@@ -151,9 +151,20 @@ function readCountries(): Country[] {
   return JSON.parse(readFileSync(join(DATA_DIR, 'countries.json'), 'utf-8')) as Country[];
 }
 
-async function main(): Promise<void> {
+function parseLimit(): number | undefined {
   const limitArg = process.argv.indexOf('--limit');
-  const limit = limitArg >= 0 ? Number(process.argv[limitArg + 1]) : undefined;
+  if (limitArg === -1) return undefined;
+  const value = Number(process.argv[limitArg + 1]);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `--limit ожидает положительное целое число, получено: ${process.argv[limitArg + 1]}`,
+    );
+  }
+  return value;
+}
+
+async function main(): Promise<void> {
+  const limit = parseLimit();
 
   const t0 = now();
   const html = await fetchCached(SOURCE_URL, CACHE_FILE);
@@ -200,11 +211,16 @@ async function main(): Promise<void> {
     unit: 'индекс',
     values,
   };
-  mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
-  writeFileSync(
-    join(DATA_DIR, 'samples', `${sample.id}.json`),
-    `${JSON.stringify(sample, null, 2)}\n`,
-  );
+  if (limit !== undefined) {
+    console.log(`--limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+  } else {
+    mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
+    writeFileSync(
+      join(DATA_DIR, 'samples', `${sample.id}.json`),
+      `${JSON.stringify(sample, null, 2)}\n`,
+    );
+  }
   console.log(`Запись: ${ms(t3)}`);
 
   console.log(

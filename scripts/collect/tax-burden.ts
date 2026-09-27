@@ -467,10 +467,19 @@ interface Sample {
   values: Record<string, number>;
 }
 
+function parseLimit(args: string[]): number | undefined {
+  const limitIndex = args.indexOf('--limit');
+  if (limitIndex === -1) return undefined;
+  const value = Number(args[limitIndex + 1]);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`--limit ожидает положительное целое число, получено: ${args[limitIndex + 1]}`);
+  }
+  return value;
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const limitIndex = args.indexOf('--limit');
-  const limit = limitIndex >= 0 ? Number(args[limitIndex + 1]) : undefined;
+  const limit = parseLimit(args);
 
   console.log('Этапы:');
   const wikitext = await timeitAsync('загрузка', fetchWikitext);
@@ -508,6 +517,11 @@ async function main(): Promise<void> {
   };
 
   timeit('запись', () => {
+    if (limit !== undefined) {
+      console.log(`  --limit ${limit}: файл не записан, значения (would-be):`);
+      console.log(JSON.stringify(values, null, 2));
+      return;
+    }
     mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
     writeFileSync(OUT_FILE, `${JSON.stringify(sample, null, 2)}\n`);
   });

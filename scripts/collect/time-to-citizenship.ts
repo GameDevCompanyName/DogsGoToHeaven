@@ -252,6 +252,11 @@ async function main(): Promise<void> {
   });
 
   await stage('запись файла', () => {
+    if (limit !== undefined) {
+      console.log(`  --limit ${limit}: файл не записан, значения (would-be):`);
+      console.log(JSON.stringify(values, null, 2));
+      return;
+    }
     const sample = {
       id: 'time-to-citizenship.wikipedia-2026',
       factorId: 'time-to-citizenship',

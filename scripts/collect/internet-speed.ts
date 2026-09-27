@@ -150,6 +150,11 @@ async function main(): Promise<void> {
   };
 
   await stage('Запись', () => {
+    if (limit !== undefined) {
+      console.log(`--limit ${limit}: файл не записан, значения (would-be):`);
+      console.log(JSON.stringify(values, null, 2));
+      return;
+    }
     mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
     writeFileSync(OUTPUT_FILE, `${JSON.stringify(sample, null, 2)}\n`);
   });

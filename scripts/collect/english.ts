@@ -241,6 +241,11 @@ async function main(): Promise<void> {
   };
 
   await timed('запись', timings, async () => {
+    if (limit !== undefined) {
+      console.log(`--limit ${limit}: файл не записан, значения (would-be):`);
+      console.log(JSON.stringify(values, null, 2));
+      return;
+    }
     mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
     writeFileSync(
       join(DATA_DIR, 'samples', `${SAMPLE_ID}.json`),

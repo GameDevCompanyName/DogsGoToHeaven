@@ -277,12 +277,19 @@ function median(values: number[]): number {
 
 // --- main -----------------------------------------------------------------------
 
-async function main(): Promise<void> {
+function parseLimit(): number | undefined {
   const limitArgIndex = process.argv.indexOf('--limit');
-  const limit =
-    limitArgIndex >= 0 && process.argv[limitArgIndex + 1]
-      ? Number(process.argv[limitArgIndex + 1])
-      : undefined;
+  if (limitArgIndex === -1) return undefined;
+  const raw = process.argv[limitArgIndex + 1];
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`--limit ожидает положительное целое число, получено: ${raw}`);
+  }
+  return value;
+}
+
+async function main(): Promise<void> {
+  const limit = parseLimit();
 
   const countries = countriesJson as Country[];
 
@@ -333,6 +340,29 @@ async function main(): Promise<void> {
 
   console.log('Этап 4/4: запись');
   t = now();
+  if (limit !== undefined) {
+    console.log(`  --limit ${limit}: файл не записан, значения (would-be):`);
+    console.log(JSON.stringify(values, null, 2));
+    console.log(`  готово за ${formatMs(now() - t)}`);
+    console.log(
+      `\nЗаполнено ${Object.keys(values).length} из ${orderedIds.length} ключей (--limit ${limit})`,
+    );
+    if (belowThreshold.length > 0) {
+      console.log(
+        `Ниже порога ${MIN_RESPONDENTS} респондентов (${belowThreshold.length}): ` +
+          belowThreshold
+            .map(({ id, count }) => `${id} (${count})`)
+            .slice(0, 10)
+            .join(', '),
+      );
+    }
+    if (notFound.length > 0) {
+      console.log(
+        `Нет в таблице сопоставления (${notFound.length}): ${notFound.slice(0, 10).join(', ')}`,
+      );
+    }
+    return;
+  }
   const output = {
     id: SAMPLE_ID,
     factorId: FACTOR_ID,
