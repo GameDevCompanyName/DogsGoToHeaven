@@ -275,7 +275,8 @@
         "type": "lower-better"
       },
       "defaultWeight": 3,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "moscow-time-diff.iana-2026"
     }
   ]
 }
