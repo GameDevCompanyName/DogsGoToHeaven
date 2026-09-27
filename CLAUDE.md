@@ -4,7 +4,7 @@
 
 - Что строим: `docs/prd.md`
 - Как пишем код: `docs/code-style.md` — прочитай перед любой задачей и следуй ему строго.
-- Формат данных и как собирать датасет: `docs/data.md`.
+- Формат данных: `docs/data.md`. Бриф для агента-сборщика одной выборки: `docs/collect.md`.
 
 ## Команды
 
@@ -14,6 +14,7 @@ npm run lint       # Prettier --check, ESLint, Steiger
 npm run check      # svelte-check
 npm run test       # Vitest
 npm run test:e2e   # Playwright
+npm run data:report # покрытие датасета по факторам
 npm run verify     # всё вышеперечисленное разом
 ```
 

@@ -27,5 +27,9 @@
 
 ## Сбор данных
 
-- [ ] Собрать `countries.json` и `cities.json` на 300 городов.
-- [ ] По каждому фактору из `data/factors.json` собрать хотя бы одну выборку и прописать `activeSample`.
+План: `docs/superpowers/specs/2026-09-27-data-collection-design.md`, бриф сборщика: `docs/collect.md`.
+
+- [x] Определения факторов в реестре, порог покрытия в движке, `npm run data:report`.
+- [ ] Список городов и стран (`scripts/collect/cities.ts`), валидация владельцем.
+- [ ] Сборщики по факторам, один PR `data/initial-dataset` с таблицей покрытия.
+- [ ] `work-visa`: проверяемого источника пока нет, фактор без данных.
