@@ -9,7 +9,7 @@
 - [x] Инициализировать каркас SvelteKit (adapter-static) + TypeScript.
 - [x] Подключить shadcn-svelte (Bits UI + Tailwind).
 - [x] Настроить ESLint, Prettier, Steiger (FSD), Vitest, Playwright — под команды из `CLAUDE.md` (`npm run lint/check/test/test:e2e/verify`).
-- [ ] Выбрать open-source источник тайлов для MapLibre GL — решает агент, который будет разрабатывать карту.
+- [x] Источник тайлов для MapLibre GL: OpenFreeMap (positron), без ключей.
 
 ## Типы данных и структура JSON
 
@@ -50,4 +50,5 @@
 
 Спека: `docs/superpowers/specs/2026-09-28-mvp-ui-design.md`, план: `docs/superpowers/plans/2026-09-28-mvp-ui.md`.
 
-- [ ] MVP: карта, список, панель настроек, карточка города.
+- [x] MVP: карта, список, панель настроек, карточка города с разбором балла и обзором легализации.
+- [ ] Обсудить с владельцем: топ выдачи по умолчанию (турецкие областные центры), шкала ползунков, поиск по городам, сохранение настроек в ссылке.
