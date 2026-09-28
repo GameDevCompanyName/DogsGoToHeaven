@@ -1,7 +1,7 @@
 <script lang="ts">
   import { CityListItem } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
-  import { pluralize } from '@/shared/lib/plural';
+  import { type PluralForms, pluralize } from '@/shared/lib/plural';
   import type { CityId } from '@/shared/lib/ranking';
   import { ScrollArea } from '@/shared/ui/scroll-area';
 
@@ -12,7 +12,7 @@
   }
 </script>
 
-{#snippet hiddenNote(count: number, reason: string, verb: [string, string, string])}
+{#snippet hiddenNote(count: number, reason: string, verb: PluralForms)}
   <p>
     Ещё {count}
     {pluralize(count, ['город', 'города', 'городов'])}
