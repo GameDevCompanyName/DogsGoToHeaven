@@ -24,6 +24,7 @@
 <button
   type="button"
   data-testid="city-list-item"
+  data-city-id={city.id}
   aria-current={isSelected ? 'true' : undefined}
   class={cn(
     'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted',

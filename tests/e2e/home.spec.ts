@@ -15,11 +15,12 @@ test('карта и список городов на месте', async ({ page 
   await expect(page.getByTestId('city-list-item').first()).toBeVisible();
 });
 
-test('ползунок веса меняет выдачу', async ({ page }) => {
+test('ползунок веса меняет балл города', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Города');
-  const firstCity = page.getByTestId('city-list-item').first();
-  const before = await firstCity.innerText();
+  const cityId = await page.getByTestId('city-list-item').first().getAttribute('data-city-id');
+  const badge = page.locator(`[data-city-id="${cityId}"]`).getByTestId('score-badge');
+  const scoreBefore = await badge.innerText();
 
   await openSection(page, 'Настройки');
   const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
@@ -27,7 +28,7 @@ test('ползунок веса меняет выдачу', async ({ page }) => 
   await thumb.press('Home');
   await openSection(page, 'Города');
 
-  await expect(firstCity).not.toHaveText(before);
+  await expect(badge).not.toHaveText(scoreBefore);
 });
 
 test('клик по городу открывает карточку с разбором балла', async ({ page }) => {

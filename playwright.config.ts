@@ -14,5 +14,12 @@ export default defineConfig({
     url: BASE_URL,
   },
   use: { baseURL: BASE_URL },
-  projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
+  projects: [
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /\.desktop\.spec\.ts$/ },
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+      testMatch: /\.desktop\.spec\.ts$/,
+    },
+  ],
 });
