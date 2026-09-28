@@ -1,5 +1,4 @@
 <script lang="ts" module>
-  const FACTOR_ID = 'legalization-ease';
   const DATE_FORMAT = new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',
     month: 'long',
@@ -8,8 +7,12 @@
 </script>
 
 <script lang="ts">
+  import { formatValue } from '@/entities/city';
+  import { getRankingContext } from '@/entities/ranking';
   import { hasNote, loadNote } from '@/shared/api';
   import type { DatasetCity } from '@/shared/lib/ranking';
+
+  import { LEGALIZATION_FACTOR_ID } from '../config/legalization';
 
   interface Props {
     city: DatasetCity;
@@ -17,10 +20,20 @@
 
   let { city }: Props = $props();
 
+  const ranking = getRankingContext();
+  const factor = ranking.dataset.factors.find((item) => item.id === LEGALIZATION_FACTOR_ID);
+  const unit = ranking.dataset.provenance[LEGALIZATION_FACTOR_ID]?.unit;
+
   const countryId = $derived(city.countryId);
-  const hasLegalizationNote = $derived(hasNote(FACTOR_ID, countryId));
-  const notePromise = $derived(hasLegalizationNote ? loadNote(FACTOR_ID, countryId) : null);
-  const score = $derived(city.values[FACTOR_ID]);
+  const hasLegalizationNote = $derived(hasNote(LEGALIZATION_FACTOR_ID, countryId));
+  const notePromise = $derived(
+    hasLegalizationNote ? loadNote(LEGALIZATION_FACTOR_ID, countryId) : null,
+  );
+  /** Оценка с единицей из выборки: «4 из 5». */
+  const scoreLabel = $derived.by(() => {
+    const score = city.values[LEGALIZATION_FACTOR_ID];
+    return factor && typeof score === 'number' ? formatValue(score, factor, unit) : null;
+  });
 
   /** Абзацы раздела: разделены пустой строкой. Markdown внутри не разбираем. */
   function toParagraphs(body: string): string[] {
@@ -50,8 +63,8 @@
     {:then note}
       {#if note}
         <div class="flex flex-col gap-1 text-xs text-muted-foreground">
-          {#if typeof score === 'number'}
-            <p class="text-sm font-medium text-foreground">Оценка {score} из 5</p>
+          {#if scoreLabel}
+            <p class="text-sm font-medium text-foreground">Оценка {scoreLabel}</p>
           {/if}
           <p>Проверено {formatDate(note.checkedAt)}</p>
           <p>Справка по открытым источникам, не юридическая консультация.</p>
