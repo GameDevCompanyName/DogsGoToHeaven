@@ -7,8 +7,8 @@ type CirclePaint = NonNullable<CircleLayer['paint']>;
 /** Открытые векторные тайлы без ключей и лимитов. */
 export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
 
-/** Стартовый вид: Европа, Кавказ и Ближний Восток целиком. */
-export const INITIAL_VIEW = { center: [35, 42] as [number, number], zoom: 2.2 };
+/** Стартовый вид: Европа, Кавказ и Ближний Восток. */
+export const INITIAL_VIEW = { center: [25, 45] as [number, number], zoom: 2.2 };
 
 export const CITY_SOURCE_ID = 'cities';
 export const CITY_LAYER_ID = 'cities';
@@ -22,7 +22,7 @@ const SCORE_COLOR: CirclePaint['circle-color'] = [
   '#a3a3a3',
 ];
 
-const RADIUS: CirclePaint['circle-radius'] = ['interpolate', ['linear'], ['zoom'], 2, 4, 8, 9];
+const RADIUS: CirclePaint['circle-radius'] = ['interpolate', ['linear'], ['zoom'], 2, 5, 8, 10];
 
 export const CITY_LAYER: CircleLayer = {
   id: CITY_LAYER_ID,

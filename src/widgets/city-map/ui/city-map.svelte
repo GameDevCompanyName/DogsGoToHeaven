@@ -32,9 +32,15 @@
   function mountMap(container: HTMLDivElement) {
     let instance: MapLibreMap | null = null;
     let isDestroyed = false;
-    import('maplibre-gl')
-      .then(({ Map }) => {
+    Promise.all([
+      import('maplibre-gl'),
+      // Воркер MapLibre ищет рядом со своим модулем, а после сборки Vite его там нет:
+      // собираем воркер отдельно и отдаём библиотеке его адрес.
+      import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
+    ])
+      .then(([{ Map, setWorkerUrl }, { default: workerUrl }]) => {
         if (isDestroyed) return;
+        setWorkerUrl(workerUrl);
         instance = new Map({
           container,
           style: MAP_STYLE_URL,
@@ -98,5 +104,5 @@
   <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
     Карта загружается…
   </p>
-  <div class="absolute inset-0" role="region" aria-label="Карта городов" {@attach mountMap}></div>
+  <div class="size-full" role="region" aria-label="Карта городов" {@attach mountMap}></div>
 </div>
