@@ -33,7 +33,7 @@
 >
   <span class="w-7 shrink-0 text-sm text-muted-foreground tabular-nums">{ranked.rank}</span>
   <span class="min-w-0 flex-1">
-    <span class="block truncate font-medium">{city.name}</span>
+    <span class="block truncate font-medium" data-testid="city-name">{city.name}</span>
     <span class="block truncate text-sm text-muted-foreground">
       {city.countryName}
       {#if missingCount > 0}

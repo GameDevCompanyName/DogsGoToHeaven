@@ -1,6 +1,44 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
-test('главная страница открывается', async ({ page }) => {
+// Тайлы и WebGL в CI не гарантированы: проверяем DOM, от карты — только контейнер.
+
+function openSection(page: Page, name: 'Карта' | 'Города' | 'Настройки') {
+  return page.getByRole('navigation', { name: 'Разделы' }).getByRole('button', { name }).click();
+}
+
+test('карта и список городов на месте', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Все псы попадают в рай');
+  await expect(page.getByTestId('city-map')).toBeVisible();
+
+  await openSection(page, 'Города');
+
+  await expect(page.getByTestId('city-list-item').first()).toBeVisible();
+});
+
+test('ползунок веса меняет выдачу', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  const firstCity = page.getByTestId('city-list-item').first();
+  const before = await firstCity.innerText();
+
+  await openSection(page, 'Настройки');
+  const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
+  await thumb.focus();
+  await thumb.press('Home');
+  await openSection(page, 'Города');
+
+  await expect(firstCity).not.toHaveText(before);
+});
+
+test('клик по городу открывает карточку с разбором балла', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  const firstCity = page.getByTestId('city-list-item').first();
+  const cityName = await firstCity.getByTestId('city-name').innerText();
+
+  await firstCity.click();
+
+  const card = page.getByTestId('city-card');
+  await expect(card.getByRole('heading', { name: cityName })).toBeVisible();
+  await expect(card.getByTestId('score-breakdown').getByRole('listitem').first()).toBeVisible();
 });
