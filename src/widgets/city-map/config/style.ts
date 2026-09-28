@@ -14,11 +14,11 @@ export const CITY_SOURCE_ID = 'cities';
 export const CITY_LAYER_ID = 'cities';
 export const SELECTED_LAYER_ID = 'cities-selected';
 
-/** Красный → жёлтый → зелёный по баллу 0–1, серые — отсечённые и без балла. */
+/** Красный → жёлтый → зелёный по месту в выдаче 0–1 (`colorValue`), серые — отсечённые и без балла. */
 const SCORE_COLOR: CirclePaint['circle-color'] = [
   'case',
   ['==', ['get', 'state'], 'ranked'],
-  ['interpolate', ['linear'], ['get', 'score'], 0, '#dc2626', 0.5, '#facc15', 1, '#16a34a'],
+  ['interpolate', ['linear'], ['get', 'colorValue'], 0, '#dc2626', 0.5, '#facc15', 1, '#16a34a'],
   '#a3a3a3',
 ];
 

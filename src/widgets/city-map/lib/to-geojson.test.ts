@@ -26,6 +26,23 @@ describe('toGeoJson', () => {
     });
   });
 
+  it('colours ranked cities by rank percentile, not by raw score', () => {
+    const collection = toGeoJson(
+      [makeView('tbilisi', 0.8), makeView('yerevan', 0.6), makeView('baku', 0.5)],
+      [],
+    );
+
+    expect(collection.features.map((feature) => feature.properties.colorValue)).toEqual([
+      1, 0.5, 0,
+    ]);
+  });
+
+  it('gives a single ranked city the best colour', () => {
+    const collection = toGeoJson([makeView('tbilisi', 0.4)], []);
+
+    expect(collection.features[0]?.properties.colorValue).toBe(1);
+  });
+
   it('marks filtered cities and cities without a score as grey', () => {
     const collection = toGeoJson([makeView('riga', null)], [makeCity('oslo', 1, 2)]);
 
