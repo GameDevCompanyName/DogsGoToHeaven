@@ -101,10 +101,16 @@ describe('RankingState', () => {
     const state = new RankingState(makeDataset(), PRESETS);
     state.applyPresets('month', null);
     state.setWeight('safety', 10);
+    state.setNumericFilter('rent', { max: 150 });
+    state.setEnabled('safety', false);
+    state.setRange('rent', [0, 1]);
 
     state.applyPresets('forever', null);
 
     expect(state.settings.weights).toMatchObject({ rent: 5, safety: 9 });
+    expect(state.settings.filters).toEqual({});
+    expect(state.settings.enabled.safety).toBe(true);
+    expect(state.settings.ranges).toEqual({});
     expect(state.durationPresetId).toBe('forever');
   });
 
