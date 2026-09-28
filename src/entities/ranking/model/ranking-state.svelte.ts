@@ -34,7 +34,8 @@ export class RankingState {
   settings = $state<RankingSettings>({ weights: {}, enabled: {}, ranges: {}, filters: {} });
   selectedCityId = $state<CityId | null>(null);
 
-  // Через функцию: датасет присваивается в конструкторе, а $derived ленив и читает его позже.
+  // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
+  // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
   readonly result = $derived.by(() => rank(this.dataset, this.settings));
 
   readonly rankedCities: RankedCityView[] = $derived(
@@ -72,35 +73,49 @@ export class RankingState {
     this.settings = this.#withoutDataless(this.#base);
   }
 
-  /** Пересобирает настройки из базы реестра и выбранных пресетов; ручные правки сбрасываются. */
+  /**
+   * Пересобирает настройки из базы реестра и выбранных пресетов; ручные правки сбрасываются.
+   * Пресет дохода накладывается после пресета срока и выигрывает на общих ключах.
+   */
   applyPresets(durationId: string | null, incomeId: string | null) {
     this.durationPresetId = durationId;
     this.incomePresetId = incomeId;
-    const active = this.presets.filter(
-      (preset) => preset.id === durationId || preset.id === incomeId,
+    const duration = this.presets.find(
+      (preset) => preset.kind === 'duration' && preset.id === durationId,
     );
+    const income = this.presets.find(
+      (preset) => preset.kind === 'income' && preset.id === incomeId,
+    );
+    const active = [duration, income].filter((preset) => preset !== undefined);
     this.settings = this.#withoutDataless(applyPresets(this.#base, active, this.dataset.factors));
   }
 
-  /** Есть ли у фактора активная выборка. Факторы без данных не участвуют в ранжировании. */
+  /**
+   * Есть ли у фактора активная выборка. Факторы без данных не участвуют в ранжировании,
+   * поэтому сеттеры ниже их правки игнорируют.
+   */
   hasData(factorId: FactorId): boolean {
     return !this.#datalessIds.includes(factorId);
   }
 
   setWeight(factorId: FactorId, weight: number) {
+    if (!this.hasData(factorId)) return;
     this.settings.weights[factorId] = weight;
   }
 
   setEnabled(factorId: FactorId, isEnabled: boolean) {
+    if (!this.hasData(factorId)) return;
     this.settings.enabled[factorId] = isEnabled;
   }
 
   setRange(factorId: FactorId, range: [number, number]) {
+    if (!this.hasData(factorId)) return;
     this.settings.ranges[factorId] = range;
   }
 
   /** Фильтр без границ снимается. */
   setNumericFilter(factorId: FactorId, filter: NumericFilter | null) {
+    if (!this.hasData(factorId)) return;
     if (filter === null || (filter.min === undefined && filter.max === undefined)) {
       delete this.settings.filters[factorId];
       return;
@@ -110,6 +125,7 @@ export class RankingState {
 
   /** Пустой набор категорий — фильтра нет. */
   setCategoryFilter(factorId: FactorId, allowed: string[] | null) {
+    if (!this.hasData(factorId)) return;
     if (allowed === null || allowed.length === 0) {
       delete this.settings.filters[factorId];
       return;

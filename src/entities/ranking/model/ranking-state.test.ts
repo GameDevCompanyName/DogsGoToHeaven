@@ -114,6 +114,32 @@ describe('RankingState', () => {
     expect(state.durationPresetId).toBe('forever');
   });
 
+  it('lets the income preset win over the duration preset on a shared key', () => {
+    const presets: Preset[] = [
+      { id: 'frugal', kind: 'income', name: 'Экономно', weights: { rent: 2 } },
+      { id: 'month', kind: 'duration', name: 'На месяц', weights: { rent: 9 } },
+    ];
+    const state = new RankingState(makeDataset(), presets);
+
+    state.applyPresets('month', 'frugal');
+
+    expect(state.settings.weights.rent).toBe(2);
+  });
+
+  it('ignores edits to a factor without data', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.setEnabled('ease', true);
+    state.setWeight('ease', 10);
+    state.setNumericFilter('ease', { min: 3 });
+    state.setRange('ease', [1, 2]);
+
+    expect(state.settings.enabled.ease).toBe(false);
+    expect(state.settings.weights.ease).toBe(5);
+    expect(state.settings.filters.ease).toBeUndefined();
+    expect(state.settings.ranges.ease).toBeUndefined();
+  });
+
   it('recomputes the result when a weight changes', () => {
     const state = new RankingState(makeDataset(), PRESETS);
     expect(firstCityId(state)).toBe('alpha');
