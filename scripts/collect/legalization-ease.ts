@@ -100,7 +100,7 @@ function main(): void {
           'рубрика в docs/collect-legalization.md; единственный фактор, где значение — ' +
           'оценка модели по источникам, а не число из источника.',
       },
-      unit: 'балл',
+      unit: 'из 5',
       values: sortedValues,
     };
     mkdirSync(join(DATA_DIR, 'samples'), { recursive: true });
