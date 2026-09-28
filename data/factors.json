@@ -251,7 +251,8 @@
         "type": "higher-better"
       },
       "defaultWeight": 6,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "activeSample": "legalization-ease.claude-research-2026"
     },
     {
       "id": "time-to-citizenship",
