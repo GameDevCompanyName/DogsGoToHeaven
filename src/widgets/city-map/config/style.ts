@@ -8,7 +8,10 @@ type CirclePaint = NonNullable<CircleLayer['paint']>;
 export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
 
 /** Стартовый вид: Европа, Кавказ и Ближний Восток. */
-export const INITIAL_VIEW = { center: [25, 45] as [number, number], zoom: 2.2 };
+export const INITIAL_VIEW: { center: [lon: number, lat: number]; zoom: number } = {
+  center: [25, 45],
+  zoom: 2.2,
+};
 
 export const CITY_SOURCE_ID = 'cities';
 export const CITY_LAYER_ID = 'cities';

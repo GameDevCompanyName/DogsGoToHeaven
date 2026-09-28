@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GeoJSONSource, Map as MapLibreMap, PaddingOptions } from 'maplibre-gl';
+  import type { GeoJSONSource, Map as MapLibreMap, PointLike } from 'maplibre-gl';
 
   import { getRankingContext } from '@/entities/ranking';
 
@@ -14,6 +14,8 @@
   } from '../config/style';
   import { toGeoJson } from '../lib/to-geojson';
 
+  type MapStatus = 'loading' | 'ready' | 'failed';
+
   /** Ширина карточки города справа на десктопе, чтобы выбранный город не прятался под ней. */
   const DESKTOP_CARD_WIDTH = 420;
 
@@ -21,6 +23,7 @@
 
   /** Карта с загруженным стилем и слоями городов; до загрузки — null. */
   let map = $state.raw<MapLibreMap | null>(null);
+  let status = $state<MapStatus>('loading');
 
   const geojson = $derived(toGeoJson(ranking.rankedCities, ranking.filteredCities));
   const selectedCity = $derived(ranking.selected?.city ?? null);
@@ -28,10 +31,14 @@
   /**
    * Создаёт карту в контейнере. MapLibre грузится отдельным чанком: он нужен только
    * в браузере и тяжёлый. Без WebGL карта не создастся — список и карточка работают и так.
+   * Размер контейнера меняет раскладка колонок без события resize у окна,
+   * поэтому за ним следит ResizeObserver.
    */
   function mountMap(container: HTMLDivElement) {
     let instance: MapLibreMap | null = null;
     let isDestroyed = false;
+    const resizeObserver = new ResizeObserver(() => instance?.resize());
+    resizeObserver.observe(container);
     Promise.all([
       import('maplibre-gl'),
       // Воркер MapLibre ищет рядом со своим модулем, а после сборки Vite его там нет:
@@ -53,9 +60,11 @@
       })
       .catch((error: unknown) => {
         console.error('Карта не создана', error);
+        if (!isDestroyed) status = 'failed';
       });
     return () => {
       isDestroyed = true;
+      resizeObserver.disconnect();
       instance?.remove();
     };
   }
@@ -75,14 +84,19 @@
       loaded.getCanvas().style.cursor = '';
     });
     map = loaded;
+    status = 'ready';
   }
 
-  /** Отступ под карточку города: справа на десктопе, снизу на телефоне. */
-  function cardPadding(): PaddingOptions {
+  /**
+   * Сдвиг города от центра карты, чтобы его не закрыла карточка: влево на половину
+   * карточки на десктопе, в верхнюю половину на телефоне. Сдвиг, а не padding:
+   * padding остался бы на карте и после закрытия карточки.
+   */
+  function cardOffset(loaded: MapLibreMap): PointLike {
     if (window.matchMedia('(min-width: 768px)').matches) {
-      return { top: 0, right: DESKTOP_CARD_WIDTH, bottom: 0, left: 0 };
+      return [-DESKTOP_CARD_WIDTH / 2, 0];
     }
-    return { top: 0, right: 0, bottom: Math.round(window.innerHeight / 2), left: 0 };
+    return [0, -Math.round(loaded.getContainer().clientHeight / 4)];
   }
 
   $effect(() => {
@@ -95,14 +109,16 @@
     if (!map) return;
     map.setFilter(SELECTED_LAYER_ID, ['==', ['get', 'id'], selectedCity?.id ?? '']);
     if (selectedCity) {
-      map.flyTo({ center: [selectedCity.lon, selectedCity.lat], padding: cardPadding() });
+      map.flyTo({ center: [selectedCity.lon, selectedCity.lat], offset: cardOffset(map) });
     }
   });
 </script>
 
 <div class="relative size-full bg-muted" data-testid="city-map">
-  <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
-    Карта загружается…
-  </p>
+  {#if status !== 'ready'}
+    <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
+      {status === 'failed' ? 'Карта недоступна' : 'Карта загружается…'}
+    </p>
+  {/if}
   <div class="size-full" role="region" aria-label="Карта городов" {@attach mountMap}></div>
 </div>
