@@ -84,7 +84,7 @@
       "english": 6,
       "summer-temp": 5
     },
-    "filters": { "safety": { "min": 60 }, "air-quality": { "max": 15 } }
+    "filters": { "safety": { "min": 50 }, "air-quality": { "max": 25 } }
   },
   {
     "id": "warm-cheap",
