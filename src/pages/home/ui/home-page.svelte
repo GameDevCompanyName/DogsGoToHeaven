@@ -20,6 +20,7 @@
   import * as Tabs from '@/shared/ui/tabs';
   import { CityCard } from '@/widgets/city-card';
   import { CityMap } from '@/widgets/city-map';
+  import { CompareSheet } from '@/widgets/compare-sheet';
   import { ResultsList } from '@/widgets/results-list';
   import { SettingsPanel } from '@/widgets/settings-panel';
   import { browser } from '$app/environment';
@@ -31,6 +32,7 @@
   setRankingContext(ranking);
 
   let section = $state<Section>('map');
+  let isCompareOpen = $state(false);
 
   /** Вкладка левой колонки: на десктопе карта видна всегда, поэтому «Карта» там — это «Города». */
   const panelTab = $derived(section === 'settings' ? 'settings' : 'cities');
@@ -78,7 +80,7 @@
         </Tabs.List>
       </header>
       <Tabs.Content value="cities" class="min-h-0 flex-1">
-        <ResultsList />
+        <ResultsList oncompareopen={() => (isCompareOpen = true)} />
       </Tabs.Content>
       <Tabs.Content value="settings" class="min-h-0 flex-1">
         <SettingsPanel />
@@ -111,3 +113,4 @@
 </div>
 
 <CityCard />
+<CompareSheet isOpen={isCompareOpen} onclose={() => (isCompareOpen = false)} />

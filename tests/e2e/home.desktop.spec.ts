@@ -26,3 +26,19 @@ test('карточка на десктопе показывает сводку �
   await card.getByTestId('factor-hint').first().click();
   await expect(page.getByTestId('factor-hint-content')).toBeVisible();
 });
+
+test('сравнение из карточки и списка показывает таблицу с двумя колонками', async ({ page }) => {
+  await page.goto('/');
+  const rows = page.getByRole('list', { name: 'Города по баллу' }).getByRole('listitem');
+  await rows.nth(0).getByTestId('city-list-item').click();
+  await page.getByTestId('city-card').getByRole('button', { name: 'Сравнить' }).click();
+  await page.keyboard.press('Escape');
+
+  await rows.nth(1).getByRole('button', { name: 'Сравнить' }).click();
+  await page.getByTestId('compare-bar').getByRole('button', { name: 'Открыть' }).click();
+
+  const sheet = page.getByTestId('compare-sheet');
+  await expect(sheet.getByTestId('compare-column')).toHaveCount(2);
+  await sheet.getByTestId('compare-column').first().getByRole('button', { name: 'Убрать' }).click();
+  await expect(sheet.getByTestId('compare-column')).toHaveCount(1);
+});

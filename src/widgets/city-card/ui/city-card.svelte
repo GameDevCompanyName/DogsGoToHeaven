@@ -1,15 +1,15 @@
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
 
-  import { profileChips, ScoreBadge } from '@/entities/city';
+  import { profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
+  import { CompareToggle } from '@/features/compare-toggle';
   import { cn } from '@/shared/lib/utils';
   import * as Sheet from '@/shared/ui/sheet';
 
   import FactorBreakdown from './factor-breakdown.svelte';
   import LegalizationNote from './legalization-note.svelte';
   import ReferenceBlock from './reference-block.svelte';
-  import SummaryLine from './summary-line.svelte';
 
   const ranking = getRankingContext();
   const isDesktop = new MediaQuery('(min-width: 768px)');
@@ -54,6 +54,9 @@
             percentile={view.percentile}
           />
         {/if}
+        <div class="flex flex-wrap items-center gap-2">
+          <CompareToggle cityId={view.city.id} />
+        </div>
       </Sheet.Header>
       <div class="flex flex-col gap-8 px-4 pb-8">
         <FactorBreakdown {view} />

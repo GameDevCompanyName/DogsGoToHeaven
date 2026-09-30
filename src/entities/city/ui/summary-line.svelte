@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { CityChip } from '@/entities/city';
   import { toneClasses } from '@/shared/lib/tone';
+
+  import type { CityChip } from '../lib/chip-label';
 
   interface Props {
     strengths: CityChip[];
