@@ -12,16 +12,46 @@
 
 <script lang="ts">
   import { CityListItem, profileChips } from '@/entities/city';
-  import { getRankingContext } from '@/entities/ranking';
+  import { describeFilter, getRankingContext } from '@/entities/ranking';
   import { type PluralForms, pluralize } from '@/shared/lib/plural';
   import type { CityId } from '@/shared/lib/ranking';
+  import { Button } from '@/shared/ui/button';
+  import { Input } from '@/shared/ui/input';
   import { ScrollArea } from '@/shared/ui/scroll-area';
 
   const ranking = getRankingContext();
   const factorsById = new Map(ranking.dataset.factors.map((factor) => [factor.id, factor]));
 
+  let query = $state('');
+
+  const needle = $derived(normalize(query.trim()));
+  /** Поиск только прячет строки: ранжирование не пересчитывается, место города остаётся прежним. */
+  const visibleCities = $derived(
+    needle === ''
+      ? ranking.rankedCities
+      : ranking.rankedCities.filter(
+          ({ city }) =>
+            normalize(city.name).includes(needle) || normalize(city.countryName).includes(needle),
+        ),
+  );
+  const strictestFilter = $derived.by(() => {
+    const restrictive = ranking.mostRestrictiveFilter;
+    if (!restrictive) return null;
+    const factor = factorsById.get(restrictive.factorId);
+    const filter = ranking.settings.filters[restrictive.factorId];
+    return factor && filter ? describeFilter(factor, filter) : null;
+  });
+
+  function normalize(text: string): string {
+    return text.toLocaleLowerCase('ru-RU').replaceAll('ё', 'е');
+  }
+
   function handleSelect(cityId: CityId) {
     ranking.selectCity(cityId);
+  }
+
+  function handleResetFilters() {
+    ranking.resetFilters();
   }
 </script>
 
@@ -33,35 +63,75 @@
   </p>
 {/snippet}
 
-<ScrollArea class="h-full">
-  <ol class="divide-y" aria-label="Города по баллу">
-    {#each ranking.rankedCities as view (view.city.id)}
-      <li>
-        <CityListItem
-          city={view.city}
-          ranked={view.ranked}
-          percentile={view.percentile}
-          chips={listChips(profileChips(view, view.city, factorsById, ranking.settings.ranges))}
-          isSelected={ranking.selectedCityId === view.city.id}
-          onselect={handleSelect}
-        />
-      </li>
+<div class="flex h-full flex-col">
+  <div class="border-b px-4 py-3">
+    <Input
+      type="search"
+      placeholder="Город или страна"
+      aria-label="Поиск по городу или стране"
+      data-testid="city-search"
+      bind:value={query}
+    />
+  </div>
+  <ScrollArea class="min-h-0 flex-1">
+    <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
+    <p class="sr-only" aria-live="polite">
+      {#if needle !== ''}
+        Найдено {visibleCities.length}
+        {pluralize(visibleCities.length, ['город', 'города', 'городов'])}
+      {/if}
+    </p>
+    {#if visibleCities.length > 0}
+      <ol class="divide-y" aria-label="Города по баллу">
+        {#each visibleCities as view (view.city.id)}
+          <li>
+            <CityListItem
+              city={view.city}
+              ranked={view.ranked}
+              percentile={view.percentile}
+              chips={listChips(profileChips(view, view.city, factorsById, ranking.settings.ranges))}
+              isSelected={ranking.selectedCityId === view.city.id}
+              onselect={handleSelect}
+            />
+          </li>
+        {/each}
+      </ol>
     {:else}
-      <li class="p-4 text-foreground/70">Ни один город не подходит под настройки.</li>
-    {/each}
-  </ol>
-  {#if ranking.hiddenByCoverage > 0 || ranking.hiddenByFilter > 0}
-    <div class="flex flex-col gap-1 border-t p-4 text-sm text-foreground/70">
-      {#if ranking.hiddenByFilter > 0}
-        {@render hiddenNote(ranking.hiddenByFilter, 'не прошли фильтры', [
-          'отсечён',
-          'отсечены',
-          'отсечены',
-        ])}
-      {/if}
-      {#if ranking.hiddenByCoverage > 0}
+      <div class="flex flex-col items-start gap-3 p-4 text-foreground/70" data-testid="empty-list">
+        {#if ranking.rankedCities.length > 0}
+          Ничего не найдено
+        {:else if ranking.hiddenByFilter > 0}
+          <p>
+            Фильтры отсекли все города.
+            {#if strictestFilter}Самый строгий: {strictestFilter}.{/if}
+          </p>
+          <Button variant="outline" size="sm" onclick={handleResetFilters}>Сбросить фильтры</Button>
+        {:else}
+          Ни один город не подходит под настройки.
+        {/if}
+      </div>
+    {/if}
+    {#if ranking.hiddenByFilter > 0 && ranking.rankedCities.length > 0}
+      <div class="border-t px-4 pt-3">
+        <p
+          class="inline-flex flex-wrap items-center gap-x-1.5 rounded-full border px-3 py-1 text-sm"
+          data-testid="hidden-by-filter"
+        >
+          Скрыто фильтрами: {ranking.hiddenByFilter} ·
+          <button
+            type="button"
+            class="font-medium underline underline-offset-4"
+            onclick={handleResetFilters}
+          >
+            Сбросить фильтры
+          </button>
+        </p>
+      </div>
+    {/if}
+    {#if ranking.hiddenByCoverage > 0}
+      <div class="p-4 text-sm text-foreground/70">
         {@render hiddenNote(ranking.hiddenByCoverage, 'мало данных', ['скрыт', 'скрыты', 'скрыты'])}
-      {/if}
-    </div>
-  {/if}
-</ScrollArea>
+      </div>
+    {/if}
+  </ScrollArea>
+</div>
