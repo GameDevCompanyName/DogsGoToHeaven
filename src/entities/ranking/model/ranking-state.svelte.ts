@@ -13,6 +13,8 @@ import {
   type RankingSettings,
 } from '@/shared/lib/ranking';
 
+import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
+import { serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
 /** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
@@ -27,8 +29,14 @@ export interface RankedCityView {
   weaknesses: FactorContribution[];
 }
 
+/** Фильтр, который в одиночку отсекает больше всего городов. */
+export interface RestrictiveFilter {
+  factorId: FactorId;
+  excludedCount: number;
+}
+
 /**
- * Реактивная обёртка над движком ранжирования: настройки, пресеты и выбранный город.
+ * Реактивная обёртка над движком ранжирования: настройки, персона и выбранный город.
  * Выдача пересчитывается при любой правке настроек.
  */
 export class RankingState {
@@ -38,8 +46,7 @@ export class RankingState {
   readonly #cityById: Readonly<Record<CityId, DatasetCity>>;
   readonly #datalessIds: readonly FactorId[];
 
-  durationPresetId = $state<string | null>(null);
-  incomePresetId = $state<string | null>(null);
+  presetId = $state<string | null>(null);
   settings = $state<RankingSettings>({ weights: {}, enabled: {}, ranges: {}, filters: {} });
   selectedCityId = $state<CityId | null>(null);
 
@@ -79,6 +86,45 @@ export class RankingState {
 
   readonly hiddenByFilter = $derived(this.filteredCities.length);
 
+  /** Опорные настройки: база реестра и выбранная персона. */
+  readonly presetSettings: RankingSettings = $derived.by(() => this.#settingsFor(this.presetId));
+
+  readonly #diff = $derived.by(() =>
+    diffSettings(this.presetSettings, this.settings, this.dataset.factors),
+  );
+
+  /** Факторы, чьи вес, галочка, диапазон или фильтр отличаются от персоны, в порядке реестра. */
+  readonly changedFactorIds: FactorId[] = $derived.by(() =>
+    changedFactorIdsOf(this.#diff, this.dataset.factors),
+  );
+
+  /** Хеш адреса без `#`: персона, отличия от неё и открытый город. */
+  readonly urlHash = $derived(
+    serializeState({ presetId: this.presetId, ...this.#diff, cityId: this.selectedCityId }),
+  );
+
+  /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
+  readonly totalWeight = $derived.by(() =>
+    this.dataset.factors.reduce(
+      (sum, { id }) => (this.settings.enabled[id] ? sum + (this.settings.weights[id] ?? 0) : sum),
+      0,
+    ),
+  );
+
+  readonly mostRestrictiveFilter: RestrictiveFilter | null = $derived.by(() => {
+    const counts: Record<FactorId, number> = {};
+    for (const excluded of this.result.excluded) {
+      for (const factorId of excluded.failedFilterIds) {
+        counts[factorId] = (counts[factorId] ?? 0) + 1;
+      }
+    }
+    let best: RestrictiveFilter | null = null;
+    for (const [factorId, excludedCount] of Object.entries(counts)) {
+      if (!best || excludedCount > best.excludedCount) best = { factorId, excludedCount };
+    }
+    return best;
+  });
+
   readonly selected: RankedCityView | null = $derived(
     this.rankedCities.find((view) => view.city.id === this.selectedCityId) ?? null,
   );
@@ -94,21 +140,33 @@ export class RankingState {
     this.settings = this.#withoutDataless(this.#base);
   }
 
-  /**
-   * Пересобирает настройки из базы реестра и выбранных пресетов; ручные правки сбрасываются.
-   * Пресет дохода накладывается после пресета срока и выигрывает на общих ключах.
-   */
-  applyPresets(durationId: string | null, incomeId: string | null) {
-    this.durationPresetId = durationId;
-    this.incomePresetId = incomeId;
-    const duration = this.presets.find(
-      (preset) => preset.kind === 'duration' && preset.id === durationId,
-    );
-    const income = this.presets.find(
-      (preset) => preset.kind === 'income' && preset.id === incomeId,
-    );
-    const active = [duration, income].filter((preset) => preset !== undefined);
-    this.settings = this.#withoutDataless(applyPresets(this.#base, active, this.dataset.factors));
+  /** Пересобирает настройки из базы реестра и персоны; ручные правки сбрасываются. */
+  applyPreset(presetId: string | null) {
+    this.presetId = this.presets.some((preset) => preset.id === presetId) ? presetId : null;
+    this.settings = this.#settingsFor(this.presetId);
+  }
+
+  resetToPreset() {
+    this.applyPreset(this.presetId);
+  }
+
+  /** Персона из ссылки и поверх неё отличия; то, что сеттеры не примут, отбрасывается. */
+  restore(url: UrlState) {
+    if (url.presetId !== undefined) this.applyPreset(url.presetId);
+    for (const [factorId, weight] of Object.entries(url.weights)) this.setWeight(factorId, weight);
+    for (const [factorId, isOn] of Object.entries(url.enabled)) this.setEnabled(factorId, isOn);
+    for (const [factorId, range] of Object.entries(url.ranges)) this.setRange(factorId, range);
+    for (const [factorId, filter] of Object.entries(url.filters)) {
+      if (filter === null || !('allowed' in filter)) this.setNumericFilter(factorId, filter);
+      else this.setCategoryFilter(factorId, filter.allowed);
+    }
+    this.selectCity(url.cityId);
+  }
+
+  /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
+  weightShare(factorId: FactorId): number {
+    if (!this.settings.enabled[factorId] || this.totalWeight === 0) return 0;
+    return (this.settings.weights[factorId] ?? 0) / this.totalWeight;
   }
 
   /**
@@ -154,8 +212,28 @@ export class RankingState {
     this.settings.filters[factorId] = { allowed };
   }
 
+  /** Галочки всех числовых факторов группы, у которых есть данные. */
+  setGroupEnabled(groupId: string, isEnabled: boolean) {
+    for (const factor of this.dataset.factors) {
+      if (factor.group === groupId && factor.kind === 'numeric') {
+        this.setEnabled(factor.id, isEnabled);
+      }
+    }
+  }
+
+  resetFilters() {
+    this.settings.filters = {};
+  }
+
   selectCity(cityId: CityId | null) {
     this.selectedCityId = cityId;
+  }
+
+  #settingsFor(presetId: string | null): RankingSettings {
+    const preset = this.presets.find(({ id }) => id === presetId);
+    return this.#withoutDataless(
+      applyPresets(this.#base, preset ? [preset] : [], this.dataset.factors),
+    );
   }
 
   /**

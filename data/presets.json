@@ -1,32 +1,106 @@
 [
   {
-    "id": "short-term",
-    "kind": "duration",
-    "name": "На месяц",
-    "weights": { "rent": 9, "healthcare": 2 },
-    "enabled": { "time-to-citizenship": false },
+    "id": "short-stay",
+    "name": "Пересидеть пару месяцев",
+    "description": "Попробовать место без бумажной волокиты, работая удалённо",
+    "highlights": ["без визы", "дёшево", "удобный часовой пояс"],
+    "weights": {
+      "rent": 9,
+      "cost-of-living": 9,
+      "internet-speed": 7,
+      "moscow-time-diff": 7,
+      "winter-temp": 6,
+      "legalization-ease": 2
+    },
+    "enabled": { "time-to-citizenship": false, "it-salary": false, "tax-burden": false },
     "filters": { "entry-visa": { "allowed": ["visa-free", "visa-on-arrival", "e-visa"] } }
   },
   {
-    "id": "long-term",
-    "kind": "duration",
-    "name": "Насовсем",
-    "weights": { "time-to-citizenship": 8, "healthcare": 7 },
-    "enabled": { "time-to-citizenship": true }
+    "id": "remote-long",
+    "name": "Удалёнщик надолго",
+    "description": "Жить за границей на визе кочевника или простом ВНЖ, доход из России или из-за рубежа",
+    "highlights": ["дёшево", "легко легализоваться", "хороший интернет"],
+    "weights": {
+      "cost-of-living": 8,
+      "rent": 8,
+      "legalization-ease": 8,
+      "tax-burden": 7,
+      "internet-speed": 6,
+      "safety": 6,
+      "moscow-time-diff": 5,
+      "time-to-citizenship": 3
+    },
+    "enabled": { "it-salary": false },
+    "filters": { "legalization-ease": { "min": 3 } }
   },
   {
-    "id": "remote",
-    "kind": "income",
-    "name": "Удалённый доход",
-    "weights": { "cost-of-living": 9, "internet-speed": 7, "moscow-time-diff": 6 },
-    "enabled": { "it-salary": false }
-  },
-  {
-    "id": "local",
-    "kind": "income",
-    "name": "Работа на месте",
-    "weights": { "it-salary": 9, "internet-speed": 2 },
+    "id": "local-career",
+    "name": "Карьера в местном IT",
+    "description": "Устроиться в местную компанию и расти в доходе",
+    "highlights": ["высокие зарплаты в IT", "английский", "понятная легализация"],
+    "weights": {
+      "it-salary": 10,
+      "english": 8,
+      "legalization-ease": 7,
+      "time-to-citizenship": 6,
+      "tax-burden": 5,
+      "rent": 5,
+      "cost-of-living": 3
+    },
     "enabled": { "moscow-time-diff": false },
-    "filters": { "work-visa": { "allowed": ["accessible"] } }
+    "filters": {
+      "entry-visa": { "allowed": ["visa-free", "visa-on-arrival", "e-visa", "consular"] }
+    }
+  },
+  {
+    "id": "for-good",
+    "name": "Насовсем, второй паспорт",
+    "description": "Построить долгую базу и получить новое гражданство",
+    "highlights": ["быстрое гражданство", "безопасно", "хорошая медицина"],
+    "weights": {
+      "time-to-citizenship": 10,
+      "legalization-ease": 9,
+      "safety": 8,
+      "healthcare": 8,
+      "english": 5,
+      "tax-burden": 4,
+      "cost-of-living": 4
+    },
+    "filters": {
+      "entry-visa": { "allowed": ["visa-free", "visa-on-arrival", "e-visa", "consular"] }
+    }
+  },
+  {
+    "id": "family",
+    "name": "Семья с детьми",
+    "description": "Безопасно, здорово и стабильно, с посильной легализацией",
+    "highlights": ["безопасно", "чистый воздух", "хорошая медицина"],
+    "weights": {
+      "safety": 10,
+      "healthcare": 9,
+      "air-quality": 8,
+      "legalization-ease": 7,
+      "rent": 7,
+      "english": 6,
+      "summer-temp": 5
+    },
+    "filters": { "safety": { "min": 60 }, "air-quality": { "max": 15 } }
+  },
+  {
+    "id": "warm-cheap",
+    "name": "Тепло и недорого",
+    "description": "Солнце и тёплая зима на удалённую зарплату",
+    "highlights": ["тёплая зима", "солнечно", "дёшево"],
+    "weights": {
+      "winter-temp": 9,
+      "sunshine": 8,
+      "cost-of-living": 9,
+      "rent": 8,
+      "internet-speed": 5,
+      "air-quality": 4
+    },
+    "enabled": { "time-to-citizenship": false },
+    "ranges": { "winter-temp": [12, 25] },
+    "filters": { "winter-temp": { "min": 8 } }
   }
 ]

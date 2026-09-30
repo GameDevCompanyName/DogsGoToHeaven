@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getRankingContext } from '@/entities/ranking';
   import { FactorControl } from '@/features/factor-controls';
-  import { PresetPicker } from '@/features/preset-picker';
+  import { PersonaPicker } from '@/features/persona-picker';
   import { ScrollArea } from '@/shared/ui/scroll-area';
 
   const ranking = getRankingContext();
@@ -16,7 +16,7 @@
 
 <ScrollArea class="h-full">
   <div class="flex flex-col gap-6 p-4 pb-8">
-    <PresetPicker />
+    <PersonaPicker />
     {#each sections as { group, factors } (group.id)}
       <section aria-labelledby="group-{group.id}">
         <h2

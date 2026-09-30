@@ -2,16 +2,26 @@ import { createContext } from 'svelte';
 
 import { buildDataset, type RawData } from '@/shared/lib/ranking';
 
+import { parseState } from '../lib/url-state';
 import { RankingState } from './ranking-state.svelte';
 
-/** Пресеты, с которыми открывается сервис. */
-const DEFAULT_DURATION_PRESET = 'long-term';
-const DEFAULT_INCOME_PRESET = 'remote';
+/** Персона, с которой сервис открывается, если ссылка не говорит иного. */
+export const DEFAULT_PRESET_ID = 'remote-long';
 
 export const [getRankingContext, setRankingContext] = createContext<RankingState>();
 
-export function createRankingState(raw: RawData): RankingState {
-  const state = new RankingState(buildDataset(raw), raw.presets);
-  state.applyPresets(DEFAULT_DURATION_PRESET, DEFAULT_INCOME_PRESET);
+/** Состояние из данных и хеша адреса; хеш передаёт страница, чтобы модель не трогала `location`. */
+export function createRankingState(raw: RawData, hash = ''): RankingState {
+  const dataset = buildDataset(raw);
+  const state = new RankingState(dataset, raw.presets);
+  const url = parseState(hash, {
+    factors: dataset.factors,
+    presetIds: raw.presets.map((preset) => preset.id),
+    cityIds: dataset.cities.map((city) => city.id),
+  });
+  state.restore({
+    ...url,
+    presetId: url.presetId === undefined ? DEFAULT_PRESET_ID : url.presetId,
+  });
   return state;
 }

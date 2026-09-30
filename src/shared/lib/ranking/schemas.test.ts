@@ -25,8 +25,22 @@ describe('schemas reject unknown keys', () => {
   });
 
   it('rejects a misspelled section on a preset', () => {
-    const result = presetSchema.safeParse({ id: 'p', kind: 'duration', name: 'П', weight: {} });
+    const result = presetSchema.safeParse({
+      id: 'p',
+      name: 'П',
+      description: 'Тест',
+      highlights: ['тест'],
+      weight: {},
+    });
     expect(result.success).toBe(false);
+  });
+
+  it('rejects a preset without highlights or with more than four', () => {
+    const preset = { id: 'p', name: 'П', description: 'Тест' };
+    expect(presetSchema.safeParse({ ...preset, highlights: [] }).success).toBe(false);
+    expect(
+      presetSchema.safeParse({ ...preset, highlights: ['а', 'б', 'в', 'г', 'д'] }).success,
+    ).toBe(false);
   });
 
   it('rejects an unknown key in a sample source', () => {

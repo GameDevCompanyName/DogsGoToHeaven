@@ -8,6 +8,7 @@ import type {
   Preset,
 } from '@/shared/lib/ranking';
 
+import { parseState } from '../lib/url-state';
 import { RankingState } from './ranking-state.svelte';
 
 /** Движок представление не читает: хватает минимального валидного. */
@@ -97,17 +98,15 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
   };
 }
 
+function preset(id: string, fields: Partial<Preset> = {}): Preset {
+  return { id, name: id, description: 'Тест', highlights: ['тест'], ...fields };
+}
+
 const PRESETS: Preset[] = [
-  { id: 'month', kind: 'duration', name: 'На месяц', weights: { rent: 9 } },
-  { id: 'forever', kind: 'duration', name: 'Насовсем', weights: { safety: 9 } },
-  { id: 'remote', kind: 'income', name: 'Удалённо', filters: { visa: { allowed: ['free'] } } },
-  {
-    id: 'local',
-    kind: 'income',
-    name: 'На месте',
-    enabled: { ease: true },
-    filters: { ease: { min: 3 } },
-  },
+  preset('month', { weights: { rent: 9 } }),
+  preset('forever', { weights: { safety: 9 } }),
+  preset('remote', { filters: { visa: { allowed: ['free'] } } }),
+  preset('local', { enabled: { ease: true }, filters: { ease: { min: 3 } } }),
 ];
 
 function firstCityId(state: RankingState): string | undefined {
@@ -115,33 +114,31 @@ function firstCityId(state: RankingState): string | undefined {
 }
 
 describe('RankingState', () => {
-  it('rebuilds settings from presets and drops manual edits', () => {
+  it('rebuilds settings from a preset and drops manual edits', () => {
     const state = new RankingState(makeDataset(), PRESETS);
-    state.applyPresets('month', null);
+    state.applyPreset('month');
     state.setWeight('safety', 10);
     state.setNumericFilter('rent', { max: 150 });
     state.setEnabled('safety', false);
     state.setRange('rent', [0, 1]);
 
-    state.applyPresets('forever', null);
+    state.applyPreset('forever');
 
     expect(state.settings.weights).toMatchObject({ rent: 5, safety: 9 });
     expect(state.settings.filters).toEqual({});
     expect(state.settings.enabled.safety).toBe(true);
     expect(state.settings.ranges).toEqual({});
-    expect(state.durationPresetId).toBe('forever');
+    expect(state.presetId).toBe('forever');
   });
 
-  it('lets the income preset win over the duration preset on a shared key', () => {
-    const presets: Preset[] = [
-      { id: 'frugal', kind: 'income', name: 'Экономно', weights: { rent: 2 } },
-      { id: 'month', kind: 'duration', name: 'На месяц', weights: { rent: 9 } },
-    ];
-    const state = new RankingState(makeDataset(), presets);
+  it('falls back to the registry defaults for an unknown preset', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('month');
 
-    state.applyPresets('month', 'frugal');
+    state.applyPreset('ghost');
 
-    expect(state.settings.weights.rent).toBe(2);
+    expect(state.presetId).toBeNull();
+    expect(state.settings.weights.rent).toBe(5);
   });
 
   it('ignores edits to a factor without data', () => {
@@ -180,7 +177,7 @@ describe('RankingState', () => {
   it('keeps factors without data switched off and unfiltered', () => {
     const state = new RankingState(makeDataset(), PRESETS);
 
-    state.applyPresets(null, 'local');
+    state.applyPreset('local');
 
     expect(state.settings.enabled.ease).toBe(false);
     expect(state.settings.filters.ease).toBeUndefined();
@@ -216,6 +213,96 @@ describe('RankingState', () => {
     state.setNumericFilter('rent', {});
 
     expect(state.settings.filters.rent).toBeUndefined();
+  });
+
+  it('lists factors that differ from the preset and forgets them once they match again', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    expect(state.changedFactorIds).toEqual([]);
+
+    state.setWeight('safety', 3);
+    state.setCategoryFilter('visa', null);
+    state.setWeight('rent', 9);
+    state.setWeight('rent', 5);
+
+    expect(state.changedFactorIds).toEqual(['safety', 'visa']);
+  });
+
+  it('resets to the preset', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    state.setEnabled('rent', false);
+    state.setCategoryFilter('visa', ['required']);
+
+    state.resetToPreset();
+
+    expect(state.changedFactorIds).toEqual([]);
+    expect(state.settings.enabled.rent).toBe(true);
+    expect(state.settings.filters.visa).toEqual({ allowed: ['free'] });
+  });
+
+  it('names the filter that alone excludes the most cities', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    expect(state.mostRestrictiveFilter).toBeNull();
+
+    state.setCategoryFilter('visa', ['free']);
+    state.setNumericFilter('rent', { max: 150 });
+
+    expect(state.mostRestrictiveFilter).toEqual({ factorId: 'rent', excludedCount: 2 });
+  });
+
+  it('resets every filter, the preset ones included', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    state.setNumericFilter('rent', { max: 150 });
+
+    state.resetFilters();
+
+    expect(state.settings.filters).toEqual({});
+    expect(state.hiddenByFilter).toBe(0);
+  });
+
+  it('switches a whole group on and off, leaving factors without data alone', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.setGroupEnabled('g', false);
+    expect(state.settings.enabled).toEqual({ rent: false, safety: false, ease: false });
+
+    state.setGroupEnabled('g', true);
+    expect(state.settings.enabled).toEqual({ rent: true, safety: true, ease: false });
+  });
+
+  it('gives each enabled factor its share of the total weight', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    expect(state.weightShare('rent')).toBeCloseTo(5 / 6);
+    state.setEnabled('safety', false);
+    expect(state.weightShare('safety')).toBe(0);
+    expect(state.weightShare('rent')).toBe(1);
+  });
+
+  it('restores the same settings and city from its own url hash', () => {
+    const dataset = makeDataset();
+    const source = new RankingState(dataset, PRESETS);
+    source.applyPreset('remote');
+    source.setWeight('rent', 9);
+    source.setEnabled('safety', false);
+    source.setCategoryFilter('visa', null);
+    source.setNumericFilter('safety', { min: 20 });
+    source.selectCity('gamma');
+
+    const target = new RankingState(dataset, PRESETS);
+    target.restore(
+      parseState(source.urlHash, {
+        factors: dataset.factors,
+        presetIds: PRESETS.map(({ id }) => id),
+        cityIds: dataset.cities.map(({ id }) => id),
+      }),
+    );
+
+    expect(target.presetId).toBe('remote');
+    expect(target.settings).toEqual(source.settings);
+    expect(target.selectedCityId).toBe('gamma');
   });
 
   it('counts cities hidden by coverage', () => {

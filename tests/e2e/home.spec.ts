@@ -66,3 +66,30 @@ test('карточка объясняет место города уровням
 
   await expect(page.getByTestId('factor-hint-content')).toBeVisible();
 });
+
+function personaCard(page: Page, name: string) {
+  return page.getByTestId('persona-card').filter({ hasText: name });
+}
+
+test('выбор персоны меняет первый город и попадает в адрес', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  const firstCity = page.getByTestId('city-list-item').first();
+  const cityBefore = (await firstCity.getAttribute('data-city-id')) ?? '';
+
+  await openSection(page, 'Настройки');
+  await personaCard(page, 'Семья с детьми').click();
+
+  await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/#p=family/);
+  await openSection(page, 'Города');
+  await expect(firstCity).not.toHaveAttribute('data-city-id', cityBefore);
+});
+
+test('ссылка с персоной открывает эту персону', async ({ page }) => {
+  await page.goto('/#p=family');
+  await openSection(page, 'Настройки');
+
+  await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
+  await expect(personaCard(page, 'Удалёнщик надолго')).toHaveAttribute('aria-pressed', 'false');
+});

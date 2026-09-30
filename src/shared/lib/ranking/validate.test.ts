@@ -153,14 +153,18 @@ describe('validateRawData', () => {
 
   it('reports a preset that references an unknown factor', () => {
     const raw = makeRaw({
-      presets: [{ id: 'p', kind: 'duration', name: 'П', weights: { ghost: 3 } }],
+      presets: [
+        { id: 'p', name: 'П', description: 'Тест', highlights: ['тест'], weights: { ghost: 3 } },
+      ],
     });
     expect(validateRawData(raw)).toEqual([expect.stringContaining('ghost')]);
   });
 
   it('reports a preset weight on a categorical factor', () => {
     const raw = makeRaw({
-      presets: [{ id: 'p', kind: 'duration', name: 'П', weights: { visa: 3 } }],
+      presets: [
+        { id: 'p', name: 'П', description: 'Тест', highlights: ['тест'], weights: { visa: 3 } },
+      ],
     });
     expect(validateRawData(raw)).toEqual([expect.stringContaining('visa')]);
   });
@@ -168,7 +172,13 @@ describe('validateRawData', () => {
   it('reports a preset filter with an unknown category code', () => {
     const raw = makeRaw({
       presets: [
-        { id: 'p', kind: 'duration', name: 'П', filters: { visa: { allowed: ['maybe'] } } },
+        {
+          id: 'p',
+          name: 'П',
+          description: 'Тест',
+          highlights: ['тест'],
+          filters: { visa: { allowed: ['maybe'] } },
+        },
       ],
     });
     expect(validateRawData(raw)).toEqual([expect.stringContaining('maybe')]);
@@ -207,7 +217,15 @@ describe('validateRawData', () => {
 
   it('reports a categorical filter on a numeric factor', () => {
     const raw = makeRaw({
-      presets: [{ id: 'p', kind: 'duration', name: 'П', filters: { rent: { allowed: ['free'] } } }],
+      presets: [
+        {
+          id: 'p',
+          name: 'П',
+          description: 'Тест',
+          highlights: ['тест'],
+          filters: { rent: { allowed: ['free'] } },
+        },
+      ],
     });
     expect(validateRawData(raw)).toEqual([expect.stringContaining('rent')]);
   });
