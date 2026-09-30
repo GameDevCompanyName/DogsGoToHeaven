@@ -129,6 +129,7 @@
         },
         "bands": {
           "type": "absolute",
+          "source": "https://finance.yahoo.com/news/top-personal-income-tax-rates-060122635.html",
           "sourceName": "обзор Euronews 2026",
           "levels": [
             {
