@@ -4,6 +4,7 @@
   import { profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import { CompareToggle } from '@/features/compare-toggle';
+  import { ShareButton } from '@/features/share-link';
   import { cn } from '@/shared/lib/utils';
   import * as Sheet from '@/shared/ui/sheet';
 
@@ -56,6 +57,7 @@
         {/if}
         <div class="flex flex-wrap items-center gap-2">
           <CompareToggle cityId={view.city.id} />
+          <ShareButton isCompact />
         </div>
       </Sheet.Header>
       <div class="flex flex-col gap-8 px-4 pb-8">
