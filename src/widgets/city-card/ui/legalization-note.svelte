@@ -57,31 +57,31 @@
     class="flex flex-col gap-3"
     data-testid="legalization-note"
   >
-    <h2 id="legalization-title" class="text-sm font-semibold">
+    <h2 id="legalization-title" class="text-lg font-semibold">
       Легализация: {city.countryName}
     </h2>
     {#await notePromise}
-      <p class="text-sm text-muted-foreground">Загружаем справку…</p>
+      <p class="text-sm text-foreground/70">Загружаем справку…</p>
     {:then note}
       {#if note}
-        <div class="flex flex-col gap-1 text-xs text-muted-foreground">
+        <div class="flex flex-col gap-1 text-sm text-foreground/70">
           {#if scoreLabel}
-            <p class="text-sm font-medium text-foreground">Оценка {scoreLabel}</p>
+            <p class="text-base font-medium text-foreground">Оценка {scoreLabel}</p>
           {/if}
           <p>Проверено {formatDate(note.checkedAt)}</p>
           <p>Справка по открытым источникам, не юридическая консультация.</p>
         </div>
         {#each note.sections as section (section.title)}
-          <div class="flex flex-col gap-2 text-sm">
+          <div class="flex flex-col gap-2">
             <h3 class="font-medium">{section.title}</h3>
             {#each toParagraphs(section.body) as paragraph, index (index)}
-              <p class="leading-relaxed text-muted-foreground">{paragraph}</p>
+              <p class="leading-relaxed">{paragraph}</p>
             {/each}
           </div>
         {/each}
       {/if}
     {:catch}
-      <p class="text-sm text-muted-foreground">Не удалось загрузить справку.</p>
+      <p class="text-sm text-foreground/70">Не удалось загрузить справку.</p>
     {/await}
   </section>
 {/if}

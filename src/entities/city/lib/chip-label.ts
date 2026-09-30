@@ -1,4 +1,38 @@
-import type { Factor, FactorValue } from '@/shared/lib/ranking';
+import type {
+  DatasetCity,
+  Factor,
+  FactorContribution,
+  FactorId,
+  FactorValue,
+} from '@/shared/lib/ranking';
+
+/** Ярлык стороны города: «дёшево» зелёным, «слабый английский» красным. */
+export interface CityChip {
+  factorId: FactorId;
+  label: string;
+  tone: 'good' | 'bad';
+}
+
+/** Ярлыки сильных и слабых сторон города в том порядке, в каком их выбрал `RankingState`. */
+export function profileChips(
+  profile: { strengths: FactorContribution[]; weaknesses: FactorContribution[] },
+  city: DatasetCity,
+  factors: ReadonlyMap<FactorId, Factor>,
+  ranges: Record<FactorId, [number, number]>,
+): { strengths: CityChip[]; weaknesses: CityChip[] } {
+  function toChips(contributions: FactorContribution[], tone: 'good' | 'bad'): CityChip[] {
+    return contributions.flatMap(({ factorId }) => {
+      const factor = factors.get(factorId);
+      const label =
+        factor && chipLabel(factor, tone, city.values[factorId] ?? null, ranges[factorId]);
+      return label ? [{ factorId, label, tone }] : [];
+    });
+  }
+  return {
+    strengths: toChips(profile.strengths, 'good'),
+    weaknesses: toChips(profile.weaknesses, 'bad'),
+  };
+}
 
 /**
  * Короткий ярлык сильной (`good`) или слабой (`bad`) стороны для списка и сводки.

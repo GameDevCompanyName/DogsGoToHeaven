@@ -181,7 +181,7 @@
         },
         "bands": {
           "type": "absolute",
-          "sourceName": "шкала Numbeo",
+          "sourceName": "Numbeo",
           "source": "https://www.numbeo.com/crime/indices_explained.jsp",
           "levels": [
             {
@@ -234,7 +234,7 @@
         },
         "bands": {
           "type": "absolute",
-          "sourceName": "шкала Numbeo",
+          "sourceName": "Numbeo",
           "source": "https://www.numbeo.com/health-care/indices_explained.jsp",
           "levels": [
             {
@@ -638,13 +638,14 @@
       "presentation": {
         "format": "plain",
         "hint": "Индекс EF EPI: насколько хорошо взрослые в стране владеют английским, по результатам теста EF.",
+        "unit": "по шкале EF",
         "chip": {
           "good": "хороший английский",
           "bad": "слабый английский"
         },
         "bands": {
           "type": "absolute",
-          "sourceName": "шкала EF EPI",
+          "sourceName": "EF EPI",
           "source": "https://www.ef.com/wwen/epi/about-epi/",
           "levels": [
             {
