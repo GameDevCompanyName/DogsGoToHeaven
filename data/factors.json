@@ -859,6 +859,7 @@
       },
       "defaultWeight": 3,
       "defaultEnabled": false,
+      "activeSample": "population.wikidata-2026",
       "presentation": {
         "format": "population",
         "hint": "Население города по Wikidata. Задайте диапазон: кому-то нужен мегаполис, кому-то город на полмиллиона.",
