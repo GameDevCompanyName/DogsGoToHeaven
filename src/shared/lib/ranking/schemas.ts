@@ -240,11 +240,15 @@ export const categoricalFilterSchema = z.object({ allowed: z.array(idSchema) }).
 
 export const factorFilterSchema = z.union([numericFilterSchema, categoricalFilterSchema]);
 
+/** Персона: готовый набор весов и фильтров поверх базы реестра. */
 export const presetSchema = z
   .object({
     id: idSchema,
-    kind: z.enum(['duration', 'income']),
     name: nameSchema,
+    /** Одна строка о том, кому подходит персона. */
+    description: nameSchema,
+    /** Ярлыки на карточке персоны: «дёшево», «хороший интернет». */
+    highlights: z.array(nameSchema).min(1).max(4),
     weights: z.record(idSchema, weightSchema).optional(),
     enabled: z.record(idSchema, z.boolean()).optional(),
     ranges: z.record(idSchema, rangeSchema).optional(),

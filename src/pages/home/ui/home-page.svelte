@@ -7,10 +7,14 @@
     { id: 'cities', label: 'Города' },
     { id: 'settings', label: 'Настройки' },
   ];
+
+  /** Пауза перед записью в адресную строку: ползунок не дёргает историю на каждом шаге. */
+  const URL_WRITE_DELAY_MS = 300;
 </script>
 
 <script lang="ts">
   import { createRankingState, setRankingContext } from '@/entities/ranking';
+  import { ShareButton } from '@/features/share-link';
   import { loadRawData } from '@/shared/api';
   import { cn } from '@/shared/lib/utils';
   import * as Tabs from '@/shared/ui/tabs';
@@ -18,8 +22,12 @@
   import { CityMap } from '@/widgets/city-map';
   import { ResultsList } from '@/widgets/results-list';
   import { SettingsPanel } from '@/widgets/settings-panel';
+  import { browser } from '$app/environment';
+  import { replaceState } from '$app/navigation';
+  import { page } from '$app/state';
 
-  const ranking = createRankingState(loadRawData());
+  // При пререндере хеша нет: страница собирается с персоной по умолчанию.
+  const ranking = createRankingState(loadRawData(), browser ? location.hash : '');
   setRankingContext(ranking);
 
   let section = $state<Section>('map');
@@ -30,7 +38,26 @@
   function handlePanelTabChange(value: string) {
     section = value === 'settings' ? 'settings' : 'cities';
   }
+
+  /** Ссылку вставили в открытую вкладку или поправили хеш руками: состояние берётся из адреса. */
+  function handleHashChange() {
+    if (location.hash.replace(/^#/, '') !== ranking.urlHash) ranking.applyHash(location.hash);
+  }
+
+  $effect(() => {
+    // Адресная строка — внешний мир: через $derived её не обновить, только синхронизировать.
+    const hash = ranking.urlHash;
+    const timer = setTimeout(() => {
+      if (location.hash.replace(/^#/, '') === hash) return;
+      // Пустой хеш — адрес без `#`: путь и запрос текущей страницы, пути для resolve() тут нет.
+      // eslint-disable-next-line svelte/no-navigation-without-resolve
+      replaceState(hash ? `#${hash}` : `${location.pathname}${location.search}`, page.state);
+    }, URL_WRITE_DELAY_MS);
+    return () => clearTimeout(timer);
+  });
 </script>
+
+<svelte:window onhashchange={handleHashChange} />
 
 <div class="relative h-dvh overflow-hidden md:grid md:grid-cols-[400px_1fr]">
   <aside
@@ -41,7 +68,10 @@
   >
     <Tabs.Root bind:value={() => panelTab, handlePanelTabChange} class="min-h-0 flex-1 gap-0">
       <header class="flex flex-col gap-3 border-b px-4 py-3">
-        <h1 class="text-base font-semibold">Все псы попадают в рай</h1>
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-base font-semibold">Все псы попадают в рай</h1>
+          <ShareButton />
+        </div>
         <Tabs.List class="hidden w-full md:inline-flex">
           <Tabs.Trigger value="cities">Города</Tabs.Trigger>
           <Tabs.Trigger value="settings">Настройки</Tabs.Trigger>

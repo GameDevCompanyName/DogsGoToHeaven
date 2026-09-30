@@ -38,7 +38,9 @@
   )}
   onclick={handleClick}
 >
-  <span class="w-7 shrink-0 text-sm text-foreground/70 tabular-nums">{ranked.rank}</span>
+  <span class="w-7 shrink-0 text-sm text-foreground/70 tabular-nums" data-testid="city-rank">
+    {ranked.rank}
+  </span>
   <span class="flex min-w-0 flex-1 flex-col gap-0.5">
     <span class="truncate text-lg leading-tight font-semibold" data-testid="city-name">
       {city.name}

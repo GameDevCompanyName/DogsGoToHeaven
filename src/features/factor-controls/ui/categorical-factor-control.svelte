@@ -5,6 +5,8 @@
   import { Checkbox } from '@/shared/ui/checkbox';
   import { Label } from '@/shared/ui/label';
 
+  import ChangedMarker from './changed-marker.svelte';
+
   interface Props {
     factor: CategoricalFactor;
   }
@@ -24,6 +26,7 @@
 
 <fieldset class="flex flex-col gap-2 py-3">
   <legend class="mb-2 flex items-center gap-0.5 text-base leading-snug font-medium">
+    <ChangedMarker factorId={factor.id} />
     {factor.name}
     <FactorHint {factor} />
   </legend>

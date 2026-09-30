@@ -30,7 +30,7 @@ Oct 1, 2026 · @Игорь, Claude
 | `remote-long`  | Удалёнщик надолго        | Жить за границей на визе кочевника или простом ВНЖ, доход из России или из-за рубежа | cost-of-living 8, rent 8, legalization-ease 8, tax-burden 7, internet-speed 6, safety 6, moscow-time-diff 5, time-to-citizenship 3; выкл it-salary; фильтр legalization-ease min 3                          |
 | `local-career` | Карьера в местном IT     | Устроиться в местную компанию и расти в доходе                                       | it-salary 10, english 8, legalization-ease 7, time-to-citizenship 6, tax-burden 5, rent 5, cost-of-living 3; выкл moscow-time-diff; фильтр entry-visa ≠ refused                                             |
 | `for-good`     | Насовсем, второй паспорт | Построить долгую базу и получить новое гражданство                                   | time-to-citizenship 10, legalization-ease 9, safety 8, healthcare 8, english 5, tax-burden 4, cost-of-living 4; фильтр entry-visa ≠ refused                                                                 |
-| `family`       | Семья с детьми           | Безопасно, здорово и стабильно, с посильной легализацией                             | safety 10, healthcare 9, air-quality 8, legalization-ease 7, rent 7, english 6, summer-temp 5; фильтры safety min 60, air-quality max 15                                                                    |
+| `family`       | Семья с детьми           | Безопасно, здорово и стабильно, с посильной легализацией                             | safety 10, healthcare 9, air-quality 8, legalization-ease 7, rent 7, english 6, summer-temp 5; фильтры safety min 50, air-quality max 25                                                                    |
 | `warm-cheap`   | Тепло и недорого         | Солнце и тёплая зима на удалённую зарплату                                           | winter-temp 9 с диапазоном [12, 25], sunshine 8, cost-of-living 9, rent 8, internet-speed 5, air-quality 4; выкл time-to-citizenship; фильтр winter-temp min 8                                              |
 
 Фильтр `entry-visa ≠ refused` записывается как `allowed` со всеми категориями, кроме `refused`. `work-visa` в фильтрах не используется, у него нет данных.
@@ -45,7 +45,7 @@ Oct 1, 2026 · @Игорь, Claude
 - У каждого ползунка рядом с весом доля в итоговом балле: «9 · 24 %». Доля = вес / сумма весов включённых факторов.
 - Точка-маркер у фактора, который отличается от персоны.
 - Над списком городов поле поиска по названию города и страны, фильтрует список без пересчёта ранжирования, ранг сохраняется. Пустой результат: «Ничего не найдено».
-- Под списком чип «Скрыто фильтрами: 41 · Сбросить фильтры», если фильтры отсекают хотя бы один город. Пустая выдача: «Фильтры отсекли все города. Самый строгий: Безопасность от 60» и кнопка сброса. Самый строгий — фильтр, который отсекает больше всего городов в одиночку.
+- Под списком чип «Скрыто фильтрами: 41 · Сбросить фильтры», если фильтры отсекают хотя бы один город. Пустая выдача: «Фильтры отсекли все города. Самый строгий: Безопасность от 50» и кнопка сброса. Самый строгий — фильтр, который отсекает больше всего городов в одиночку.
 
 ### Ссылка с настройками
 
