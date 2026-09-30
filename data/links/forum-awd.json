@@ -1,0 +1,315 @@
+{
+  "source": {
+    "name": "Форум Винского",
+    "url": "https://forum.awd.ru/",
+    "collectedAt": "2026-10-01"
+  },
+  "countries": {
+    "ae": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1239",
+      "title": "ОАЭ"
+    },
+    "am": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1731",
+      "title": "Армения"
+    },
+    "ar": {
+      "url": "https://forum.awd.ru/viewforum.php?f=194",
+      "title": "Аргентина, Уругвай, Парагвай"
+    },
+    "at": {
+      "url": "https://forum.awd.ru/viewforum.php?f=941",
+      "title": "Австрия"
+    },
+    "au": {
+      "url": "https://forum.awd.ru/viewforum.php?f=178",
+      "title": "Австралия"
+    },
+    "az": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1472",
+      "title": "Закавказье"
+    },
+    "be": {
+      "url": "https://forum.awd.ru/viewforum.php?f=156",
+      "title": "Бенилюкс"
+    },
+    "bg": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1273",
+      "title": "Болгария"
+    },
+    "br": {
+      "url": "https://forum.awd.ru/viewforum.php?f=195",
+      "title": "Бразилия"
+    },
+    "by": {
+      "url": "https://forum.awd.ru/viewforum.php?f=183",
+      "title": "Белоруссия"
+    },
+    "ca": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1037",
+      "title": "Канада"
+    },
+    "ch": {
+      "url": "https://forum.awd.ru/viewforum.php?f=972",
+      "title": "Швейцария"
+    },
+    "cn": {
+      "url": "https://forum.awd.ru/viewforum.php?f=138",
+      "title": "Китай"
+    },
+    "cy": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1297",
+      "title": "Кипр"
+    },
+    "cz": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1092",
+      "title": "Чехия"
+    },
+    "de": {
+      "url": "https://forum.awd.ru/viewforum.php?f=155",
+      "title": "Германия"
+    },
+    "dk": {
+      "url": "https://forum.awd.ru/viewforum.php?f=152",
+      "title": "Швеция и Дания"
+    },
+    "ee": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1525",
+      "title": "Эстония"
+    },
+    "eg": {
+      "url": "https://forum.awd.ru/viewforum.php?f=163",
+      "title": "Египет"
+    },
+    "es": {
+      "url": "https://forum.awd.ru/viewforum.php?f=158",
+      "title": "Испания"
+    },
+    "fi": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1543",
+      "title": "Финляндия"
+    },
+    "fr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=157",
+      "title": "Франция"
+    },
+    "gb": {
+      "url": "https://forum.awd.ru/viewforum.php?f=154",
+      "title": "Великобритания"
+    },
+    "ge": {
+      "url": "https://forum.awd.ru/viewforum.php?f=184",
+      "title": "Грузия"
+    },
+    "gr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=949",
+      "title": "Греция"
+    },
+    "hr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1231",
+      "title": "Хорватия"
+    },
+    "hu": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1279",
+      "title": "Венгрия"
+    },
+    "id": {
+      "url": "https://forum.awd.ru/viewforum.php?f=137",
+      "title": "Индонезия"
+    },
+    "ie": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1183",
+      "title": "Ирландия"
+    },
+    "il": {
+      "url": "https://forum.awd.ru/viewforum.php?f=171",
+      "title": "Израиль"
+    },
+    "in": {
+      "url": "https://forum.awd.ru/viewforum.php?f=136",
+      "title": "Индия"
+    },
+    "is": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1200",
+      "title": "Исландия и Гренландия"
+    },
+    "it": {
+      "url": "https://forum.awd.ru/viewforum.php?f=159",
+      "title": "Италия"
+    },
+    "jp": {
+      "url": "https://forum.awd.ru/viewforum.php?f=145",
+      "title": "Япония"
+    },
+    "kg": {
+      "url": "https://forum.awd.ru/viewforum.php?f=185",
+      "title": "Средняя Азия"
+    },
+    "kr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1106",
+      "title": "Корея"
+    },
+    "kz": {
+      "url": "https://forum.awd.ru/viewforum.php?f=185",
+      "title": "Средняя Азия"
+    },
+    "lt": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1699",
+      "title": "Литва"
+    },
+    "lu": {
+      "url": "https://forum.awd.ru/viewforum.php?f=156",
+      "title": "Бенилюкс"
+    },
+    "lv": {
+      "url": "https://forum.awd.ru/viewforum.php?f=883",
+      "title": "Латвия"
+    },
+    "ma": {
+      "url": "https://forum.awd.ru/viewforum.php?f=164",
+      "title": "Марокко"
+    },
+    "me": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1099",
+      "title": "Черногория"
+    },
+    "mn": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1112",
+      "title": "Монголия"
+    },
+    "mt": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1431",
+      "title": "Мальта"
+    },
+    "mx": {
+      "url": "https://forum.awd.ru/viewforum.php?f=189",
+      "title": "Мексика"
+    },
+    "my": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1379",
+      "title": "Малайзия"
+    },
+    "nl": {
+      "url": "https://forum.awd.ru/viewforum.php?f=156",
+      "title": "Бенилюкс"
+    },
+    "no": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1084",
+      "title": "Норвегия"
+    },
+    "nz": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1189",
+      "title": "Новая Зеландия"
+    },
+    "om": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1569",
+      "title": "Оман"
+    },
+    "pe": {
+      "url": "https://forum.awd.ru/viewforum.php?f=197",
+      "title": "Боливия и Перу"
+    },
+    "ph": {
+      "url": "https://forum.awd.ru/viewforum.php?f=143",
+      "title": "Филиппины"
+    },
+    "pl": {
+      "url": "https://forum.awd.ru/viewforum.php?f=161",
+      "title": "Польша"
+    },
+    "pt": {
+      "url": "https://forum.awd.ru/viewforum.php?f=959",
+      "title": "Португалия"
+    },
+    "ro": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1285",
+      "title": "Румыния"
+    },
+    "rs": {
+      "url": "https://forum.awd.ru/viewforum.php?f=160",
+      "title": "Сербия, Македония, Босния и Герцеговина, Косово"
+    },
+    "sa": {
+      "url": "https://forum.awd.ru/viewforum.php?f=177",
+      "title": "Аравийский полуостров"
+    },
+    "se": {
+      "url": "https://forum.awd.ru/viewforum.php?f=152",
+      "title": "Швеция и Дания"
+    },
+    "sg": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1372",
+      "title": "Сингапур"
+    },
+    "si": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1317",
+      "title": "Словения"
+    },
+    "sk": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1291",
+      "title": "Словакия"
+    },
+    "th": {
+      "url": "https://forum.awd.ru/viewforum.php?f=116",
+      "title": "Таиланд"
+    },
+    "tj": {
+      "url": "https://forum.awd.ru/viewforum.php?f=185",
+      "title": "Средняя Азия"
+    },
+    "tr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=186",
+      "title": "Турция"
+    },
+    "tw": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1656",
+      "title": "Тайвань"
+    },
+    "us": {
+      "url": "https://forum.awd.ru/viewforum.php?f=187",
+      "title": "США"
+    },
+    "uz": {
+      "url": "https://forum.awd.ru/viewforum.php?f=185",
+      "title": "Средняя Азия"
+    },
+    "vn": {
+      "url": "https://forum.awd.ru/viewforum.php?f=134",
+      "title": "Вьетнам"
+    },
+    "za": {
+      "url": "https://forum.awd.ru/viewforum.php?f=168",
+      "title": "Южная Африка"
+    }
+  },
+  "cities": {
+    "hong-kong": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1363",
+      "title": "Гонконг"
+    },
+    "istanbul": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1398",
+      "title": "Стамбул"
+    },
+    "kuala-lumpur": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1487",
+      "title": "Куала-Лумпур"
+    },
+    "london": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1452",
+      "title": "Лондон"
+    },
+    "macau": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1363",
+      "title": "Макао"
+    },
+    "paris": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1468",
+      "title": "Париж"
+    },
+    "prague": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1523",
+      "title": "Прага"
+    }
+  }
+}
