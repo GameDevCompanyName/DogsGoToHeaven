@@ -14,6 +14,12 @@ const NUMERIC: NumericFactor = {
   scoring: { type: 'lower-better' },
   defaultWeight: 5,
   defaultEnabled: true,
+  presentation: {
+    format: 'plain',
+    hint: 'Тест',
+    chip: { good: 'хорошо', bad: 'плохо' },
+    bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+  },
 };
 
 const CATEGORICAL: CategoricalFactor = {
@@ -24,6 +30,7 @@ const CATEGORICAL: CategoricalFactor = {
   group: 'g',
   level: 'country',
   categories: [{ code: 'visa-free', name: 'Без визы' }],
+  presentation: { format: 'category', hint: 'Тест' },
 };
 
 describe('formatValue', () => {

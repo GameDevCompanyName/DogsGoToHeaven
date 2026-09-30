@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Dataset, DatasetCity, FactorProvenance, Preset } from '@/shared/lib/ranking';
+import type {
+  Dataset,
+  DatasetCity,
+  FactorProvenance,
+  NumericPresentation,
+  Preset,
+} from '@/shared/lib/ranking';
 
 import { RankingState } from './ranking-state.svelte';
+
+/** Движок представление не читает: хватает минимального валидного. */
+const PRESENTATION: NumericPresentation = {
+  format: 'plain',
+  hint: 'Тест',
+  chip: { good: 'хорошо', bad: 'плохо' },
+  bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+};
 
 function makeCity(id: string, values: DatasetCity['values'], coverage = 1): DatasetCity {
   return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values, coverage };
@@ -26,6 +40,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'rent',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Аренда',
         definition: 'Тест',
         group: 'g',
@@ -37,6 +52,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'safety',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Безопасность',
         definition: 'Тест',
         group: 'g',
@@ -48,6 +64,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'ease',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Лёгкость',
         definition: 'Тест',
         group: 'g',
@@ -59,6 +76,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'visa',
         kind: 'categorical',
+        presentation: { format: 'category', hint: 'Тест' },
         name: 'Виза',
         definition: 'Тест',
         group: 'g',

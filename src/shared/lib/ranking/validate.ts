@@ -28,6 +28,7 @@ export function validateRawData(raw: RawData): string[] {
     if (!groupIds.has(factor.group)) {
       errors.push(`Factor "${factor.id}": unknown group "${factor.group}"`);
     }
+    validatePresentation(factor, errors);
     if (factor.activeSample === undefined) continue;
     const sample = samplesById.get(factor.activeSample);
     if (!sample) {
@@ -65,6 +66,21 @@ function collectIds(items: { id: string }[], label: string, errors: string[]): S
     ids.add(item.id);
   }
   return ids;
+}
+
+/**
+ * У фактора с направлением («больше лучше», «меньше лучше») тон уровня берётся из шкалы,
+ * поэтому он обязателен. У `range` тон зависит от диапазона пользователя, шкала только описывает.
+ */
+function validatePresentation(factor: Factor, errors: string[]): void {
+  if (factor.kind !== 'numeric' || factor.scoring.type === 'range') return;
+  const { bands } = factor.presentation;
+  if (bands.type !== 'absolute') return;
+  for (const level of bands.levels) {
+    if (level.tone === undefined) {
+      errors.push(`Factor "${factor.id}": level "${level.label}" needs a tone`);
+    }
+  }
 }
 
 function validateSampleValues(

@@ -38,7 +38,20 @@
       },
       "defaultWeight": 8,
       "defaultEnabled": true,
-      "activeSample": "cost-of-living.numbeo-2026"
+      "activeSample": "cost-of-living.numbeo-2026",
+      "presentation": {
+        "format": "nyc-index",
+        "hint": "Индекс Numbeo: цены на еду, транспорт и услуги без аренды; Нью-Йорк = 100, меньше — дешевле.",
+        "chip": {
+          "good": "дёшево",
+          "bad": "дорого"
+        },
+        "bands": {
+          "type": "percentile",
+          "phrase": "дешевле, чем в {n} % городов",
+          "inversePhrase": "дороже, чем в {n} % городов"
+        }
+      }
     },
     {
       "id": "rent",
@@ -52,7 +65,20 @@
       },
       "defaultWeight": 7,
       "defaultEnabled": true,
-      "activeSample": "rent.numbeo-2026"
+      "activeSample": "rent.numbeo-2026",
+      "presentation": {
+        "format": "nyc-index",
+        "hint": "Индекс Numbeo: стоимость аренды жилья; Нью-Йорк = 100, меньше — дешевле.",
+        "chip": {
+          "good": "дешёвая аренда",
+          "bad": "дорогая аренда"
+        },
+        "bands": {
+          "type": "percentile",
+          "phrase": "дешевле, чем в {n} % городов",
+          "inversePhrase": "дороже, чем в {n} % городов"
+        }
+      }
     },
     {
       "id": "it-salary",
@@ -66,7 +92,20 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
-      "activeSample": "it-salary.stackoverflow-2025"
+      "activeSample": "it-salary.stackoverflow-2025",
+      "presentation": {
+        "format": "usd-per-year",
+        "hint": "Медианная годовая компенсация разработчика по опросу Stack Overflow, в долларах до налогов. Данные по стране, а не по городу.",
+        "chip": {
+          "good": "высокие зарплаты",
+          "bad": "низкие зарплаты"
+        },
+        "bands": {
+          "type": "percentile",
+          "phrase": "зарплаты выше, чем в {n} % городов",
+          "inversePhrase": "зарплаты ниже, чем в {n} % городов"
+        }
+      }
     },
     {
       "id": "tax-burden",
@@ -80,7 +119,45 @@
       },
       "defaultWeight": 4,
       "defaultEnabled": true,
-      "activeSample": "tax-burden.wikipedia-2026"
+      "activeSample": "tax-burden.wikipedia-2026",
+      "presentation": {
+        "format": "percent-max",
+        "hint": "Максимальная ставка налога на доходы физлиц в стране; ставка для вашего дохода может быть ниже. В среднем по Европе — 38,5 %.",
+        "chip": {
+          "good": "низкие налоги",
+          "bad": "высокие налоги"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "обзор Euronews 2026",
+          "levels": [
+            {
+              "max": 0,
+              "label": "нет налога",
+              "tone": "good"
+            },
+            {
+              "max": 15,
+              "label": "низкий",
+              "tone": "good"
+            },
+            {
+              "max": 35,
+              "label": "умеренный",
+              "tone": "ok"
+            },
+            {
+              "max": 45,
+              "label": "высокий",
+              "tone": "bad"
+            },
+            {
+              "label": "очень высокий",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "safety",
@@ -94,7 +171,46 @@
       },
       "defaultWeight": 7,
       "defaultEnabled": true,
-      "activeSample": "safety.numbeo-2026"
+      "activeSample": "safety.numbeo-2026",
+      "presentation": {
+        "format": "index-100",
+        "hint": "Индекс безопасности Numbeo по опросам жителей, от 0 до 100: больше — безопаснее.",
+        "chip": {
+          "good": "безопасно",
+          "bad": "небезопасно"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "шкала Numbeo",
+          "source": "https://www.numbeo.com/crime/indices_explained.jsp",
+          "levels": [
+            {
+              "below": 20,
+              "label": "опасно",
+              "tone": "bad"
+            },
+            {
+              "below": 40,
+              "label": "небезопасно",
+              "tone": "bad"
+            },
+            {
+              "below": 60,
+              "label": "средне",
+              "tone": "ok"
+            },
+            {
+              "below": 80,
+              "label": "безопасно",
+              "tone": "good"
+            },
+            {
+              "label": "очень безопасно",
+              "tone": "good"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "healthcare",
@@ -108,7 +224,41 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
-      "activeSample": "healthcare.numbeo-2026"
+      "activeSample": "healthcare.numbeo-2026",
+      "presentation": {
+        "format": "index-100",
+        "hint": "Индекс здравоохранения Numbeo по опросам жителей: доступность и качество медицины в стране, от 0 до 100.",
+        "chip": {
+          "good": "хорошая медицина",
+          "bad": "слабая медицина"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "шкала Numbeo",
+          "source": "https://www.numbeo.com/health-care/indices_explained.jsp",
+          "levels": [
+            {
+              "below": 40,
+              "label": "слабое",
+              "tone": "bad"
+            },
+            {
+              "below": 60,
+              "label": "среднее",
+              "tone": "ok"
+            },
+            {
+              "below": 80,
+              "label": "хорошее",
+              "tone": "good"
+            },
+            {
+              "label": "очень хорошее",
+              "tone": "good"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "air-quality",
@@ -122,7 +272,46 @@
       },
       "defaultWeight": 4,
       "defaultEnabled": true,
-      "activeSample": "air-quality.who-2026"
+      "activeSample": "air-quality.who-2026",
+      "presentation": {
+        "format": "pm25",
+        "hint": "Среднегодовая концентрация мелких частиц PM2.5 по данным ВОЗ. Норма ВОЗ — не выше 5 мкг/м³, меньше — чище.",
+        "chip": {
+          "good": "чистый воздух",
+          "bad": "грязный воздух"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "норма ВОЗ",
+          "source": "https://www.who.int/publications/i/item/9789240034228",
+          "levels": [
+            {
+              "max": 5,
+              "label": "чисто",
+              "tone": "good"
+            },
+            {
+              "max": 10,
+              "label": "хорошо",
+              "tone": "good"
+            },
+            {
+              "max": 15,
+              "label": "умеренно",
+              "tone": "ok"
+            },
+            {
+              "max": 25,
+              "label": "загрязнено",
+              "tone": "bad"
+            },
+            {
+              "label": "сильно загрязнено",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "winter-temp",
@@ -137,7 +326,41 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
-      "activeSample": "winter-temp.open-meteo-2020-2024"
+      "activeSample": "winter-temp.open-meteo-2020-2024",
+      "presentation": {
+        "format": "celsius",
+        "hint": "Средняя температура самого холодного месяца за 2020–2024 годы. Хорошо или плохо — решает ваш диапазон в настройках.",
+        "chip": {
+          "good": "мягкая зима",
+          "bad": "холодная зима",
+          "badAbove": "жаркая зима"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "below": -5,
+              "label": "суровая зима"
+            },
+            {
+              "below": 0,
+              "label": "холодная"
+            },
+            {
+              "below": 8,
+              "label": "прохладная"
+            },
+            {
+              "below": 15,
+              "label": "мягкая"
+            },
+            {
+              "label": "тёплая"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "summer-temp",
@@ -152,7 +375,41 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
-      "activeSample": "summer-temp.open-meteo-2020-2024"
+      "activeSample": "summer-temp.open-meteo-2020-2024",
+      "presentation": {
+        "format": "celsius",
+        "hint": "Средняя температура самого тёплого месяца за 2020–2024 годы. Хорошо или плохо — решает ваш диапазон в настройках.",
+        "chip": {
+          "good": "комфортное лето",
+          "bad": "жаркое лето",
+          "badBelow": "холодное лето"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "below": 18,
+              "label": "прохладное лето"
+            },
+            {
+              "below": 24,
+              "label": "комфортное"
+            },
+            {
+              "below": 28,
+              "label": "жаркое"
+            },
+            {
+              "below": 32,
+              "label": "очень жаркое"
+            },
+            {
+              "label": "изнуряющая жара"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "sunshine",
@@ -166,7 +423,20 @@
       },
       "defaultWeight": 4,
       "defaultEnabled": true,
-      "activeSample": "sunshine.open-meteo-2020-2024"
+      "activeSample": "sunshine.open-meteo-2020-2024",
+      "presentation": {
+        "format": "relative-only",
+        "hint": "Часы солнца в год по модельным данным ERA5. Модель завышает сами часы, поэтому показываем только сравнение с другими городами.",
+        "chip": {
+          "good": "солнечно",
+          "bad": "пасмурно"
+        },
+        "bands": {
+          "type": "percentile",
+          "phrase": "солнечнее, чем в {n} % городов",
+          "inversePhrase": "пасмурнее, чем в {n} % городов"
+        }
+      }
     },
     {
       "id": "entry-visa",
@@ -197,7 +467,11 @@
           "code": "refused",
           "name": "Въезд закрыт"
         }
-      ]
+      ],
+      "presentation": {
+        "format": "category",
+        "hint": "Как гражданину РФ с обычным паспортом въехать в страну на короткий срок. Правила меняются часто — проверяйте перед поездкой."
+      }
     },
     {
       "id": "work-visa",
@@ -219,7 +493,11 @@
           "code": "closed",
           "name": "Практически недоступна"
         }
-      ]
+      ],
+      "presentation": {
+        "format": "category",
+        "hint": "Есть ли у гражданина РФ понятный путь к рабочей визе без работодателя-спонсора."
+      }
     },
     {
       "id": "nomad-visa",
@@ -238,7 +516,11 @@
           "code": "no",
           "name": "Нет"
         }
-      ]
+      ],
+      "presentation": {
+        "format": "category",
+        "hint": "Есть ли виза цифрового кочевника, доступная гражданам РФ: удобный путь для удалёнщика."
+      }
     },
     {
       "id": "legalization-ease",
@@ -252,7 +534,46 @@
       },
       "defaultWeight": 6,
       "defaultEnabled": true,
-      "activeSample": "legalization-ease.claude-research-2026"
+      "activeSample": "legalization-ease.claude-research-2026",
+      "presentation": {
+        "format": "score-5",
+        "hint": "Оценка Claude по открытым источникам: насколько просто гражданину РФ въехать и получить ВНЖ, от 1 до 5. Подробности — в справке ниже.",
+        "chip": {
+          "good": "легко легализоваться",
+          "bad": "сложно легализоваться"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "рубрика проекта",
+          "source": "https://github.com/GameDevCompanyName/DogsGoToHeaven/blob/main/docs/collect-legalization.md",
+          "levels": [
+            {
+              "max": 1,
+              "label": "практически закрыто",
+              "tone": "bad"
+            },
+            {
+              "max": 2,
+              "label": "сложно",
+              "tone": "bad"
+            },
+            {
+              "max": 3,
+              "label": "реально, но с условиями",
+              "tone": "ok"
+            },
+            {
+              "max": 4,
+              "label": "доступно",
+              "tone": "good"
+            },
+            {
+              "label": "просто",
+              "tone": "good"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "time-to-citizenship",
@@ -266,7 +587,40 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
-      "activeSample": "time-to-citizenship.wikipedia-2026"
+      "activeSample": "time-to-citizenship.wikipedia-2026",
+      "presentation": {
+        "format": "years",
+        "hint": "Сколько лет нужно легально прожить в стране до права подать на гражданство в общем порядке.",
+        "chip": {
+          "good": "быстро до гражданства",
+          "bad": "долго до гражданства"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "max": 5,
+              "label": "быстро",
+              "tone": "good"
+            },
+            {
+              "max": 8,
+              "label": "средне",
+              "tone": "ok"
+            },
+            {
+              "max": 10,
+              "label": "долго",
+              "tone": "bad"
+            },
+            {
+              "label": "очень долго",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "english",
@@ -280,7 +634,46 @@
         "type": "higher-better"
       },
       "defaultWeight": 5,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "presentation": {
+        "format": "plain",
+        "hint": "Индекс EF EPI: насколько хорошо взрослые в стране владеют английским, по результатам теста EF.",
+        "chip": {
+          "good": "хороший английский",
+          "bad": "слабый английский"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "шкала EF EPI",
+          "source": "https://www.ef.com/wwen/epi/about-epi/",
+          "levels": [
+            {
+              "below": 450,
+              "label": "очень низкий",
+              "tone": "bad"
+            },
+            {
+              "below": 500,
+              "label": "низкий",
+              "tone": "bad"
+            },
+            {
+              "below": 550,
+              "label": "средний",
+              "tone": "ok"
+            },
+            {
+              "below": 600,
+              "label": "высокий",
+              "tone": "good"
+            },
+            {
+              "label": "очень высокий",
+              "tone": "good"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "internet-speed",
@@ -294,7 +687,41 @@
         "type": "higher-better"
       },
       "defaultWeight": 4,
-      "defaultEnabled": true
+      "defaultEnabled": true,
+      "presentation": {
+        "format": "plain",
+        "hint": "Медианная скорость домашнего интернета на скачивание по Speedtest. Для удалёнки хватает 100 Мбит/с — это порог FCC 2024.",
+        "chip": {
+          "good": "быстрый интернет",
+          "bad": "медленный интернет"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "порог FCC 2024",
+          "source": "https://www.fcc.gov/document/fcc-increases-broadband-speed-benchmark",
+          "levels": [
+            {
+              "below": 25,
+              "label": "медленно",
+              "tone": "bad"
+            },
+            {
+              "below": 100,
+              "label": "достаточно для удалёнки",
+              "tone": "ok"
+            },
+            {
+              "below": 250,
+              "label": "быстро",
+              "tone": "good"
+            },
+            {
+              "label": "очень быстро",
+              "tone": "good"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "moscow-time-diff",
@@ -308,7 +735,41 @@
       },
       "defaultWeight": 3,
       "defaultEnabled": true,
-      "activeSample": "moscow-time-diff.iana-2026"
+      "activeSample": "moscow-time-diff.iana-2026",
+      "presentation": {
+        "format": "plain",
+        "hint": "Разница стандартного времени с Москвой. Чем она меньше, тем больше рабочих часов совпадает с командой в России.",
+        "unit": "ч от Москвы",
+        "chip": {
+          "good": "удобный часовой пояс",
+          "bad": "неудобный часовой пояс"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "max": 2,
+              "label": "удобно работать с РФ",
+              "tone": "good"
+            },
+            {
+              "max": 4,
+              "label": "часы частично пересекаются",
+              "tone": "ok"
+            },
+            {
+              "max": 7,
+              "label": "общие часы утром или вечером",
+              "tone": "bad"
+            },
+            {
+              "label": "почти не пересекаются",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
     }
   ]
 }
