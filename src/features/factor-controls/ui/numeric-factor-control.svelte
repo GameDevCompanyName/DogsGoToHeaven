@@ -7,6 +7,8 @@
   import { Label } from '@/shared/ui/label';
   import { Slider } from '@/shared/ui/slider';
 
+  import ChangedMarker from './changed-marker.svelte';
+
   interface Props {
     factor: NumericFactor;
   }
@@ -24,6 +26,10 @@
   const low = $derived(range ? range[0] : numericFilter?.min);
   const high = $derived(range ? range[1] : numericFilter?.max);
   const checkboxId = $derived(`factor-${factor.id}`);
+  /** Доля в итоговом балле, целые проценты; у выключенного фактора её нет. */
+  const sharePercent = $derived(
+    isEnabled ? Math.round(ranking.weightShare(factor.id) * 100) : null,
+  );
 
   function parseBound(raw: string): number | undefined {
     if (raw.trim() === '') return undefined;
@@ -64,10 +70,17 @@
   <div class="flex items-center gap-2">
     <Checkbox id={checkboxId} bind:checked={() => isEnabled, handleEnabledChange} />
     <span class="flex min-w-0 flex-1 items-center gap-0.5">
+      <ChangedMarker factorId={factor.id} />
       <Label for={checkboxId} class="text-base leading-snug">{factor.name}</Label>
       <FactorHint {factor} />
     </span>
-    <span class="text-base text-foreground/70 tabular-nums" aria-hidden="true">{weight}</span>
+    <span
+      class="shrink-0 text-base whitespace-nowrap text-foreground/70 tabular-nums"
+      data-testid="weight-share-{factor.id}"
+      title="Вес и доля в итоговом балле"
+    >
+      {weight}{#if sharePercent !== null}&nbsp;·&nbsp;{sharePercent}&nbsp;%{/if}
+    </span>
   </div>
   <Slider
     type="single"

@@ -16,6 +16,24 @@
   function handleReset() {
     ranking.resetToPreset();
   }
+
+  /**
+   * Прокручивает ряд персон к активной карточке, если та за краем: например, открыли ссылку
+   * с персоной. Панель при этом может быть скрыта, поэтому ждём, пока у карточки появится размер.
+   */
+  function revealInRow(card: HTMLElement) {
+    const observer = new ResizeObserver(() => {
+      const row = card.parentElement;
+      const cardBox = card.getBoundingClientRect();
+      if (!row || cardBox.width === 0) return;
+      observer.disconnect();
+      const rowBox = row.getBoundingClientRect();
+      if (cardBox.left >= rowBox.left && cardBox.right <= rowBox.right) return;
+      row.scrollLeft += cardBox.left - rowBox.left - (rowBox.width - cardBox.width) / 2;
+    });
+    observer.observe(card);
+    return () => observer.disconnect();
+  }
 </script>
 
 <section aria-labelledby="personas-heading" class="flex flex-col gap-2">
@@ -31,7 +49,7 @@
   >
     {#each ranking.presets as preset (preset.id)}
       {@const isActive = preset.id === ranking.presetId}
-      <li class="w-64 shrink-0 snap-start md:w-auto">
+      <li class="w-64 shrink-0 snap-start md:w-auto" {@attach isActive ? revealInRow : undefined}>
         <button
           type="button"
           aria-pressed={isActive}
@@ -52,7 +70,12 @@
           <span class="text-sm leading-snug text-foreground/70">{preset.description}</span>
           <span class="mt-auto flex flex-wrap gap-1 pt-1">
             {#each preset.highlights as highlight (highlight)}
-              <span class="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+              <span
+                class={cn(
+                  'rounded-full px-2 py-0.5 text-xs text-secondary-foreground',
+                  isActive ? 'bg-background' : 'bg-secondary',
+                )}
+              >
                 {highlight}
               </span>
             {/each}
