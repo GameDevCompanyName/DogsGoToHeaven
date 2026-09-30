@@ -11,7 +11,9 @@
  *      чьи координаты P625, округлённые до сотых, совпадают с нашими, а русская метка
  *      равна `name` города (нет такого — города нет в выборке). Из нескольких кандидатов
  *      берём того, у кого есть P1082, затем с меньшим номером Q. Сопоставление кэшируется в
- *      scripts/collect/.cache/population/qids.json.
+ *      scripts/collect/.cache/population/qids.json. Запасной путь для городов, которых
+ *      это не нашло или у найденного нет P1082, — заголовок английской Википедии
+ *      (wbgetentities, TITLE_FALLBACKS); Kotor подменён муниципалитетом (QID_OVERRIDES).
  *   2. Население: SPARQL по `VALUES ?item {…}` пачками по 50, все утверждения P1082
  *      с рангом не «deprecated» и квалификатором P585 (момент времени). Берём значение
  *      с самой поздней P585; если дат нет ни у одного — значение с наивысшим рангом
@@ -45,6 +47,27 @@ const SEARCH_RADIUS_KM = 2;
 const PREFERRED_RANK = 'http://wikiba.se/ontology#PreferredRank';
 const DEPRECATED_RANK = 'http://wikiba.se/ontology#DeprecatedRank';
 
+/**
+ * Ручное решение (Kotor): элемент «Kotor» (Q171080) хранит население старого города
+ * (562 чел.), а город в привычном смысле — муниципалитет Kotor Municipality (Q4856305,
+ * P131-родитель с собственным P1082). Подмена точечная, а не общая эвристика.
+ */
+const QID_OVERRIDES: Record<string, string> = {
+  kotor: 'Q4856305',
+};
+
+/**
+ * Запасной поиск по заголовку английской Википедии для городов, которых не нашло
+ * сопоставление по координатам и русской метке, или у найденного элемента нет P1082.
+ * cities.ts заголовки не сохраняет, поэтому карта явная и короткая.
+ */
+const TITLE_FALLBACKS: Record<string, string> = {
+  seoul: 'Seoul',
+  'the-hague': 'The Hague',
+  bar: 'Bar, Montenegro',
+  'ha-long': 'Hạ Long',
+};
+
 interface City {
   id: string;
   name: string;
@@ -70,14 +93,13 @@ const sparqlSchema = z.object({
 
 type Row = Record<string, string>;
 
-async function fetchSparql(query: string): Promise<string> {
-  const url = `${SPARQL_ENDPOINT}?format=json&query=${encodeURIComponent(query)}`;
+async function fetchText(url: string): Promise<string> {
   for (let attempt = 0; ; attempt += 1) {
     await sleep(REQUEST_DELAY_MS);
     let response: Response;
     try {
       response = await fetch(url, {
-        headers: { 'User-Agent': USER_AGENT, Accept: 'application/sparql-results+json' },
+        headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
       });
     } catch (error) {
       if (attempt >= 3) throw error;
@@ -92,14 +114,23 @@ async function fetchSparql(query: string): Promise<string> {
   }
 }
 
-/** SPARQL-запрос с дисковым кэшем по хэшу текста запроса. */
-async function sparql(query: string): Promise<Row[]> {
+/** Ответ по адресу с дисковым кэшем; имя файла — хэш ключа (текст SPARQL-запроса или адрес). */
+async function cachedText(key: string, url: string): Promise<string> {
   mkdirSync(CACHE_DIR, { recursive: true });
-  const file = join(CACHE_DIR, `${createHash('sha1').update(query).digest('hex')}.json`);
-  const cached = existsSync(file);
-  const text = cached ? readFileSync(file, 'utf8') : await fetchSparql(query);
+  const file = join(CACHE_DIR, `${createHash('sha1').update(key).digest('hex')}.json`);
+  if (existsSync(file)) return readFileSync(file, 'utf8');
+  const text = await fetchText(url);
+  writeFileSync(file, text);
+  return text;
+}
+
+/** SPARQL-запрос с дисковым кэшем. */
+async function sparql(query: string): Promise<Row[]> {
+  const text = await cachedText(
+    query,
+    `${SPARQL_ENDPOINT}?format=json&query=${encodeURIComponent(query)}`,
+  );
   const data = sparqlSchema.parse(JSON.parse(text));
-  if (!cached) writeFileSync(file, text);
   return data.results.bindings.map((row) =>
     Object.fromEntries(Object.entries(row).map(([key, cell]) => [key, cell.value])),
   );
@@ -159,24 +190,53 @@ async function findQid(city: City): Promise<string | undefined> {
   return best?.qid;
 }
 
-async function resolveQids(cities: City[]): Promise<Map<string, string>> {
+const entitiesSchema = z.object({
+  entities: z.record(z.object({ missing: z.string().optional() }).passthrough()),
+});
+
+/** Элемент Wikidata по заголовку английской Википедии (wbgetentities, sites=enwiki). */
+async function qidByTitle(title: string): Promise<string | undefined> {
+  const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=${encodeURIComponent(title)}&props=info&format=json`;
+  const { entities } = entitiesSchema.parse(JSON.parse(await cachedText(url, url)));
+  return Object.entries(entities).find(([, entity]) => entity.missing === undefined)?.[0];
+}
+
+interface Resolution {
+  /** Основной элемент города. */
+  primary: Map<string, string>;
+  /** Элемент по заголовку Википедии: запасной, если у основного нет P1082 или его нет вовсе. */
+  byTitle: Map<string, string>;
+}
+
+async function resolveQids(cities: City[]): Promise<Resolution> {
   mkdirSync(CACHE_DIR, { recursive: true });
   const file = join(CACHE_DIR, 'qids.json');
   const known: Record<string, string> = existsSync(file)
     ? z.record(z.string()).parse(JSON.parse(readFileSync(file, 'utf8')))
     : {};
+  const primary = new Map<string, string>();
+  const byTitle = new Map<string, string>();
   for (const city of cities) {
-    if (known[city.id] !== undefined) continue;
-    const qid = await findQid(city);
-    if (qid !== undefined) known[city.id] = qid;
+    const override = QID_OVERRIDES[city.id];
+    if (override !== undefined) {
+      primary.set(city.id, override);
+      continue;
+    }
+    let qid = known[city.id];
+    if (qid === undefined) {
+      qid = await findQid(city);
+      if (qid !== undefined) known[city.id] = qid;
+    }
+    if (qid !== undefined) primary.set(city.id, qid);
+  }
+  for (const city of cities) {
+    const title = TITLE_FALLBACKS[city.id];
+    if (title === undefined) continue;
+    const qid = await qidByTitle(title);
+    if (qid !== undefined) byTitle.set(city.id, qid);
   }
   writeFileSync(file, `${JSON.stringify(known, null, 2)}\n`);
-  const resolved = new Map<string, string>();
-  for (const city of cities) {
-    const qid = known[city.id];
-    if (qid !== undefined) resolved.set(city.id, qid);
-  }
-  return resolved;
+  return { primary, byTitle };
 }
 
 // --- Этап 2: население ----------------------------------------------------------
@@ -252,19 +312,25 @@ async function main(): Promise<void> {
     .parse(JSON.parse(readFileSync(join(DATA_DIR, 'cities.json'), 'utf8')));
   const cities: City[] = limit === undefined ? all : all.slice(0, limit);
 
-  const qids = await stage('сопоставление с Wikidata', () => resolveQids(cities));
+  const { primary, byTitle } = await stage('сопоставление с Wikidata', () => resolveQids(cities));
   const observations = await stage('загрузка P1082', () =>
-    fetchObservations([...new Set(qids.values())]),
+    fetchObservations([...new Set([...primary.values(), ...byTitle.values()])]),
   );
 
   const values: Record<string, number> = {};
   const unresolved: string[] = [];
   await stage('выбор значений', async () => {
     for (const city of cities) {
-      const qid = qids.get(city.id);
-      const value = qid === undefined ? undefined : pick(observations.get(qid) ?? []);
+      const tried = [primary.get(city.id), byTitle.get(city.id)].filter(
+        (qid): qid is string => qid !== undefined,
+      );
+      const value = tried
+        .map((qid) => pick(observations.get(qid) ?? []))
+        .find((v) => v !== undefined);
       if (value === undefined) {
-        unresolved.push(`${city.id} (${qid === undefined ? 'нет элемента' : `${qid}: нет P1082`})`);
+        unresolved.push(
+          `${city.id} (${tried.length === 0 ? 'нет элемента' : `${tried.join(', ')}: нет P1082`})`,
+        );
       } else {
         values[city.id] = value;
       }
@@ -282,7 +348,7 @@ async function main(): Promise<void> {
       notes:
         'Свойство P1082 (население) элемента города. Берётся значение с самой поздней датой P585; ' +
         'если дат нет, с наивысшим рангом; устаревшие (deprecated) значения игнорируются. ' +
-        'Города сопоставлены с элементами по координатам и русской метке.',
+        'Города сопоставлены с элементами по координатам и русской метке, не найденные — по заголовку английской Википедии; для Котора взят муниципалитет.',
     },
     unit: 'чел.',
     values,
