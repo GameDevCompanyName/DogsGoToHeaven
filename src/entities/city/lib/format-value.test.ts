@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { NumericFormat } from '@/shared/lib/ranking';
 
-import { formatValue } from './format-value';
+import { formatValue, NBSP } from './format-value';
 import { CATEGORICAL, makeNumeric } from './test-factors';
 
 /** Неразрывный пробел: им отделены проценты, единицы и разряды. */
@@ -67,6 +67,16 @@ describe('formatValue', () => {
   it('prefers the presentation unit over the sample unit', () => {
     expect(format('plain', 170.4, 'Мбит/с')?.primary).toBe(`170${S}Мбит/с`);
     expect(format('plain', 3, 'ч', 'ч от Москвы')?.primary).toBe(`3${S}ч от Москвы`);
+  });
+
+  it('shows a monthly rent in dollars', () => {
+    expect(format('usd-per-month', 747)?.primary).toBe(`≈${NBSP}$750 в месяц`);
+  });
+
+  it('shows a population in millions or thousands', () => {
+    expect(format('population', 1_234_000)?.primary).toBe(`1,2${NBSP}млн`);
+    expect(format('population', 850_400)?.primary).toBe(`850${NBSP}тыс.`);
+    expect(format('population', 85_000)?.primary).toMatch(/^85.000$/);
   });
 
   it('names a category', () => {

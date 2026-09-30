@@ -137,6 +137,8 @@ export const numericFormatSchema = z.enum([
   'years',
   'score-5',
   'plain',
+  'usd-per-month',
+  'population',
 ]);
 
 export const numericPresentationSchema = z

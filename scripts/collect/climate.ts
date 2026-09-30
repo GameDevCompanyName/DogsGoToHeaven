@@ -1,10 +1,10 @@
 /**
- * Собирает выборки `winter-temp`, `summer-temp` и `sunshine` из Open-Meteo Historical
+ * Собирает выборки `winter-temp`, `summer-temp`, `sunshine` и `muggy-days` из Open-Meteo Historical
  * Weather API (https://archive-api.open-meteo.com/v1/archive, без ключа) по координатам
  * из data/cities.json.
  *
  * Период — 2020-01-01..2024-12-31 (`timezone=auto`, посуточно
- * `temperature_2m_mean,sunshine_duration`). Города запрашиваются пачками по 10
+ * `temperature_2m_mean,sunshine_duration,dew_point_2m_mean`). Города запрашиваются пачками по 10
  * (широты/долготы через запятую в одном запросе), между запросами пауза 2 с.
  * Сырые ответы кэшируются в scripts/collect/.cache/climate/<hash>.json и при повторном
  * запуске не перезапрашиваются.
@@ -15,7 +15,9 @@
  *   - `winter-temp` — минимум из 12 усреднённых месячных значений (°C, 1 знак);
  *   - `summer-temp` — максимум из них (°C, 1 знак);
  *   - `sunshine` — сумма `sunshine_duration` (секунды) по каждому календарному году,
- *     переведённая в часы, усреднённая по 5 годам, целое число.
+ *     переведённая в часы, усреднённая по 5 годам, целое число;
+ *   - `muggy-days` — число суток с `dew_point_2m_mean` ≥ 18 °C в каждом календарном году,
+ *     усреднённое по 5 годам, целое число.
  * Города, для которых источник не вернул данных, остаются без значения.
  *
  * Запуск: npx tsx scripts/collect/climate.ts [--limit N]
@@ -41,7 +43,9 @@ const MAX_CONSECUTIVE_429 = 3;
 const SOURCE_NAME = 'Open-Meteo Historical Weather API';
 const SOURCE_URL = 'https://archive-api.open-meteo.com/v1/archive';
 const SOURCE_PERIOD = '2020–2024';
-const COLLECTED_AT = '2026-09-28';
+const COLLECTED_AT = '2026-10-01';
+const MUGGY_DEW_POINT_C = 18;
+const DAILY_VARIABLES = 'temperature_2m_mean,sunshine_duration,dew_point_2m_mean';
 
 interface City {
   id: string;
@@ -53,6 +57,7 @@ interface ClimateResult {
   winterTemp?: number;
   summerTemp?: number;
   sunshine?: number;
+  muggyDays?: number;
 }
 
 // --- Аргументы ------------------------------------------------------------------
@@ -96,6 +101,7 @@ class RateLimitedError extends Error {
 function batchCacheKey(batch: City[]): string {
   const hash = createHash('sha1')
     .update(batch.map((city) => city.id).join(','))
+    .update(DAILY_VARIABLES)
     .update(START_DATE)
     .update(END_DATE)
     .digest('hex')
@@ -176,6 +182,7 @@ const dailySchema = z.object({
   time: z.array(z.string()),
   temperature_2m_mean: z.array(z.number().nullable()),
   sunshine_duration: z.array(z.number().nullable()),
+  dew_point_2m_mean: z.array(z.number().nullable()),
 });
 
 const locationSchema = z.object({ daily: dailySchema });
@@ -193,7 +200,7 @@ async function fetchBatch(batch: City[]): Promise<z.infer<typeof locationSchema>
   const params = new URLSearchParams({
     latitude: batch.map((city) => city.lat).join(','),
     longitude: batch.map((city) => city.lon).join(','),
-    daily: 'temperature_2m_mean,sunshine_duration',
+    daily: DAILY_VARIABLES,
     start_date: START_DATE,
     end_date: END_DATE,
     timezone: 'auto',
@@ -211,6 +218,7 @@ function computeClimate(daily: z.infer<typeof dailySchema>): ClimateResult {
   // monthKey "MM" -> год -> {sum, count}
   const monthlyByYear = new Map<string, Map<number, { sum: number; count: number }>>();
   const sunshineByYear = new Map<number, number>();
+  const muggyByYear = new Map<number, number>();
 
   for (let i = 0; i < daily.time.length; i += 1) {
     const date = daily.time[i];
@@ -218,6 +226,7 @@ function computeClimate(daily: z.infer<typeof dailySchema>): ClimateResult {
     const month = date.slice(5, 7);
     const temp = daily.temperature_2m_mean[i];
     const sunshine = daily.sunshine_duration[i];
+    const dewPoint = daily.dew_point_2m_mean[i];
 
     if (temp !== null) {
       const byYear = monthlyByYear.get(month) ?? new Map<number, { sum: number; count: number }>();
@@ -229,6 +238,9 @@ function computeClimate(daily: z.infer<typeof dailySchema>): ClimateResult {
     }
     if (sunshine !== null) {
       sunshineByYear.set(year, (sunshineByYear.get(year) ?? 0) + sunshine);
+    }
+    if (dewPoint !== null) {
+      muggyByYear.set(year, (muggyByYear.get(year) ?? 0) + (dewPoint >= MUGGY_DEW_POINT_C ? 1 : 0));
     }
   }
 
@@ -250,6 +262,11 @@ function computeClimate(daily: z.infer<typeof dailySchema>): ClimateResult {
   if (sunshineYears.length === 5) {
     const hoursByYear = sunshineYears.map((seconds) => seconds / 3600);
     result.sunshine = Math.round(hoursByYear.reduce((a, b) => a + b, 0) / hoursByYear.length);
+  }
+
+  const muggyYears = [...muggyByYear.values()];
+  if (muggyYears.length === 5) {
+    result.muggyDays = Math.round(muggyYears.reduce((a, b) => a + b, 0) / muggyYears.length);
   }
 
   return result;
@@ -307,6 +324,7 @@ async function main(): Promise<void> {
   const winterTemp: Record<string, number> = {};
   const summerTemp: Record<string, number> = {};
   const sunshine: Record<string, number> = {};
+  const muggyDays: Record<string, number> = {};
   const missing: string[] = [];
 
   const fetchStart = Date.now();
@@ -329,6 +347,7 @@ async function main(): Promise<void> {
         if (result.winterTemp !== undefined) winterTemp[city.id] = result.winterTemp;
         if (result.summerTemp !== undefined) summerTemp[city.id] = result.summerTemp;
         if (result.sunshine !== undefined) sunshine[city.id] = result.sunshine;
+        if (result.muggyDays !== undefined) muggyDays[city.id] = result.muggyDays;
         if (result.winterTemp === undefined && result.sunshine === undefined) {
           missing.push(city.id);
         }
@@ -373,6 +392,16 @@ async function main(): Promise<void> {
     sunshine,
     limit,
   );
+  writeSample(
+    'muggy-days',
+    suffix,
+    'дн./год',
+    'Число суток в году со среднесуточной точкой росы (dew_point_2m_mean) не ниже 18 °C, ' +
+      'усреднённое по календарным годам 2020–2024 и округлённое до целого. ' +
+      'Точка росы от 18 °C по общепринятой шкале ощущается как душно и влажно.',
+    muggyDays,
+    limit,
+  );
   const writeMs = Date.now() - writeStart;
 
   console.log('\nЭтапы:');
@@ -385,6 +414,7 @@ async function main(): Promise<void> {
   console.log(`  winter-temp: ${Object.keys(winterTemp).length}/${cities.length}`);
   console.log(`  summer-temp: ${Object.keys(summerTemp).length}/${cities.length}`);
   console.log(`  sunshine: ${Object.keys(sunshine).length}/${cities.length}`);
+  console.log(`  muggy-days: ${Object.keys(muggyDays).length}/${cities.length}`);
   const uniqueMissing = [...new Set(missing)];
   console.log(
     `  без данных (${uniqueMissing.length}): ${uniqueMissing.slice(0, 10).join(', ') || '—'}`,
