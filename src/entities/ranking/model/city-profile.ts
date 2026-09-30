@@ -32,16 +32,15 @@ export function weaknessesOf(contributions: FactorContribution[]): FactorContrib
 }
 
 /**
- * Для каждого балла — доля остальных городов с баллом строго ниже:
- * лучший — 1, худший — 0, равные баллы — одно значение, единственный город — 1.
+ * Для каждого балла — доля остальных городов с баллом не выше:
+ * лучший — 1, худший — 0, равные баллы делят высшее место, единственный город — 1.
  */
 export function rankPercentiles(scores: number[]): Map<number, number> {
   const ascending = scores.toSorted((a, b) => a - b);
   const result = new Map<number, number>();
+  // По возрастанию последний индекс из равных перезаписывает прежние — это высшее место.
   ascending.forEach((score, index) => {
-    if (!result.has(score)) {
-      result.set(score, ascending.length > 1 ? index / (ascending.length - 1) : 1);
-    }
+    result.set(score, ascending.length > 1 ? index / (ascending.length - 1) : 1);
   });
   return result;
 }
