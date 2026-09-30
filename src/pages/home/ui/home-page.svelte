@@ -39,18 +39,25 @@
     section = value === 'settings' ? 'settings' : 'cities';
   }
 
+  /** Ссылку вставили в открытую вкладку или поправили хеш руками: состояние берётся из адреса. */
+  function handleHashChange() {
+    if (location.hash.replace(/^#/, '') !== ranking.urlHash) ranking.applyHash(location.hash);
+  }
+
   $effect(() => {
     // Адресная строка — внешний мир: через $derived её не обновить, только синхронизировать.
-    const hash = `#${ranking.urlHash}`;
+    const hash = ranking.urlHash;
     const timer = setTimeout(() => {
-      if (location.hash === hash) return;
-      // Меняется только хеш текущей страницы, пути для resolve() тут нет.
+      if (location.hash.replace(/^#/, '') === hash) return;
+      // Пустой хеш — адрес без `#`: путь и запрос текущей страницы, пути для resolve() тут нет.
       // eslint-disable-next-line svelte/no-navigation-without-resolve
-      replaceState(hash, page.state);
+      replaceState(hash ? `#${hash}` : `${location.pathname}${location.search}`, page.state);
     }, URL_WRITE_DELAY_MS);
     return () => clearTimeout(timer);
   });
 </script>
+
+<svelte:window onhashchange={handleHashChange} />
 
 <div class="relative h-dvh overflow-hidden md:grid md:grid-cols-[400px_1fr]">
   <aside

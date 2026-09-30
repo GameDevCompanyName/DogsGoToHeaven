@@ -8,7 +8,6 @@ import type {
   Preset,
 } from '@/shared/lib/ranking';
 
-import { parseState } from '../lib/url-state';
 import { RankingState } from './ranking-state.svelte';
 
 /** Движок представление не читает: хватает минимального валидного. */
@@ -251,6 +250,15 @@ describe('RankingState', () => {
     expect(state.mostRestrictiveFilter).toEqual({ factorId: 'rent', excludedCount: 2 });
   });
 
+  it('breaks a tie between the strictest filters by registry order', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.setCategoryFilter('visa', ['free']);
+    state.setNumericFilter('rent', { max: 250 });
+
+    expect(state.mostRestrictiveFilter).toEqual({ factorId: 'rent', excludedCount: 1 });
+  });
+
   it('resets every filter, the preset ones included', () => {
     const state = new RankingState(makeDataset(), PRESETS);
     state.applyPreset('remote');
@@ -282,27 +290,84 @@ describe('RankingState', () => {
   });
 
   it('restores the same settings and city from its own url hash', () => {
-    const dataset = makeDataset();
+    const base = makeDataset();
+    const dataset: Dataset = {
+      ...base,
+      factors: [
+        ...base.factors,
+        {
+          id: 'warmth',
+          kind: 'numeric',
+          presentation: PRESENTATION,
+          name: 'Тепло',
+          definition: 'Тест',
+          group: 'g',
+          level: 'city',
+          scoring: { type: 'range', defaultRange: [10, 20] },
+          defaultWeight: 1,
+          defaultEnabled: false,
+        },
+      ],
+      provenance: { ...base.provenance, warmth: SOURCE },
+    };
     const source = new RankingState(dataset, PRESETS);
     source.applyPreset('remote');
     source.setWeight('rent', 9);
     source.setEnabled('safety', false);
+    source.setRange('warmth', [5, 25]);
     source.setCategoryFilter('visa', null);
     source.setNumericFilter('safety', { min: 20 });
     source.selectCity('gamma');
 
     const target = new RankingState(dataset, PRESETS);
-    target.restore(
-      parseState(source.urlHash, {
-        factors: dataset.factors,
-        presetIds: PRESETS.map(({ id }) => id),
-        cityIds: dataset.cities.map(({ id }) => id),
-      }),
-    );
+    target.applyHash(source.urlHash);
 
     expect(target.presetId).toBe('remote');
     expect(target.settings).toEqual(source.settings);
     expect(target.selectedCityId).toBe('gamma');
+  });
+
+  it('applies a hash over manual edits, the default persona when the hash names none', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'forever');
+    state.applyHash('#p=month&c=beta');
+    state.setWeight('safety', 7);
+
+    state.applyHash('#w=rent:2');
+
+    expect(state.presetId).toBe('forever');
+    expect(state.settings.weights).toMatchObject({ rent: 2, safety: 9 });
+    expect(state.selectedCityId).toBeNull();
+  });
+
+  it('keeps manual edits when the current persona is picked again', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.selectPreset('month');
+    state.setWeight('safety', 7);
+
+    state.selectPreset('month');
+
+    expect(state.settings.weights.safety).toBe(7);
+    expect(state.changedFactorIds).toEqual(['safety']);
+  });
+
+  it('writes an empty hash for the untouched default persona', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    expect(state.urlHash).toBe('');
+
+    state.setWeight('safety', 3);
+
+    expect(state.urlHash).toBe('p=month&w=safety:3');
+  });
+
+  it('never writes a city that the filters hide', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.selectCity('beta');
+    expect(state.urlHash).toContain('c=beta');
+
+    state.setCategoryFilter('visa', ['free']);
+
+    expect(state.urlHash).not.toContain('c=');
   });
 
   it('counts cities hidden by coverage', () => {

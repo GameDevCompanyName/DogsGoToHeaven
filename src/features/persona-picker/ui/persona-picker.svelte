@@ -9,8 +9,9 @@
 
   const changedCount = $derived(ranking.changedFactorIds.length);
 
+  /** Повторное нажатие на активную персону правки не сбрасывает: для этого есть «Сбросить». */
   function handleSelect(presetId: string) {
-    ranking.applyPreset(presetId);
+    ranking.selectPreset(presetId);
   }
 
   function handleReset() {

@@ -22,9 +22,10 @@ export function diffSettings(
     if (isEnabled !== undefined && isEnabled !== reference.enabled[id]) {
       diff.enabled[id] = isEnabled;
     }
-    const range = current.ranges[id];
-    const referenceRange = reference.ranges[id];
-    if (range && (range[0] !== referenceRange?.[0] || range[1] !== referenceRange[1])) {
+    // В записях не у всех факторов есть диапазон: тип индекса этого не видит, поэтому явно.
+    const range: [number, number] | undefined = current.ranges[id];
+    const referenceRange: [number, number] | undefined = reference.ranges[id];
+    if (range && (range[0] !== referenceRange?.[0] || range[1] !== referenceRange?.[1])) {
       diff.ranges[id] = [range[0], range[1]];
     }
     const filter = current.filters[id];

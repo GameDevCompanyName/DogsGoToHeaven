@@ -14,7 +14,7 @@ import {
 } from '@/shared/lib/ranking';
 
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
-import { serializeState, type UrlState } from '../lib/url-state';
+import { parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
 /** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
@@ -42,6 +42,8 @@ export interface RestrictiveFilter {
 export class RankingState {
   readonly dataset: Dataset;
   readonly presets: Preset[];
+  /** Персона, которую берёт хеш без `p`; её нетронутые настройки пишутся пустым хешем. */
+  readonly defaultPresetId: string | null;
   readonly #base: RankingSettings;
   readonly #cityById: Readonly<Record<CityId, DatasetCity>>;
   readonly #datalessIds: readonly FactorId[];
@@ -98,10 +100,18 @@ export class RankingState {
     changedFactorIdsOf(this.#diff, this.dataset.factors),
   );
 
-  /** Хеш адреса без `#`: персона, отличия от неё и открытый город. */
-  readonly urlHash = $derived(
-    serializeState({ presetId: this.presetId, ...this.#diff, cityId: this.selectedCityId }),
-  );
+  /**
+   * Хеш адреса без `#`: персона, отличия от неё и открытый город. Город берётся из показанного,
+   * чтобы ссылка не несла отсечённый фильтрами. Нетронутая персона по умолчанию — пустой хеш:
+   * простой заход не переписывает адрес.
+   */
+  readonly urlHash = $derived.by(() => {
+    const cityId = this.selected?.city.id ?? null;
+    const isUntouchedDefault =
+      this.presetId === this.defaultPresetId && this.changedFactorIds.length === 0;
+    if (isUntouchedDefault && cityId === null) return '';
+    return serializeState({ presetId: this.presetId, ...this.#diff, cityId });
+  });
 
   /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
   readonly totalWeight = $derived.by(() =>
@@ -111,6 +121,7 @@ export class RankingState {
     ),
   );
 
+  /** При равенстве побеждает фильтр, который раньше в реестре. */
   readonly mostRestrictiveFilter: RestrictiveFilter | null = $derived.by(() => {
     const counts: Record<FactorId, number> = {};
     for (const excluded of this.result.excluded) {
@@ -119,8 +130,9 @@ export class RankingState {
       }
     }
     let best: RestrictiveFilter | null = null;
-    for (const [factorId, excludedCount] of Object.entries(counts)) {
-      if (!best || excludedCount > best.excludedCount) best = { factorId, excludedCount };
+    for (const { id: factorId } of this.dataset.factors) {
+      const excludedCount = counts[factorId] ?? 0;
+      if (excludedCount > (best?.excludedCount ?? 0)) best = { factorId, excludedCount };
     }
     return best;
   });
@@ -129,9 +141,10 @@ export class RankingState {
     this.rankedCities.find((view) => view.city.id === this.selectedCityId) ?? null,
   );
 
-  constructor(dataset: Dataset, presets: Preset[]) {
+  constructor(dataset: Dataset, presets: Preset[], defaultPresetId: string | null = null) {
     this.dataset = dataset;
     this.presets = presets;
+    this.defaultPresetId = defaultPresetId;
     this.#cityById = Object.fromEntries(dataset.cities.map((city) => [city.id, city]));
     this.#datalessIds = dataset.factors
       .filter((factor) => dataset.provenance[factor.id] === undefined)
@@ -146,12 +159,33 @@ export class RankingState {
     this.settings = this.#settingsFor(this.presetId);
   }
 
+  /** Выбор персоны пользователем: повторный выбор текущей правки не трогает, сброс — отдельно. */
+  selectPreset(presetId: string | null) {
+    if (presetId !== this.presetId) this.applyPreset(presetId);
+  }
+
   resetToPreset() {
     this.applyPreset(this.presetId);
   }
 
+  /**
+   * Состояние целиком из хеша адреса, с `#` или без: персона (без `p` — по умолчанию) и поверх
+   * неё отличия. Ручные правки, которых нет в хеше, сбрасываются.
+   */
+  applyHash(hash: string) {
+    const url = parseState(hash, {
+      factors: this.dataset.factors,
+      presetIds: this.presets.map((preset) => preset.id),
+      cityIds: this.dataset.cities.map((city) => city.id),
+    });
+    this.#restore({
+      ...url,
+      presetId: url.presetId === undefined ? this.defaultPresetId : url.presetId,
+    });
+  }
+
   /** Персона из ссылки и поверх неё отличия; то, что сеттеры не примут, отбрасывается. */
-  restore(url: UrlState) {
+  #restore(url: UrlState) {
     if (url.presetId !== undefined) this.applyPreset(url.presetId);
     for (const [factorId, weight] of Object.entries(url.weights)) this.setWeight(factorId, weight);
     for (const [factorId, isOn] of Object.entries(url.enabled)) this.setEnabled(factorId, isOn);
