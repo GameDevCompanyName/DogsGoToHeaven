@@ -30,7 +30,7 @@ export function standing(dataset: Dataset, factor: NumericFactor, value: number)
   const lower = values.filter((item) => item < value).length;
   const higher = values.filter((item) => item > value).length;
   const [worse, better] = type === 'lower-better' ? [higher, lower] : [lower, higher];
-  return { betterThan: Math.min(1, worse / others), worseThan: Math.min(1, better / others) };
+  return { betterThan: worse / others, worseThan: better / others };
 }
 
 function valuesWithData(dataset: Dataset, factorId: FactorId): number[] {
