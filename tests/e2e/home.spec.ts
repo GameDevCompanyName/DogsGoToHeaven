@@ -71,11 +71,14 @@ function personaCard(page: Page, name: string) {
   return page.getByTestId('persona-card').filter({ hasText: name });
 }
 
-test('выбор персоны меняет первый город и попадает в адрес', async ({ page }) => {
+test('выбор персоны меняет выдачу и попадает в адрес', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Города');
-  const firstCity = page.getByTestId('city-list-item').first();
-  const cityBefore = (await firstCity.getAttribute('data-city-id')) ?? '';
+  const items = page.getByTestId('city-list-item');
+  // Сравниваем первую пятёрку, а не один город: лидер может совпасть у двух персон.
+  const topBefore = await items.evaluateAll((nodes) =>
+    nodes.slice(0, 5).map((node) => node.getAttribute('data-city-id')),
+  );
 
   await openSection(page, 'Настройки');
   await personaCard(page, 'Семья с детьми').click();
@@ -83,7 +86,13 @@ test('выбор персоны меняет первый город и попа
   await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(/#p=family/);
   await openSection(page, 'Города');
-  await expect(firstCity).not.toHaveAttribute('data-city-id', cityBefore);
+  await expect
+    .poll(() =>
+      items.evaluateAll((nodes) =>
+        nodes.slice(0, 5).map((node) => node.getAttribute('data-city-id')),
+      ),
+    )
+    .not.toEqual(topBefore);
 });
 
 test('ссылка с персоной открывает эту персону', async ({ page }) => {
