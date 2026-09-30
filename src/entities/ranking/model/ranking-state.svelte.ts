@@ -4,6 +4,7 @@ import {
   createDefaultSettings,
   type Dataset,
   type DatasetCity,
+  type FactorContribution,
   type FactorId,
   type NumericFilter,
   type Preset,
@@ -12,10 +13,18 @@ import {
   type RankingSettings,
 } from '@/shared/lib/ranking';
 
-/** Строка выдачи: результат движка вместе с городом из датасета. */
+import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
+
+/** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
 export interface RankedCityView {
   ranked: RankedCity;
   city: DatasetCity;
+  /** Место по баллу среди показанных городов с баллом: 1 — лучший, 0 — худший, null — нет балла. */
+  percentile: number | null;
+  /** До трёх учтённых факторов с оценкой от 0.66, по вкладу в балл. */
+  strengths: FactorContribution[];
+  /** До двух учтённых факторов с оценкой до 0.33, по доле веса. */
+  weaknesses: FactorContribution[];
 }
 
 /**
@@ -38,12 +47,24 @@ export class RankingState {
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
   readonly result = $derived.by(() => rank(this.dataset, this.settings));
 
-  readonly rankedCities: RankedCityView[] = $derived(
-    this.result.ranked.flatMap((ranked) => {
+  readonly rankedCities: RankedCityView[] = $derived.by(() => {
+    const percentiles = rankPercentiles(
+      this.result.ranked.flatMap(({ score }) => (score === null ? [] : [score])),
+    );
+    return this.result.ranked.flatMap((ranked) => {
       const city = this.#cityById[ranked.cityId];
-      return city ? [{ ranked, city }] : [];
-    }),
-  );
+      if (!city) return [];
+      return [
+        {
+          ranked,
+          city,
+          percentile: ranked.score === null ? null : (percentiles.get(ranked.score) ?? null),
+          strengths: strengthsOf(ranked.contributions),
+          weaknesses: weaknessesOf(ranked.contributions),
+        },
+      ];
+    });
+  });
 
   readonly filteredCities: DatasetCity[] = $derived(
     this.result.excluded.flatMap((excluded) => {

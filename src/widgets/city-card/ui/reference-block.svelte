@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatValue } from '@/entities/city';
+  import { FactorHint, formatValue } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { DatasetCity } from '@/shared/lib/ranking';
 
@@ -20,20 +20,23 @@
 
 {#if categoricalFactors.length > 0}
   <section aria-labelledby="reference-title" class="flex flex-col gap-3">
-    <h2 id="reference-title" class="text-sm font-semibold">Справка</h2>
-    <dl class="flex flex-col gap-3">
+    <h2 id="reference-title" class="text-lg font-semibold">Справка</h2>
+    <dl class="flex flex-col gap-4">
       {#each categoricalFactors as factor (factor.id)}
         <div class="flex flex-col gap-1">
-          <div class="flex items-baseline gap-2 text-sm">
-            <dt class="min-w-0 flex-1 font-medium">{factor.name}</dt>
-            <dd class="shrink-0 text-muted-foreground">
-              {formatValue(city.values[factor.id] ?? null, factor)}
+          <div class="flex items-start gap-2">
+            <dt class="flex min-w-0 flex-1 items-center gap-0.5 font-medium">
+              {factor.name}
+              <FactorHint {factor} />
+            </dt>
+            <dd class="shrink-0 pt-0.5 text-right">
+              {formatValue(city.values[factor.id] ?? null, factor)?.primary}
             </dd>
           </div>
           <SourceLine provenance={ranking.dataset.provenance[factor.id]} />
         </div>
       {/each}
     </dl>
-    <p class="text-xs text-muted-foreground">Справка, не юридическая консультация.</p>
+    <p class="text-sm text-foreground/70">Справка, не юридическая консультация.</p>
   </section>
 {/if}

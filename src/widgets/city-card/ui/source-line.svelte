@@ -9,7 +9,7 @@
 </script>
 
 {#if provenance}
-  <p class="text-xs text-muted-foreground">
+  <p class="text-sm text-foreground/70">
     {#if provenance.url}
       <a
         href={provenance.url}

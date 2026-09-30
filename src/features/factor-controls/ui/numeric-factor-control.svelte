@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { FactorHint } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { NumericFactor } from '@/shared/lib/ranking';
   import { Checkbox } from '@/shared/ui/checkbox';
@@ -62,8 +63,11 @@
 <div class="flex flex-col gap-3 py-3">
   <div class="flex items-center gap-2">
     <Checkbox id={checkboxId} bind:checked={() => isEnabled, handleEnabledChange} />
-    <Label for={checkboxId} class="min-w-0 flex-1 leading-snug">{factor.name}</Label>
-    <span class="text-sm text-muted-foreground tabular-nums" aria-hidden="true">{weight}</span>
+    <span class="flex min-w-0 flex-1 items-center gap-0.5">
+      <Label for={checkboxId} class="text-base leading-snug">{factor.name}</Label>
+      <FactorHint {factor} />
+    </span>
+    <span class="text-base text-foreground/70 tabular-nums" aria-hidden="true">{weight}</span>
   </div>
   <Slider
     type="single"
@@ -75,7 +79,7 @@
     data-testid="weight-{factor.id}"
     bind:value={() => weight, handleWeightChange}
   />
-  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+  <div class="flex items-center gap-2 text-sm text-foreground/70">
     <span class="w-12 shrink-0">{range ? 'цель' : 'порог'}</span>
     <Input
       type="number"

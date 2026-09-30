@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Factor, Preset } from './schemas';
+import type { Factor, NumericPresentation, Preset } from './schemas';
 import { applyPresets, createDefaultSettings } from './settings';
 import type { RankingSettings } from './types';
+
+/** Движок представление не читает: хватает минимального валидного. */
+const PRESENTATION: NumericPresentation = {
+  format: 'plain',
+  hint: 'Тест',
+  chip: { good: 'хорошо', bad: 'плохо' },
+  bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+};
 
 const FACTORS: Factor[] = [
   {
     id: 'rent',
     kind: 'numeric',
+    presentation: PRESENTATION,
     name: 'Аренда',
     definition: 'Тест',
     group: 'money',
@@ -19,6 +28,7 @@ const FACTORS: Factor[] = [
   {
     id: 'winter-temp',
     kind: 'numeric',
+    presentation: PRESENTATION,
     name: 'Зима',
     definition: 'Тест',
     group: 'climate',
@@ -30,6 +40,7 @@ const FACTORS: Factor[] = [
   {
     id: 'visa',
     kind: 'categorical',
+    presentation: { format: 'category', hint: 'Тест' },
     name: 'Виза',
     definition: 'Тест',
     group: 'legalization',

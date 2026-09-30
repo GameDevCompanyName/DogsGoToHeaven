@@ -1,8 +1,11 @@
 export { buildDataset } from './build-dataset';
 export { MIN_CITY_COVERAGE, rank } from './rank';
 export {
+  type BandLevel,
+  type Bands,
   type CategoricalFactor,
   type CategoricalFilter,
+  type CategoricalPresentation,
   type City,
   citySchema,
   type Country,
@@ -13,9 +16,13 @@ export {
   type FactorRegistry,
   factorRegistrySchema,
   factorSchema,
+  type LevelTone,
   type NumericFactor,
   type NumericFilter,
+  type NumericFormat,
+  type NumericPresentation,
   type NumericScoring,
+  type Presentation,
   type Preset,
   presetSchema,
   type RawData,

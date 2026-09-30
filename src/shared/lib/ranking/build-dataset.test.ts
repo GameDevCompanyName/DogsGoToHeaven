@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildDataset } from './build-dataset';
-import type { RawData } from './schemas';
+import type { NumericPresentation, RawData } from './schemas';
+
+/** Движок представление не читает: хватает минимального валидного. */
+const PRESENTATION: NumericPresentation = {
+  format: 'plain',
+  hint: 'Тест',
+  chip: { good: 'хорошо', bad: 'плохо' },
+  bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+};
 
 const SOURCE = { name: 'Test', period: '2026', collectedAt: '2026-09-27' };
 
@@ -22,6 +30,7 @@ function makeRaw(): RawData {
         {
           id: 'rent',
           kind: 'numeric',
+          presentation: PRESENTATION,
           name: 'Аренда',
           definition: 'Тест',
           group: 'g',
@@ -34,6 +43,7 @@ function makeRaw(): RawData {
         {
           id: 'visa',
           kind: 'categorical',
+          presentation: { format: 'category', hint: 'Тест' },
           name: 'Виза',
           definition: 'Тест',
           group: 'g',
@@ -44,6 +54,7 @@ function makeRaw(): RawData {
         {
           id: 'sunshine',
           kind: 'numeric',
+          presentation: PRESENTATION,
           name: 'Солнце',
           definition: 'Тест',
           group: 'g',

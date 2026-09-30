@@ -69,7 +69,7 @@
         type="button"
         aria-pressed={section === item.id}
         class={cn(
-          'border-t-2 border-transparent text-sm font-medium text-muted-foreground transition-colors',
+          'border-t-2 border-transparent text-sm font-medium text-foreground/70 transition-colors',
           section === item.id && 'border-foreground text-foreground',
         )}
         onclick={() => (section = item.id)}

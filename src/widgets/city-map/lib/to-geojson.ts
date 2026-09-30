@@ -24,31 +24,13 @@ export type CityCollection = FeatureCollection<Point, CityPointProperties>;
 
 /** Города для слоя карты. Скрытые по покрытию не попадают на карту вовсе. */
 export function toGeoJson(views: RankedCityView[], filtered: DatasetCity[]): CityCollection {
-  const percentileOf = percentiles(
-    views.flatMap(({ ranked }) => (ranked.score === null ? [] : [ranked.score])),
-  );
-  const ranked = views.map(({ city, ranked }) =>
+  const ranked = views.map(({ city, ranked, percentile }) =>
     ranked.score === null
       ? toFeature(city, 'unscored', 0, 0)
-      : toFeature(city, 'ranked', ranked.score, percentileOf.get(ranked.score) ?? 1),
+      : toFeature(city, 'ranked', ranked.score, percentile ?? 1),
   );
   const grey = filtered.map((city) => toFeature(city, 'filtered', 0, 0));
   return { type: 'FeatureCollection', features: [...ranked, ...grey] };
-}
-
-/**
- * Для каждого балла — доля остальных городов с баллом строго ниже:
- * лучший — 1, худший — 0, равные баллы — одно значение, единственный город — 1.
- */
-function percentiles(scores: number[]): Map<number, number> {
-  const ascending = [...scores].sort((a, b) => a - b);
-  const result = new Map<number, number>();
-  ascending.forEach((score, index) => {
-    if (!result.has(score)) {
-      result.set(score, ascending.length > 1 ? index / (ascending.length - 1) : 1);
-    }
-  });
-  return result;
 }
 
 function toFeature(

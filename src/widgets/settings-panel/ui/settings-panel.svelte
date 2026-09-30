@@ -21,7 +21,7 @@
       <section aria-labelledby="group-{group.id}">
         <h2
           id="group-{group.id}"
-          class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+          class="text-sm font-semibold tracking-wide text-foreground/70 uppercase"
         >
           {group.name}
         </h2>
@@ -30,9 +30,9 @@
             {#if ranking.hasData(factor.id)}
               <FactorControl {factor} />
             {:else}
-              <div class="flex items-center gap-2 py-3 text-muted-foreground" aria-disabled="true">
-                <span class="min-w-0 flex-1 text-sm leading-snug font-medium">{factor.name}</span>
-                <span class="shrink-0 text-xs">данных пока нет</span>
+              <div class="flex items-center gap-2 py-3 text-foreground/70" aria-disabled="true">
+                <span class="min-w-0 flex-1 leading-snug font-medium">{factor.name}</span>
+                <span class="shrink-0 text-sm">данных пока нет</span>
               </div>
             {/if}
           {/each}

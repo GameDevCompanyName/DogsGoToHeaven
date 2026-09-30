@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Dataset, DatasetCity, FactorProvenance, Preset } from '@/shared/lib/ranking';
+import type {
+  Dataset,
+  DatasetCity,
+  FactorProvenance,
+  NumericPresentation,
+  Preset,
+} from '@/shared/lib/ranking';
 
 import { RankingState } from './ranking-state.svelte';
+
+/** Движок представление не читает: хватает минимального валидного. */
+const PRESENTATION: NumericPresentation = {
+  format: 'plain',
+  hint: 'Тест',
+  chip: { good: 'хорошо', bad: 'плохо' },
+  bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+};
 
 function makeCity(id: string, values: DatasetCity['values'], coverage = 1): DatasetCity {
   return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values, coverage };
@@ -26,6 +40,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'rent',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Аренда',
         definition: 'Тест',
         group: 'g',
@@ -37,6 +52,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'safety',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Безопасность',
         definition: 'Тест',
         group: 'g',
@@ -48,6 +64,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'ease',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Лёгкость',
         definition: 'Тест',
         group: 'g',
@@ -59,6 +76,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'visa',
         kind: 'categorical',
+        presentation: { format: 'category', hint: 'Тест' },
         name: 'Виза',
         definition: 'Тест',
         group: 'g',
@@ -217,5 +235,86 @@ describe('RankingState', () => {
     expect(state.rankedCities).toEqual([]);
     expect(state.hiddenByCoverage).toBe(2);
     expect(state.selected).toBeNull();
+  });
+});
+
+/** Пять факторов «больше лучше» с весами 5..1: у `top` всё лучшее, у `bottom` всё худшее. */
+function makeProfileDataset(): Dataset {
+  const weights = { a: 5, b: 4, c: 3, d: 2, e: 1 };
+  const factors = Object.entries(weights).map(([id, weight]) => ({
+    id,
+    kind: 'numeric' as const,
+    presentation: PRESENTATION,
+    name: id,
+    definition: 'Тест',
+    group: 'g',
+    level: 'city' as const,
+    scoring: { type: 'higher-better' as const },
+    defaultWeight: weight,
+    defaultEnabled: true,
+  }));
+  const values = (value: number) => Object.fromEntries(factors.map(({ id }) => [id, value]));
+  return {
+    groups: [{ id: 'g', name: 'Группа' }],
+    factors,
+    cities: [
+      makeCity('top', values(10)),
+      makeCity('middle', values(5)),
+      makeCity('bottom', values(0)),
+    ],
+    provenance: Object.fromEntries(factors.map(({ id }) => [id, SOURCE])),
+  };
+}
+
+function viewOf(state: RankingState, cityId: string) {
+  return state.rankedCities.find((view) => view.city.id === cityId);
+}
+
+function factorIds(contributions: { factorId: string }[] | undefined) {
+  return contributions?.map((contribution) => contribution.factorId);
+}
+
+describe('RankingState strengths and weaknesses', () => {
+  it('takes up to three strengths by contribution', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    expect(factorIds(viewOf(state, 'top')?.strengths)).toEqual(['a', 'b', 'c']);
+    expect(viewOf(state, 'top')?.weaknesses).toEqual([]);
+  });
+
+  it('takes up to two weaknesses by weight share', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    expect(factorIds(viewOf(state, 'bottom')?.weaknesses)).toEqual(['a', 'b']);
+    expect(viewOf(state, 'bottom')?.strengths).toEqual([]);
+  });
+
+  it('leaves a middling city without strengths or weaknesses', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    expect(viewOf(state, 'middle')).toMatchObject({ strengths: [], weaknesses: [] });
+  });
+
+  it('never counts a zero-weight factor', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    state.setWeight('a', 0);
+
+    expect(factorIds(viewOf(state, 'top')?.strengths)).toEqual(['b', 'c', 'd']);
+    expect(factorIds(viewOf(state, 'bottom')?.weaknesses)).toEqual(['b', 'c']);
+  });
+
+  it('has nothing to say when every factor is off', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    for (const id of ['a', 'b', 'c', 'd', 'e']) state.setEnabled(id, false);
+
+    expect(viewOf(state, 'top')).toMatchObject({ strengths: [], weaknesses: [] });
+  });
+
+  it('places each city by rank percentile, the best at 1', () => {
+    const state = new RankingState(makeProfileDataset(), []);
+
+    expect(state.rankedCities.map((view) => view.percentile)).toEqual([1, 0.5, 0]);
   });
 });
