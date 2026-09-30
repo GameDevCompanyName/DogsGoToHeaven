@@ -69,12 +69,23 @@ function collectIds(items: { id: string }[], label: string, errors: string[]): S
 }
 
 /**
+ * Своя единица есть только у формата `plain`, остальные форматы пишут единицу сами.
+ * Ярлыки сторон диапазона (`badBelow`, `badAbove`) — только у `range`.
  * У фактора с направлением («больше лучше», «меньше лучше») тон уровня берётся из шкалы,
  * поэтому он обязателен. У `range` тон зависит от диапазона пользователя, шкала только описывает.
  */
 function validatePresentation(factor: Factor, errors: string[]): void {
-  if (factor.kind !== 'numeric' || factor.scoring.type === 'range') return;
-  const { bands } = factor.presentation;
+  if (factor.kind !== 'numeric') return;
+  const { bands, chip, format, unit } = factor.presentation;
+  if (unit !== undefined && format !== 'plain') {
+    errors.push(`Factor "${factor.id}": presentation unit needs format "plain", not "${format}"`);
+  }
+  if (factor.scoring.type === 'range') return;
+  for (const key of ['badBelow', 'badAbove'] as const) {
+    if (chip[key] !== undefined) {
+      errors.push(`Factor "${factor.id}": chip ${key} needs range scoring`);
+    }
+  }
   if (bands.type !== 'absolute') return;
   for (const level of bands.levels) {
     if (level.tone === undefined) {

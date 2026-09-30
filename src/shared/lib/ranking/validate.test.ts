@@ -183,6 +183,28 @@ describe('validateRawData', () => {
     expect(validateRawData(raw)).toEqual([expect.stringContaining('rent')]);
   });
 
+  it('reports a presentation unit on a format other than plain', () => {
+    const raw = makeRaw();
+    const rent = makeRent([
+      { max: 50, label: 'дёшево', tone: 'good' },
+      { label: 'дорого', tone: 'bad' },
+    ]);
+    rent.presentation.unit = 'индекс';
+    raw.registry.factors[0] = rent;
+    expect(validateRawData(raw)).toEqual([expect.stringContaining('unit')]);
+  });
+
+  it('reports a range-side chip on a factor without a range', () => {
+    const raw = makeRaw();
+    const rent = makeRent([
+      { max: 50, label: 'дёшево', tone: 'good' },
+      { label: 'дорого', tone: 'bad' },
+    ]);
+    rent.presentation.chip.badAbove = 'слишком дорого';
+    raw.registry.factors[0] = rent;
+    expect(validateRawData(raw)).toEqual([expect.stringContaining('badAbove')]);
+  });
+
   it('reports a categorical filter on a numeric factor', () => {
     const raw = makeRaw({
       presets: [{ id: 'p', kind: 'duration', name: 'П', filters: { rent: { allowed: ['free'] } } }],
