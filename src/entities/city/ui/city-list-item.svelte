@@ -53,15 +53,14 @@
     {#if chips.length > 0}
       <span class="flex flex-wrap gap-x-1.5 text-sm leading-snug font-medium">
         {#each chips as chip, index (chip.factorId)}
-          {#if index > 0}
-            <span class="text-foreground/50" aria-hidden="true">·</span>
-          {/if}
+          <!-- Точка внутри ярлыка: при переносе она уходит на новую строку вместе с ним. -->
           <span
             data-testid="city-chip"
             data-tone={chip.tone}
             class="whitespace-nowrap {toneClasses(chip.tone).text}"
           >
-            {chip.label}
+            {#if index > 0}<span class="mr-1.5 text-foreground/50" aria-hidden="true">·</span
+              >{/if}{chip.label}
           </span>
         {/each}
       </span>
