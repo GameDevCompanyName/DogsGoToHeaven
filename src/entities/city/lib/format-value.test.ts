@@ -39,9 +39,10 @@ describe('formatValue', () => {
   it('compares PM2.5 with the WHO guideline', () => {
     expect(format('pm25', 11)).toEqual({
       primary: `11${S}мкг/м³`,
-      secondary: `в 2 раза выше нормы ВОЗ`,
+      secondary: `в 2,2 раза выше нормы ВОЗ`,
     });
-    expect(format('pm25', 7.5)?.secondary).toBe(`в 1,5 раза выше нормы ВОЗ`);
+    expect(format('pm25', 12.5)?.secondary).toBe(`в 2,5 раза выше нормы ВОЗ`);
+    expect(format('pm25', 27.6)?.secondary).toBe(`в 6 раз выше нормы ВОЗ`);
     expect(format('pm25', 5)?.secondary).toBe(`в норме ВОЗ`);
   });
 

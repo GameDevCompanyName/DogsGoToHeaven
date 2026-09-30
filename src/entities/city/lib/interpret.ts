@@ -8,7 +8,7 @@ import type {
 } from '@/shared/lib/ranking';
 import type { Tone } from '@/shared/lib/tone';
 
-import { NBSP } from './format-value';
+import { displayedNumber, NBSP } from './format-value';
 import { standing } from './percentile';
 
 /**
@@ -41,12 +41,14 @@ export function interpretValue(
   range?: [number, number],
 ): Interpretation | null {
   if (factor.kind !== 'numeric' || typeof value !== 'number') return null;
-  const { bands } = factor.presentation;
+  const { bands, format } = factor.presentation;
+  // Уровень — по числу, которое видит пользователь: у одинаковых «40 из 100» одна подпись.
+  const shown = displayedNumber(value, format);
   if (factor.scoring.type === 'range') {
-    return interpretRange(factor, value, range ?? factor.scoring.defaultRange);
+    return interpretRange(factor, shown, range ?? factor.scoring.defaultRange);
   }
   if (bands.type === 'absolute') {
-    const level = findLevel(bands.levels, value);
+    const level = findLevel(bands.levels, shown);
     return {
       label: level.label,
       tone: level.tone ?? 'neutral',
@@ -67,6 +69,7 @@ export function interpretValue(
   };
 }
 
+/** `value` — уже округлённое до показа: «на 3 °C» и тон считаются от одного и того же числа. */
 function interpretRange(
   factor: NumericFactor,
   value: number,
@@ -77,12 +80,11 @@ function interpretRange(
   const base = { kind: 'range' as const, ...(description ? { description } : {}) };
   if (value >= low && value <= high) return { ...base, label: 'в вашем диапазоне', tone: 'good' };
   const isBelow = value < low;
-  const distance = isBelow ? low - value : value - high;
-  const amount = Math.max(1, Math.round(distance));
+  const amount = Math.max(1, Math.round(isBelow ? low - value : value - high));
   const isCelsius = format === 'celsius';
   const side = isCelsius ? (isBelow ? 'холоднее' : 'теплее') : isBelow ? 'ниже' : 'выше';
   const label = `${side} диапазона на ${amount}${isCelsius ? `${NBSP}°C` : ''}`;
-  return { ...base, label, tone: distance <= RANGE_TOLERANCE ? 'ok' : 'bad' };
+  return { ...base, label, tone: amount <= RANGE_TOLERANCE ? 'ok' : 'bad' };
 }
 
 function describe(bands: Bands, value: number): string | undefined {

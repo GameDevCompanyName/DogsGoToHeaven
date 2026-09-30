@@ -1,5 +1,5 @@
 import { type PluralForms, pluralize } from '@/shared/lib/plural';
-import type { Factor, FactorValue, NumericPresentation } from '@/shared/lib/ranking';
+import type { Factor, FactorValue, NumericFormat, NumericPresentation } from '@/shared/lib/ranking';
 
 /** Неразрывный пробел перед процентом и единицей: «39 %» не рвётся на две строки. */
 export const NBSP = ' ';
@@ -38,6 +38,43 @@ export function formatValue(
   return formatNumber(value, factor.presentation, unit);
 }
 
+/**
+ * Значение с той точностью, с какой его показывает формат: уровень и сравнение с диапазоном
+ * считаются от него, чтобы «40 из 100» не получало разные подписи у 39,6 и 40,2.
+ * Число, которое формат не показывает целиком (индекс, зарплата), остаётся как есть.
+ */
+export function displayedNumber(value: number, format: NumericFormat): number {
+  const decimals = displayDecimals(value, format);
+  return decimals === null ? value : roundHalfAway(value, decimals);
+}
+
+/** Знаков после запятой в показе; `null` — формат показывает число иначе или не показывает. */
+function displayDecimals(value: number, format: NumericFormat): number | null {
+  switch (format) {
+    case 'index-100':
+    case 'celsius':
+      return 0;
+    case 'plain':
+      // Сотни мегабит и баллы EF без дробей, часы разницы — с половинками.
+      return Math.abs(value) >= 10 ? 0 : 1;
+    case 'pm25':
+    case 'percent-max':
+    case 'years':
+    case 'score-5':
+      return 1;
+    case 'nyc-index':
+    case 'usd-per-year':
+    case 'relative-only':
+      return null;
+  }
+}
+
+/** Округление, как у `Intl.NumberFormat`: половина — от нуля, «−3,5» → «−4»; без «−0». */
+function roundHalfAway(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return (Math.sign(value) * Math.round(Math.abs(value) * factor)) / factor + 0;
+}
+
 /** Балл 0–1 в шкале 0–100 для показа, «—» — нет балла. */
 export function formatScore(score: number | null): string {
   return score === null ? '—' : String(Math.round(score * 100));
@@ -45,7 +82,7 @@ export function formatScore(score: number | null): string {
 
 /** Температура со знаком, как в прогнозе: «+6 °C», «−3 °C». */
 export function formatCelsius(value: number): string {
-  const rounded = Math.round(value);
+  const rounded = displayedNumber(value, 'celsius');
   if (rounded === 0) return `0${NBSP}°C`;
   return `${rounded > 0 ? '+' : '−'}${Math.abs(rounded)}${NBSP}°C`;
 }
@@ -55,6 +92,8 @@ function formatNumber(
   presentation: NumericPresentation,
   unit: string | undefined,
 ): FormattedValue | null {
+  const number = displayedNumber(value, presentation.format);
+  const shown = ONE_DECIMAL.format(number);
   switch (presentation.format) {
     case 'nyc-index':
       return {
@@ -67,13 +106,13 @@ function formatNumber(
         secondary: `${usd(roundTo(value, 1000))} в год`,
       };
     case 'percent-max':
-      return { primary: value === 0 ? `0${NBSP}%` : `до ${ONE_DECIMAL.format(value)}${NBSP}%` };
+      return { primary: number === 0 ? `0${NBSP}%` : `до ${shown}${NBSP}%` };
     case 'index-100':
-      return { primary: `${INTEGER.format(value)} из 100` };
+      return { primary: `${shown} из 100` };
     case 'pm25':
       return {
-        primary: `${ONE_DECIMAL.format(value)}${NBSP}мкг/м³`,
-        secondary: compareWithWho(value),
+        primary: `${shown}${NBSP}мкг/м³`,
+        secondary: compareWithWho(number),
       };
     case 'celsius':
       return { primary: formatCelsius(value) };
@@ -81,15 +120,13 @@ function formatNumber(
       return null;
     case 'years':
       return {
-        primary: `через ${ONE_DECIMAL.format(value)} ${wordFor(value, ['год', 'года', 'лет'])}`,
+        primary: `через ${shown} ${wordFor(number, ['год', 'года', 'лет'])}`,
       };
     case 'score-5':
-      return { primary: `${ONE_DECIMAL.format(value)} из 5` };
+      return { primary: `${shown} из 5` };
     case 'plain': {
-      // Сотни мегабит и баллы EF без дробей, часы разницы — с половинками.
-      const number = Math.abs(value) >= 10 ? INTEGER.format(value) : ONE_DECIMAL.format(value);
       const label = presentation.unit ?? unit;
-      return { primary: label ? `${number}${NBSP}${label}` : number };
+      return { primary: label ? `${shown}${NBSP}${label}` : shown };
     }
   }
 }
@@ -105,8 +142,8 @@ function compareWithWho(pm25: number): string {
   if (pm25 <= WHO_PM25_GUIDELINE) return 'в норме ВОЗ';
   const ratio = pm25 / WHO_PM25_GUIDELINE;
   if (ratio < 1.05) return 'чуть выше нормы ВОЗ';
-  // До двукратного превышения важна десятая доля, дальше — нет.
-  const rounded = ratio < 2 ? Math.round(ratio * 10) / 10 : Math.round(ratio);
+  // До пятикратного превышения важна десятая доля, дальше — нет.
+  const rounded = roundHalfAway(ratio, ratio < 5 ? 1 : 0);
   return `в ${ONE_DECIMAL.format(rounded)} ${wordFor(rounded, ['раз', 'раза', 'раз'])} выше нормы ВОЗ`;
 }
 

@@ -36,7 +36,7 @@ const WINTER_RANGE: NumericScoring = { type: 'range', defaultRange: [5, 20] };
 const WINTER: Bands = {
   type: 'absolute',
   sourceName: 'оценка проекта',
-  levels: [{ below: 8, label: 'прохладная' }, { label: 'мягкая' }],
+  levels: [{ below: 8, label: 'прохладная' }, { below: 15, label: 'мягкая' }, { label: 'тёплая' }],
 };
 
 describe('interpretValue', () => {
@@ -57,6 +57,20 @@ describe('interpretValue', () => {
     const factor = makeNumeric({ bands: SAFETY }, { type: 'higher-better' });
 
     expect(interpretValue(factor, 40, makeDataset(factor, [40]))?.label).toBe('безопасно');
+  });
+
+  it('judges the level by the value as displayed', () => {
+    const factor = makeNumeric({ format: 'index-100', bands: SAFETY }, { type: 'higher-better' });
+
+    expect(interpretValue(factor, 39.6, makeDataset(factor, [39.6]))?.label).toBe('безопасно');
+  });
+
+  it('describes a temperature by the value as displayed', () => {
+    const factor = makeNumeric({ format: 'celsius', bands: WINTER }, WINTER_RANGE);
+    const dataset = makeDataset(factor, [14.6, 15.4]);
+
+    expect(interpretValue(factor, 14.6, dataset)?.description).toBe('тёплая');
+    expect(interpretValue(factor, 15.4, dataset)?.description).toBe('тёплая');
   });
 
   it('describes a percentile level with the share of worse cities', () => {
@@ -109,6 +123,15 @@ describe('interpretValue', () => {
     });
     expect(interpretValue(factor, 3, dataset, [5, 20])).toMatchObject({
       label: 'холоднее диапазона на 2 °C',
+      tone: 'ok',
+    });
+  });
+
+  it('measures the distance from the value as displayed', () => {
+    const factor = makeNumeric({ format: 'celsius', bands: WINTER }, WINTER_RANGE);
+
+    expect(interpretValue(factor, 23.4, makeDataset(factor, [23.4]), [5, 20])).toMatchObject({
+      label: 'теплее диапазона на 3 °C',
       tone: 'ok',
     });
   });
