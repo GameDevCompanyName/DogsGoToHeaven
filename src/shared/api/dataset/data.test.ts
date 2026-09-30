@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { linksFileSchema } from '@/shared/lib/links';
 import { parseNote } from '@/shared/lib/notes';
 import { validateRawData } from '@/shared/lib/ranking';
 
+import { LINK_FILES } from './load-links';
 import { loadRawData, SAMPLE_FILES } from './load-raw-data';
 
 /** Прогоняет реальную папку data/ через схемы и проверку связей. */
@@ -59,6 +61,30 @@ describe('data/notes', () => {
           problems.push(`${path}: countryId "${note.countryId}" ≠ имени файла`);
       } catch (error) {
         problems.push(`${path}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+});
+
+/** Ссылки «Почитать людей» в data/links: файлов может не быть вовсе. */
+describe('data/links', () => {
+  it('every links file parses and points at known cities and countries', () => {
+    const raw = loadRawData();
+    const cityIds = new Set(raw.cities.map((city) => city.id));
+    const countryIds = new Set(raw.countries.map((country) => country.id));
+    const problems: string[] = [];
+    for (const [path, content] of Object.entries(LINK_FILES)) {
+      const parsed = linksFileSchema.safeParse(content);
+      if (!parsed.success) {
+        problems.push(`${path}: ${parsed.error.message}`);
+        continue;
+      }
+      for (const id of Object.keys(parsed.data.cities)) {
+        if (!cityIds.has(id)) problems.push(`${path}: неизвестный город "${id}"`);
+      }
+      for (const id of Object.keys(parsed.data.countries)) {
+        if (!countryIds.has(id)) problems.push(`${path}: неизвестная страна "${id}"`);
       }
     }
     expect(problems).toEqual([]);

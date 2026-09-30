@@ -10,6 +10,7 @@
 
   import FactorBreakdown from './factor-breakdown.svelte';
   import LegalizationNote from './legalization-note.svelte';
+  import PeopleLinks from './people-links.svelte';
   import ReferenceBlock from './reference-block.svelte';
 
   const ranking = getRankingContext();
@@ -64,6 +65,7 @@
         <FactorBreakdown {view} />
         <ReferenceBlock city={view.city} />
         <LegalizationNote city={view.city} />
+        <PeopleLinks city={view.city} />
       </div>
     {/if}
   </Sheet.Content>
