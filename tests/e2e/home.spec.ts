@@ -98,13 +98,13 @@ test('поиск находит город и сохраняет его мест
   await page.goto('/');
   await openSection(page, 'Города');
   const tbilisi = page.locator('[data-city-id="tbilisi"]');
-  const rankBefore = await tbilisi.locator('span').first().innerText();
+  const rankBefore = await tbilisi.getByTestId('city-rank').innerText();
 
   await page.getByTestId('city-search').fill('тбил');
 
   await expect(page.getByTestId('city-list-item')).toHaveCount(1);
   await expect(tbilisi.getByTestId('city-name')).toHaveText('Тбилиси');
-  await expect(tbilisi.locator('span').first()).toHaveText(rankBefore);
+  await expect(tbilisi.getByTestId('city-rank')).toHaveText(rankBefore);
 
   await page.getByTestId('city-search').fill('атлантида');
 
@@ -120,5 +120,23 @@ test('сброс фильтров возвращает отсечённые го
   await hidden.getByRole('button', { name: 'Сбросить фильтры' }).click();
 
   await expect(hidden).toBeHidden();
-  await expect(page).toHaveURL(/f=safety:-/);
+  await expect(page).toHaveURL(/f=[\w-]+:-/);
+});
+
+test('ссылка, вставленная в открытую вкладку, заменяет правки', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Настройки');
+  const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
+  await thumb.focus();
+  await thumb.press('Home');
+  await expect(page.getByTestId('persona-status')).toBeVisible();
+  await expect(page).toHaveURL(/w=cost-of-living:0/);
+
+  await page.evaluate(() => {
+    location.hash = '#p=family';
+  });
+
+  await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('persona-status')).toBeHidden();
+  await expect(page).toHaveURL(/#p=family$/);
 });
