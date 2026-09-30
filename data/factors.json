@@ -57,7 +57,7 @@
       "id": "rent",
       "kind": "numeric",
       "name": "Стоимость аренды",
-      "definition": "Индекс стоимости аренды жилья, Нью-Йорк = 100",
+      "definition": "Аренда однокомнатной квартиры в центре города, USD в месяц (Numbeo)",
       "group": "money",
       "level": "city",
       "scoring": {
@@ -65,10 +65,10 @@
       },
       "defaultWeight": 7,
       "defaultEnabled": true,
-      "activeSample": "rent.numbeo-2026",
+      "activeSample": "rent.numbeo-usd-2026",
       "presentation": {
-        "format": "nyc-index",
-        "hint": "Индекс Numbeo: стоимость аренды жилья; Нью-Йорк = 100, меньше — дешевле.",
+        "format": "usd-per-month",
+        "hint": "Средняя месячная аренда однокомнатной квартиры в центре по данным Numbeo, в долларах.",
         "chip": {
           "good": "дешёвая аренда",
           "bad": "дорогая аренда"
