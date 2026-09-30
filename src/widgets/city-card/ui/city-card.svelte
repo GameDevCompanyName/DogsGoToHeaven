@@ -48,7 +48,11 @@
           <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
         </div>
         {#if chips}
-          <SummaryLine strengths={chips.strengths} weaknesses={chips.weaknesses} />
+          <SummaryLine
+            strengths={chips.strengths}
+            weaknesses={chips.weaknesses}
+            percentile={view.percentile}
+          />
         {/if}
       </Sheet.Header>
       <div class="flex flex-col gap-8 px-4 pb-8">

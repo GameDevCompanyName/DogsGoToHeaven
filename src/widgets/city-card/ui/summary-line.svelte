@@ -5,9 +5,14 @@
   interface Props {
     strengths: CityChip[];
     weaknesses: CityChip[];
+    /** Перцентиль места среди показанных городов, 1 — лучший. */
+    percentile: number | null;
   }
 
-  let { strengths, weaknesses }: Props = $props();
+  let { strengths, weaknesses, percentile }: Props = $props();
+
+  /** «В топе» — только верхняя половина выдачи, у остальных просто плюсы. */
+  const isInTop = $derived(percentile !== null && percentile >= 0.5);
 </script>
 
 {#snippet chipList(chips: CityChip[])}
@@ -21,7 +26,7 @@
 
 <p class="text-base leading-snug" data-testid="summary-line">
   {#if strengths.length > 0}
-    В топе за счёт: {@render chipList(strengths)}.
+    {isInTop ? 'В топе за счёт' : 'Плюсы'}: {@render chipList(strengths)}.
   {:else}
     Ровный профиль без явных плюсов.
   {/if}
