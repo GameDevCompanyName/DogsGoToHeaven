@@ -64,6 +64,8 @@ function displayDecimals(value: number, format: NumericFormat): number | null {
       return 1;
     case 'nyc-index':
     case 'usd-per-year':
+    case 'usd-per-month':
+    case 'population':
     case 'relative-only':
       return null;
   }
@@ -128,6 +130,10 @@ function formatNumber(
       const label = presentation.unit ?? unit;
       return { primary: label ? `${shown}${NBSP}${label}` : shown };
     }
+    case 'usd-per-month':
+      return { primary: `≈${NBSP}${usd(roundTo(value, 10))} в месяц` };
+    case 'population':
+      return { primary: formatPopulation(value) };
   }
 }
 
@@ -145,6 +151,13 @@ function compareWithWho(pm25: number): string {
   // До пятикратного превышения важна десятая доля, дальше — нет.
   const rounded = roundHalfAway(ratio, ratio < 5 ? 1 : 0);
   return `в ${ONE_DECIMAL.format(rounded)} ${wordFor(rounded, ['раз', 'раза', 'раз'])} выше нормы ВОЗ`;
+}
+
+/** Население: «1,2 млн», «850 тыс.», меньше ста тысяч — «85 000». */
+export function formatPopulation(value: number): string {
+  if (value >= 1_000_000) return `${ONE_DECIMAL.format(value / 1_000_000)}${NBSP}млн`;
+  if (value >= 100_000) return `${INTEGER.format(value / 1_000)}${NBSP}тыс.`;
+  return INTEGER.format(value);
 }
 
 function usd(amount: number): string {

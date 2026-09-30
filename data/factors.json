@@ -22,7 +22,7 @@
     },
     {
       "id": "remote",
-      "name": "Удалёнка"
+      "name": "Связь с домом"
     }
   ],
   "factors": [
@@ -440,6 +440,53 @@
       }
     },
     {
+      "id": "muggy-days",
+      "kind": "numeric",
+      "name": "Душные дни",
+      "definition": "Дней в году со средней за сутки точкой росы не ниже 18 °C, по данным Open-Meteo за 2020–2024",
+      "group": "climate",
+      "level": "city",
+      "scoring": {
+        "type": "lower-better"
+      },
+      "defaultWeight": 3,
+      "defaultEnabled": true,
+      "presentation": {
+        "format": "plain",
+        "unit": "дн./год",
+        "hint": "Сколько дней в году воздух ощущается душным: точка росы 18 °C и выше, как в Бангкоке летом. Не путать с жарой: сухие +35 °C переносятся легче.",
+        "chip": {
+          "good": "не душно",
+          "bad": "душно"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "max": 30,
+              "label": "сухо",
+              "tone": "good"
+            },
+            {
+              "max": 90,
+              "label": "бывает душно",
+              "tone": "ok"
+            },
+            {
+              "max": 180,
+              "label": "душно",
+              "tone": "bad"
+            },
+            {
+              "label": "очень душно",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "entry-visa",
       "kind": "categorical",
       "name": "Визовый режим для въезда",
@@ -768,6 +815,77 @@
             {
               "label": "почти не пересекаются",
               "tone": "bad"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "direct-flights",
+      "kind": "categorical",
+      "name": "Прямые рейсы из России",
+      "definition": "Есть ли прямые регулярные или чартерные рейсы из аэропортов России в город на дату сбора; по таблицам направлений аэропортов в Википедии",
+      "group": "remote",
+      "level": "city",
+      "categories": [
+        {
+          "code": "moscow",
+          "name": "прямой рейс из Москвы"
+        },
+        {
+          "code": "regions",
+          "name": "прямой рейс из других городов РФ"
+        },
+        {
+          "code": "none",
+          "name": "без прямых рейсов"
+        }
+      ],
+      "presentation": {
+        "format": "category",
+        "hint": "Прямые рейсы из России на дату сбора: главная боль уехавших — пропущенные семейные события. Расписания меняются каждый сезон."
+      }
+    },
+    {
+      "id": "population",
+      "kind": "numeric",
+      "name": "Размер города",
+      "definition": "Население города по последним данным Wikidata, человек",
+      "group": "adaptation",
+      "level": "city",
+      "scoring": {
+        "type": "range",
+        "defaultRange": [300000, 5000000]
+      },
+      "defaultWeight": 3,
+      "defaultEnabled": false,
+      "presentation": {
+        "format": "population",
+        "hint": "Население города по Wikidata. Задайте диапазон: кому-то нужен мегаполис, кому-то город на полмиллиона.",
+        "chip": {
+          "good": "подходящий размер",
+          "bad": "не тот размер",
+          "badBelow": "слишком маленький",
+          "badAbove": "слишком большой"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "levels": [
+            {
+              "below": 300000,
+              "label": "небольшой город"
+            },
+            {
+              "below": 1000000,
+              "label": "средний город"
+            },
+            {
+              "below": 5000000,
+              "label": "большой город"
+            },
+            {
+              "label": "мегаполис"
             }
           ]
         }
