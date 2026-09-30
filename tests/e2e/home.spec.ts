@@ -43,3 +43,26 @@ test('клик по городу открывает карточку с разб
   await expect(card.getByRole('heading', { name: cityName })).toBeVisible();
   await expect(card.getByTestId('score-breakdown').getByRole('listitem').first()).toBeVisible();
 });
+
+test('у первого города в списке есть ярлык сильной или слабой стороны', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+
+  const chip = page.getByTestId('city-list-item').first().getByTestId('city-chip').first();
+
+  await expect(chip).toHaveText(/\S/);
+});
+
+test('карточка объясняет место города уровнями и подсказками', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  await page.getByTestId('city-list-item').first().click();
+
+  const card = page.getByTestId('city-card');
+  await expect(card.getByRole('heading', { name: 'Тянет вверх' })).toBeVisible();
+  await expect(card.getByTestId('level-chip').first()).toHaveText(/\S/);
+
+  await card.getByTestId('factor-hint').first().click();
+
+  await expect(page.getByTestId('factor-hint-content')).toBeVisible();
+});

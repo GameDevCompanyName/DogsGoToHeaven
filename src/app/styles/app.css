@@ -37,8 +37,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Базовый размер 16px на телефоне и десктопе; вторичный текст — 14px цветом foreground/70. */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-base text-foreground;
   }
   html {
     @apply font-sans;

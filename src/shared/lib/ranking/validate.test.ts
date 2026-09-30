@@ -1,7 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RawData } from './schemas';
+import type { BandLevel, NumericFactor, RawData } from './schemas';
 import { validateRawData } from './validate';
+
+function makeRent(levels: BandLevel[]): NumericFactor {
+  return {
+    id: 'rent',
+    kind: 'numeric',
+    name: 'Аренда',
+    definition: 'Тест',
+    group: 'money',
+    level: 'city',
+    scoring: { type: 'lower-better' },
+    activeSample: 'rent.test',
+    defaultWeight: 5,
+    defaultEnabled: true,
+    presentation: {
+      format: 'nyc-index',
+      hint: 'Тест',
+      chip: { good: 'дёшево', bad: 'дорого' },
+      bands: { type: 'absolute', sourceName: 'Тест', levels },
+    },
+  };
+}
 
 function makeRaw(overrides: Partial<RawData> = {}): RawData {
   return {
@@ -10,18 +31,10 @@ function makeRaw(overrides: Partial<RawData> = {}): RawData {
     registry: {
       groups: [{ id: 'money', name: 'Деньги' }],
       factors: [
-        {
-          id: 'rent',
-          kind: 'numeric',
-          name: 'Аренда',
-          definition: 'Тест',
-          group: 'money',
-          level: 'city',
-          scoring: { type: 'lower-better' },
-          activeSample: 'rent.test',
-          defaultWeight: 5,
-          defaultEnabled: true,
-        },
+        makeRent([
+          { max: 50, label: 'дёшево', tone: 'good' },
+          { label: 'дорого', tone: 'bad' },
+        ]),
         {
           id: 'visa',
           kind: 'categorical',
@@ -34,6 +47,7 @@ function makeRaw(overrides: Partial<RawData> = {}): RawData {
             { code: 'free', name: 'Без визы' },
             { code: 'required', name: 'Нужна' },
           ],
+          presentation: { format: 'category', hint: 'Тест' },
         },
       ],
     },
@@ -158,6 +172,37 @@ describe('validateRawData', () => {
       ],
     });
     expect(validateRawData(raw)).toEqual([expect.stringContaining('maybe')]);
+  });
+
+  it('reports an absolute level without a tone on a factor scored by direction', () => {
+    const raw = makeRaw();
+    raw.registry.factors[0] = makeRent([
+      { max: 50, label: 'дёшево' },
+      { label: 'дорого', tone: 'bad' },
+    ]);
+    expect(validateRawData(raw)).toEqual([expect.stringContaining('rent')]);
+  });
+
+  it('reports a presentation unit on a format other than plain', () => {
+    const raw = makeRaw();
+    const rent = makeRent([
+      { max: 50, label: 'дёшево', tone: 'good' },
+      { label: 'дорого', tone: 'bad' },
+    ]);
+    rent.presentation.unit = 'индекс';
+    raw.registry.factors[0] = rent;
+    expect(validateRawData(raw)).toEqual([expect.stringContaining('unit')]);
+  });
+
+  it('reports a range-side chip on a factor without a range', () => {
+    const raw = makeRaw();
+    const rent = makeRent([
+      { max: 50, label: 'дёшево', tone: 'good' },
+      { label: 'дорого', tone: 'bad' },
+    ]);
+    rent.presentation.chip.badAbove = 'слишком дорого';
+    raw.registry.factors[0] = rent;
+    expect(validateRawData(raw)).toEqual([expect.stringContaining('badAbove')]);
   });
 
   it('reports a categorical filter on a numeric factor', () => {

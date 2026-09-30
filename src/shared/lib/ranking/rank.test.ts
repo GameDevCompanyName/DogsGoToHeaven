@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { MIN_CITY_COVERAGE, rank } from './rank';
+import type { NumericPresentation } from './schemas';
 import type { Dataset, DatasetCity, RankingSettings } from './types';
+
+/** Движок представление не читает: хватает минимального валидного. */
+const PRESENTATION: NumericPresentation = {
+  format: 'plain',
+  hint: 'Тест',
+  chip: { good: 'хорошо', bad: 'плохо' },
+  bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
+};
 
 function makeCity(id: string, values: DatasetCity['values']): DatasetCity {
   return { id, name: id, countryId: 'xx', countryName: 'xx', lat: 0, lon: 0, values, coverage: 1 };
@@ -19,6 +28,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'rent',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Аренда',
         definition: 'Тест',
         group: 'g',
@@ -30,6 +40,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'safety',
         kind: 'numeric',
+        presentation: PRESENTATION,
         name: 'Безопасность',
         definition: 'Тест',
         group: 'g',
@@ -41,6 +52,7 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
       {
         id: 'visa',
         kind: 'categorical',
+        presentation: { format: 'category', hint: 'Тест' },
         name: 'Виза',
         definition: 'Тест',
         group: 'g',

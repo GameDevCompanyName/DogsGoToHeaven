@@ -116,7 +116,7 @@
 
 <div class="relative size-full bg-muted" data-testid="city-map">
   {#if status !== 'ready'}
-    <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
+    <p class="absolute inset-0 grid place-items-center text-sm text-foreground/70">
       {status === 'failed' ? 'Карта недоступна' : 'Карта загружается…'}
     </p>
   {/if}

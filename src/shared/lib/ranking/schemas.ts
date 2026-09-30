@@ -51,6 +51,123 @@ export const numericScoringSchema = z.discriminatedUnion('type', [
 
 export const weightSchema = z.number().int().min(0).max(10);
 
+/** Тон уровня: цвет метки в интерфейсе. Движок его не читает. */
+export const levelToneSchema = z.enum(['good', 'ok', 'bad']);
+
+/**
+ * Уровень абсолютной шкалы. Граница — `max` (включительно) или `below` (строго меньше),
+ * у последнего уровня границы нет.
+ */
+export const bandLevelSchema = z
+  .object({
+    max: z.number().optional(),
+    below: z.number().optional(),
+    label: nameSchema,
+    /** Нет тона — уровень только описывает значение, тон берётся из диапазона пользователя. */
+    tone: levelToneSchema.optional(),
+  })
+  .strict();
+
+const PERCENT_PLACEHOLDER = '{n}';
+
+export const bandsSchema = z
+  .discriminatedUnion('type', [
+    z
+      .object({
+        type: z.literal('absolute'),
+        /** Чья это шкала: «норма ВОЗ», «Numbeo». */
+        sourceName: nameSchema,
+        source: z.string().url().optional(),
+        levels: z.array(bandLevelSchema).min(2),
+      })
+      .strict(),
+    z
+      .object({
+        type: z.literal('percentile'),
+        /** Когда город лучше большинства: «дешевле, чем в {n} % городов». */
+        phrase: nameSchema,
+        /** Когда хуже большинства: «дороже, чем в {n} % городов». Без него берётся `phrase`. */
+        inversePhrase: nameSchema.optional(),
+      })
+      .strict(),
+  ])
+  .superRefine((bands, context) => {
+    if (bands.type === 'percentile') {
+      for (const key of ['phrase', 'inversePhrase'] as const) {
+        const phrase = bands[key];
+        if (phrase !== undefined && !phrase.includes(PERCENT_PLACEHOLDER)) {
+          context.addIssue({ code: 'custom', path: [key], message: 'phrase must contain {n}' });
+        }
+      }
+      return;
+    }
+    let previous = -Infinity;
+    bands.levels.forEach((level, index) => {
+      const isLast = index === bands.levels.length - 1;
+      const bound = level.max ?? level.below;
+      if (level.max !== undefined && level.below !== undefined) {
+        context.addIssue({ code: 'custom', path: ['levels', index], message: 'max or below' });
+      } else if (isLast !== (bound === undefined)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['levels', index],
+          message: 'every level but the last needs a bound',
+        });
+      } else if (bound !== undefined) {
+        if (bound <= previous) {
+          context.addIssue({
+            code: 'custom',
+            path: ['levels', index],
+            message: 'bounds must ascend',
+          });
+        }
+        previous = bound;
+      }
+    });
+  });
+
+export const numericFormatSchema = z.enum([
+  'nyc-index',
+  'usd-per-year',
+  'percent-max',
+  'index-100',
+  'pm25',
+  'celsius',
+  'relative-only',
+  'years',
+  'score-5',
+  'plain',
+]);
+
+export const numericPresentationSchema = z
+  .object({
+    format: numericFormatSchema,
+    /** Что это за число, откуда и как его понимать; по тапу на ⓘ. */
+    hint: nameSchema,
+    /** Единица для формата `plain` вместо единицы из выборки: «ч от Москвы». */
+    unit: nameSchema.optional(),
+    /** Короткие ярлыки для списка и сводки: сильная и слабая сторона. */
+    chip: z
+      .object({
+        good: nameSchema,
+        bad: nameSchema,
+        /** Для `range`: слабая сторона, когда значение ниже диапазона. */
+        badBelow: nameSchema.optional(),
+        /** Для `range`: слабая сторона, когда значение выше диапазона. */
+        badAbove: nameSchema.optional(),
+      })
+      .strict(),
+    bands: bandsSchema,
+  })
+  .strict();
+
+export const categoricalPresentationSchema = z
+  .object({
+    format: z.literal('category'),
+    hint: nameSchema,
+  })
+  .strict();
+
 const factorBaseSchema = z.object({
   id: idSchema,
   name: nameSchema,
@@ -67,6 +184,7 @@ export const numericFactorSchema = factorBaseSchema
     scoring: numericScoringSchema,
     defaultWeight: weightSchema,
     defaultEnabled: z.boolean(),
+    presentation: numericPresentationSchema,
   })
   .strict();
 
@@ -74,6 +192,7 @@ export const categoricalFactorSchema = factorBaseSchema
   .extend({
     kind: z.literal('categorical'),
     categories: z.array(z.object({ code: idSchema, name: nameSchema }).strict()).min(1),
+    presentation: categoricalPresentationSchema,
   })
   .strict();
 
@@ -145,6 +264,13 @@ export type Country = z.infer<typeof countrySchema>;
 export type City = z.infer<typeof citySchema>;
 export type FactorGroup = z.infer<typeof factorGroupSchema>;
 export type NumericScoring = z.infer<typeof numericScoringSchema>;
+export type LevelTone = z.infer<typeof levelToneSchema>;
+export type BandLevel = z.infer<typeof bandLevelSchema>;
+export type Bands = z.infer<typeof bandsSchema>;
+export type NumericFormat = z.infer<typeof numericFormatSchema>;
+export type NumericPresentation = z.infer<typeof numericPresentationSchema>;
+export type CategoricalPresentation = z.infer<typeof categoricalPresentationSchema>;
+export type Presentation = NumericPresentation | CategoricalPresentation;
 export type NumericFactor = z.infer<typeof numericFactorSchema>;
 export type CategoricalFactor = z.infer<typeof categoricalFactorSchema>;
 export type Factor = z.infer<typeof factorSchema>;
