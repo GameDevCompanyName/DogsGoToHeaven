@@ -93,3 +93,32 @@ test('ссылка с персоной открывает эту персону'
   await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
   await expect(personaCard(page, 'Удалёнщик надолго')).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('поиск находит город и сохраняет его место', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  const tbilisi = page.locator('[data-city-id="tbilisi"]');
+  const rankBefore = await tbilisi.locator('span').first().innerText();
+
+  await page.getByTestId('city-search').fill('тбил');
+
+  await expect(page.getByTestId('city-list-item')).toHaveCount(1);
+  await expect(tbilisi.getByTestId('city-name')).toHaveText('Тбилиси');
+  await expect(tbilisi.locator('span').first()).toHaveText(rankBefore);
+
+  await page.getByTestId('city-search').fill('атлантида');
+
+  await expect(page.getByTestId('empty-list')).toHaveText('Ничего не найдено');
+});
+
+test('сброс фильтров возвращает отсечённые города', async ({ page }) => {
+  await page.goto('/#p=family');
+  await openSection(page, 'Города');
+  const hidden = page.getByTestId('hidden-by-filter');
+  await expect(hidden).toContainText('Скрыто фильтрами');
+
+  await hidden.getByRole('button', { name: 'Сбросить фильтры' }).click();
+
+  await expect(hidden).toBeHidden();
+  await expect(page).toHaveURL(/f=safety:-/);
+});
