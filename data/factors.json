@@ -484,7 +484,8 @@
             }
           ]
         }
-      }
+      },
+      "activeSample": "muggy-days.open-meteo-2020-2024"
     },
     {
       "id": "entry-visa",
