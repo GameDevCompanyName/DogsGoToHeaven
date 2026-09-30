@@ -1,52 +1,80 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CategoricalFactor, NumericFactor } from '@/shared/lib/ranking';
+import type { NumericFormat } from '@/shared/lib/ranking';
 
 import { formatValue } from './format-value';
+import { CATEGORICAL, makeNumeric } from './test-factors';
 
-const NUMERIC: NumericFactor = {
-  id: 'rent',
-  kind: 'numeric',
-  name: 'Аренда',
-  definition: 'Тест',
-  group: 'g',
-  level: 'city',
-  scoring: { type: 'lower-better' },
-  defaultWeight: 5,
-  defaultEnabled: true,
-  presentation: {
-    format: 'plain',
-    hint: 'Тест',
-    chip: { good: 'хорошо', bad: 'плохо' },
-    bands: { type: 'percentile', phrase: 'лучше, чем в {n} % городов' },
-  },
-};
+/** Неразрывный пробел: им отделены проценты, единицы и разряды. */
+const S = ' ';
 
-const CATEGORICAL: CategoricalFactor = {
-  id: 'visa',
-  kind: 'categorical',
-  name: 'Виза',
-  definition: 'Тест',
-  group: 'g',
-  level: 'country',
-  categories: [{ code: 'visa-free', name: 'Без визы' }],
-  presentation: { format: 'category', hint: 'Тест' },
-};
+function format(format: NumericFormat, value: number, unit?: string, presentationUnit?: string) {
+  return formatValue(value, makeNumeric({ format, unit: presentationUnit }), unit);
+}
 
 describe('formatValue', () => {
-  it('formats a number the Russian way with its unit', () => {
-    expect(formatValue(38.24, NUMERIC, 'индекс')).toBe('38,2 индекс');
+  it('compares a Numbeo index with New York', () => {
+    expect(format('nyc-index', 61.2)).toEqual({
+      primary: `на 39${S}% дешевле Нью-Йорка`,
+      secondary: `индекс 61,2`,
+    });
+    expect(format('nyc-index', 112)?.primary).toBe(`на 12${S}% дороже Нью-Йорка`);
   });
 
-  it('groups thousands and omits a missing unit', () => {
-    expect(formatValue(52000, NUMERIC)).toBe('52 000');
+  it('turns a yearly salary into a monthly one', () => {
+    expect(format('usd-per-year', 58_000)).toEqual({
+      primary: `≈${S}$4${S}800 в месяц до налогов`,
+      secondary: `$58${S}000 в год`,
+    });
+  });
+
+  it('shows a top tax rate as a ceiling', () => {
+    expect(format('percent-max', 45)?.primary).toBe(`до 45${S}%`);
+  });
+
+  it('shows an index out of 100', () => {
+    expect(format('index-100', 63.4)?.primary).toBe(`63 из 100`);
+  });
+
+  it('compares PM2.5 with the WHO guideline', () => {
+    expect(format('pm25', 11)).toEqual({
+      primary: `11${S}мкг/м³`,
+      secondary: `в 2 раза выше нормы ВОЗ`,
+    });
+    expect(format('pm25', 7.5)?.secondary).toBe(`в 1,5 раза выше нормы ВОЗ`);
+    expect(format('pm25', 5)?.secondary).toBe(`в норме ВОЗ`);
+  });
+
+  it('signs a temperature', () => {
+    expect(format('celsius', 6.3)?.primary).toBe(`+6${S}°C`);
+    expect(format('celsius', -3.4)?.primary).toBe(`−3${S}°C`);
+  });
+
+  it('hides the number of a relative-only factor', () => {
+    expect(format('relative-only', 2900)).toBeNull();
+  });
+
+  it('counts years with the right word form', () => {
+    expect(format('years', 6)?.primary).toBe(`через 6 лет`);
+    expect(format('years', 2)?.primary).toBe(`через 2 года`);
+  });
+
+  it('shows a score out of 5', () => {
+    expect(format('score-5', 3)?.primary).toBe(`3 из 5`);
+  });
+
+  it('prefers the presentation unit over the sample unit', () => {
+    expect(format('plain', 170.4, 'Мбит/с')?.primary).toBe(`170${S}Мбит/с`);
+    expect(format('plain', 3, 'ч', 'ч от Москвы')?.primary).toBe(`3${S}ч от Москвы`);
   });
 
   it('names a category', () => {
-    expect(formatValue('visa-free', CATEGORICAL)).toBe('Без визы');
+    expect(formatValue('visa-free', CATEGORICAL)).toEqual({ primary: 'Без визы' });
   });
 
   it('says there is no data for a gap', () => {
-    expect(formatValue(null, NUMERIC, 'индекс')).toBe('нет данных');
+    expect(formatValue(null, makeNumeric({ format: 'relative-only' }))).toEqual({
+      primary: 'нет данных',
+    });
   });
 });

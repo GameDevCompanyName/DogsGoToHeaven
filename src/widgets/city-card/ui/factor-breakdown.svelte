@@ -25,7 +25,9 @@
             factor,
             provenance,
             normalized: contribution.normalized,
-            value: formatValue(view.city.values[factor.id] ?? null, factor, provenance?.unit),
+            value:
+              formatValue(view.city.values[factor.id] ?? null, factor, provenance?.unit)?.primary ??
+              '',
             share: score > 0 ? Math.round((contribution.contribution / score) * 100) : 0,
           },
         ];

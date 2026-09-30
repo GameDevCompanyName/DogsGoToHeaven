@@ -27,7 +27,7 @@
           <div class="flex items-baseline gap-2 text-sm">
             <dt class="min-w-0 flex-1 font-medium">{factor.name}</dt>
             <dd class="shrink-0 text-muted-foreground">
-              {formatValue(city.values[factor.id] ?? null, factor)}
+              {formatValue(city.values[factor.id] ?? null, factor)?.primary}
             </dd>
           </div>
           <SourceLine provenance={ranking.dataset.provenance[factor.id]} />

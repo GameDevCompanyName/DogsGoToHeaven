@@ -32,7 +32,9 @@
   /** Оценка с единицей из выборки: «4 из 5». */
   const scoreLabel = $derived.by(() => {
     const score = city.values[LEGALIZATION_FACTOR_ID];
-    return factor && typeof score === 'number' ? formatValue(score, factor, unit) : null;
+    return factor && typeof score === 'number'
+      ? (formatValue(score, factor, unit)?.primary ?? null)
+      : null;
   });
 
   /** Абзацы раздела: разделены пустой строкой. Markdown внутри не разбираем. */
