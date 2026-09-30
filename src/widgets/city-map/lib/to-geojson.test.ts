@@ -9,16 +9,19 @@ function makeCity(id: string, lon: number, lat: number): DatasetCity {
   return { id, name: id, countryId: 'xx', countryName: 'xx', lat, lon, values: {}, coverage: 1 };
 }
 
-function makeView(id: string, score: number | null): RankedCityView {
+function makeView(id: string, score: number | null, percentile: number | null): RankedCityView {
   return {
     city: makeCity(id, 10, 20),
     ranked: { cityId: id, rank: 1, score, contributions: [], missingFactorIds: [] },
+    percentile,
+    strengths: [],
+    weaknesses: [],
   };
 }
 
 describe('toGeoJson', () => {
   it('puts a ranked city at its coordinates with its score', () => {
-    const collection = toGeoJson([makeView('tbilisi', 0.8)], []);
+    const collection = toGeoJson([makeView('tbilisi', 0.8, 1)], []);
 
     expect(collection.features[0]).toMatchObject({
       geometry: { type: 'Point', coordinates: [10, 20] },
@@ -28,7 +31,7 @@ describe('toGeoJson', () => {
 
   it('colours ranked cities by rank percentile, not by raw score', () => {
     const collection = toGeoJson(
-      [makeView('tbilisi', 0.8), makeView('yerevan', 0.6), makeView('baku', 0.5)],
+      [makeView('tbilisi', 0.8, 1), makeView('yerevan', 0.6, 0.5), makeView('baku', 0.5, 0)],
       [],
     );
 
@@ -37,14 +40,8 @@ describe('toGeoJson', () => {
     ]);
   });
 
-  it('gives a single ranked city the best colour', () => {
-    const collection = toGeoJson([makeView('tbilisi', 0.4)], []);
-
-    expect(collection.features[0]?.properties.colorValue).toBe(1);
-  });
-
   it('marks filtered cities and cities without a score as grey', () => {
-    const collection = toGeoJson([makeView('riga', null)], [makeCity('oslo', 1, 2)]);
+    const collection = toGeoJson([makeView('riga', null, null)], [makeCity('oslo', 1, 2)]);
 
     expect(collection.features.map((feature) => feature.properties.state)).toEqual([
       'unscored',
