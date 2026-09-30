@@ -74,36 +74,43 @@
     />
   </div>
   <ScrollArea class="min-h-0 flex-1">
-    <ol class="divide-y" aria-label="Города по баллу">
-      {#each visibleCities as view (view.city.id)}
-        <li>
-          <CityListItem
-            city={view.city}
-            ranked={view.ranked}
-            percentile={view.percentile}
-            chips={listChips(profileChips(view, view.city, factorsById, ranking.settings.ranges))}
-            isSelected={ranking.selectedCityId === view.city.id}
-            onselect={handleSelect}
-          />
-        </li>
-      {:else}
-        <li class="flex flex-col items-start gap-3 p-4 text-foreground/70" data-testid="empty-list">
-          {#if ranking.rankedCities.length > 0}
-            Ничего не найдено
-          {:else if ranking.hiddenByFilter > 0}
-            <p>
-              Фильтры отсекли все города.
-              {#if strictestFilter}Самый строгий: {strictestFilter}.{/if}
-            </p>
-            <Button variant="outline" size="sm" onclick={handleResetFilters}>
-              Сбросить фильтры
-            </Button>
-          {:else}
-            Ни один город не подходит под настройки.
-          {/if}
-        </li>
-      {/each}
-    </ol>
+    <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
+    <p class="sr-only" aria-live="polite">
+      {#if needle !== ''}
+        Найдено {visibleCities.length}
+        {pluralize(visibleCities.length, ['город', 'города', 'городов'])}
+      {/if}
+    </p>
+    {#if visibleCities.length > 0}
+      <ol class="divide-y" aria-label="Города по баллу">
+        {#each visibleCities as view (view.city.id)}
+          <li>
+            <CityListItem
+              city={view.city}
+              ranked={view.ranked}
+              percentile={view.percentile}
+              chips={listChips(profileChips(view, view.city, factorsById, ranking.settings.ranges))}
+              isSelected={ranking.selectedCityId === view.city.id}
+              onselect={handleSelect}
+            />
+          </li>
+        {/each}
+      </ol>
+    {:else}
+      <div class="flex flex-col items-start gap-3 p-4 text-foreground/70" data-testid="empty-list">
+        {#if ranking.rankedCities.length > 0}
+          Ничего не найдено
+        {:else if ranking.hiddenByFilter > 0}
+          <p>
+            Фильтры отсекли все города.
+            {#if strictestFilter}Самый строгий: {strictestFilter}.{/if}
+          </p>
+          <Button variant="outline" size="sm" onclick={handleResetFilters}>Сбросить фильтры</Button>
+        {:else}
+          Ни один город не подходит под настройки.
+        {/if}
+      </div>
+    {/if}
     {#if ranking.hiddenByFilter > 0 && ranking.rankedCities.length > 0}
       <div class="border-t px-4 pt-3">
         <p
