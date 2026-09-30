@@ -827,6 +827,7 @@
       "definition": "Есть ли прямые регулярные или чартерные рейсы из аэропортов России в город на дату сбора; по таблицам направлений аэропортов в Википедии",
       "group": "remote",
       "level": "city",
+      "activeSample": "direct-flights.wikipedia-2026",
       "categories": [
         {
           "code": "moscow",
