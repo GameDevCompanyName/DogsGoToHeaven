@@ -2,6 +2,11 @@ import { expect, type Page, test } from '@playwright/test';
 
 // Тайлы и WebGL в CI не гарантированы: проверяем DOM, от карты — только контейнер.
 
+// Флаг лендинга стоит заранее: без него главная без хеша уводит на /start.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('dogs:onboarded', '1'));
+});
+
 function openSection(page: Page, name: 'Карта' | 'Города' | 'Настройки') {
   return page.getByRole('navigation', { name: 'Разделы' }).getByRole('button', { name }).click();
 }

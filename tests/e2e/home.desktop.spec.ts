@@ -2,6 +2,11 @@ import { expect, test } from '@playwright/test';
 
 // На десктопе список городов виден сразу, а карточка открывается справа поверх карты.
 
+// Флаг лендинга стоит заранее: без него главная без хеша уводит на /start.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('dogs:onboarded', '1'));
+});
+
 test('клик по городу в списке открывает карточку', async ({ page }) => {
   await page.goto('/');
   const firstCity = page.getByTestId('city-list-item').first();

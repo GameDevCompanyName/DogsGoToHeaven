@@ -16,6 +16,7 @@
   import { createRankingState, setRankingContext } from '@/entities/ranking';
   import { ShareButton } from '@/features/share-link';
   import { loadRawData } from '@/shared/api';
+  import { isOnboarded, markOnboarded } from '@/shared/lib/onboarding';
   import { cn } from '@/shared/lib/utils';
   import * as Tabs from '@/shared/ui/tabs';
   import { CityCard } from '@/widgets/city-card';
@@ -24,11 +25,13 @@
   import { ResultsList } from '@/widgets/results-list';
   import { SettingsPanel } from '@/widgets/settings-panel';
   import { browser } from '$app/environment';
-  import { replaceState } from '$app/navigation';
+  import { goto, replaceState } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { page } from '$app/state';
 
   // При пререндере хеша нет: страница собирается с персоной по умолчанию.
-  const ranking = createRankingState(loadRawData(), browser ? location.hash : '');
+  const initialHash = browser ? location.hash : '';
+  const ranking = createRankingState(loadRawData(), initialHash);
   setRankingContext(ranking);
 
   let section = $state<Section>('map');
@@ -56,6 +59,15 @@
       replaceState(hash ? `#${hash}` : `${location.pathname}${location.search}`, page.state);
     }, URL_WRITE_DELAY_MS);
     return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    // Переход на лендинг — действие в браузере при первом показе, а не значение: через $derived
+    // его не выразить. Эффект не читает реактивного состояния и срабатывает один раз; при
+    // пререндере эффекты не запускаются, поэтому собранная страница остаётся главной.
+    // Пришедший по ссылке с настройками лендинг уже не увидит: он сразу получил карту.
+    if (initialHash.replace(/^#/, '') !== '') markOnboarded();
+    else if (!isOnboarded()) void goto(resolve('/start'), { replaceState: true });
   });
 </script>
 
