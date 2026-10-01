@@ -1,8 +1,9 @@
-import { type Note, parseNote } from '@/shared/lib/notes';
+import { type Note, NOTE_SPECS, parseNote } from '@/shared/lib/notes';
 
 /**
  * Обзоры к значениям факторов, `data/notes/<factorId>/<key>.md`.
  * Ленивый glob: файл попадает в бандл отдельным чанком и грузится по требованию.
+ * Файл разбирается спекой своего фактора; у фактора без спеки обзоров нет.
  */
 const NOTE_LOADERS = import.meta.glob<string>('@data/notes/*/*.md', {
   query: '?raw',
@@ -10,13 +11,14 @@ const NOTE_LOADERS = import.meta.glob<string>('@data/notes/*/*.md', {
 });
 
 export function hasNote(factorId: string, key: string): boolean {
-  return findLoader(factorId, key) !== undefined;
+  return NOTE_SPECS[factorId] !== undefined && findLoader(factorId, key) !== undefined;
 }
 
 export async function loadNote(factorId: string, key: string): Promise<Note | null> {
+  const spec = NOTE_SPECS[factorId];
   const loader = findLoader(factorId, key);
-  if (!loader) return null;
-  return parseNote(await loader());
+  if (!spec || !loader) return null;
+  return parseNote(await loader(), spec);
 }
 
 function findLoader(factorId: string, key: string): (() => Promise<string>) | undefined {

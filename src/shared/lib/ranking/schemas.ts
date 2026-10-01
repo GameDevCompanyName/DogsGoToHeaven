@@ -130,6 +130,7 @@ export const numericFormatSchema = z.enum([
   'nyc-index',
   'usd-per-year',
   'percent-max',
+  'percent',
   'index-100',
   'pm25',
   'celsius',

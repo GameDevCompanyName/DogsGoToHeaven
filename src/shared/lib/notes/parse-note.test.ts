@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { NOTE_SECTIONS, parseNote } from './parse-note';
+import { parseNote } from './parse-note';
+import { LEGALIZATION_SPEC } from './specs';
 
 const VALID = `---
 countryId: ge
@@ -38,7 +39,7 @@ describe('parseNote', () => {
     expect(note.countryId).toBe('ge');
     expect(note.checkedAt).toBe('2026-09-28');
     expect(note.sources).toHaveLength(3);
-    expect(note.sections.map((s) => s.title)).toEqual([...NOTE_SECTIONS]);
+    expect(note.sections.map((s) => s.title)).toEqual([...LEGALIZATION_SPEC.sections]);
     expect(note.sections[0]?.body).toBe('Без визы на год.');
     expect(note.score).toBe(5);
   });
