@@ -14,6 +14,7 @@ import {
 } from '@/shared/lib/ranking';
 
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
+import { type CitySort, sortCities } from '../lib/sort-cities';
 import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
@@ -59,6 +60,8 @@ export class RankingState {
   selectedCityId = $state<CityId | null>(null);
   /** Города сравнения в порядке выбора, не больше трёх. */
   compareIds = $state<CityId[]>([]);
+  /** Сортировка таблицы по фактору; `null` — по баллу. */
+  sort = $state<CitySort | null>(null);
 
   // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
@@ -82,6 +85,9 @@ export class RankingState {
       ];
     });
   });
+
+  /** Строки таблицы: выдача в порядке сортировки, места остаются по баллу. */
+  readonly tableCities: RankedCityView[] = $derived(sortCities(this.rankedCities, this.sort));
 
   readonly filteredCities: DatasetCity[] = $derived(
     this.result.excluded.flatMap((excluded) => {
@@ -116,11 +122,13 @@ export class RankingState {
    */
   readonly urlHash = $derived.by(() => {
     const cityId = this.selected?.city.id ?? null;
-    const compareIds = this.compareIds;
+    const { compareIds, sort } = this;
     const isUntouchedDefault =
       this.presetId === this.defaultPresetId && this.changedFactorIds.length === 0;
-    if (isUntouchedDefault && cityId === null && compareIds.length === 0) return '';
-    return serializeState({ presetId: this.presetId, ...this.#diff, cityId, compareIds });
+    if (isUntouchedDefault && cityId === null && compareIds.length === 0 && sort === null) {
+      return '';
+    }
+    return serializeState({ presetId: this.presetId, ...this.#diff, cityId, compareIds, sort });
   });
 
   /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
@@ -217,6 +225,7 @@ export class RankingState {
     }
     this.selectCity(url.cityId);
     this.compareIds = [...url.compareIds];
+    this.sort = url.sort && this.#canSort(url.sort.factorId) ? { ...url.sort } : null;
   }
 
   /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
@@ -296,6 +305,23 @@ export class RankingState {
 
   clearCompare() {
     this.compareIds = [];
+  }
+
+  /**
+   * Клик по заголовку таблицы: по возрастанию, затем по убыванию, затем снова по баллу.
+   * Сортируются только числовые факторы с данными.
+   */
+  toggleSort(factorId: FactorId) {
+    if (!this.#canSort(factorId)) return;
+    if (this.sort?.factorId !== factorId) this.sort = { factorId, direction: 'asc' };
+    else if (this.sort.direction === 'asc') this.sort = { factorId, direction: 'desc' };
+    else this.sort = null;
+  }
+
+  /** Колонки таблицы — числовые факторы с данными: только по ним и есть сортировка. */
+  #canSort(factorId: FactorId): boolean {
+    const factor = this.dataset.factors.find(({ id }) => id === factorId);
+    return factor?.kind === 'numeric' && this.hasData(factorId);
   }
 
   #settingsFor(presetId: string | null): RankingSettings {

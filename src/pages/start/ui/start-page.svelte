@@ -3,11 +3,13 @@
   import { loadRawData } from '@/shared/api';
   import { markOnboarded } from '@/shared/lib/onboarding';
   import { pluralize } from '@/shared/lib/plural';
+  import { Button } from '@/shared/ui/button';
   import { resolve } from '$app/paths';
 
   const raw = loadRawData();
   const cityCount = raw.cities.length;
   const home = resolve('/');
+  const quiz = resolve('/quiz');
 
   function handleEnter() {
     markOnboarded();
@@ -32,6 +34,9 @@
         Выберите, что ближе, — веса факторов подстроятся. Потом их можно поменять.
       </p>
     </div>
+    <Button href={quiz} variant="outline" class="w-fit" data-testid="start-quiz">
+      Не знаю, кто я — пройти опрос
+    </Button>
     <ul class="grid gap-3 md:grid-cols-2">
       {#each raw.presets as preset (preset.id)}
         <li>

@@ -62,3 +62,36 @@ test('сравнение из карточки и списка показыва�
   await sheet.getByTestId('compare-column').first().getByRole('button', { name: 'Убрать' }).click();
   await expect(sheet.getByTestId('compare-column')).toHaveCount(1);
 });
+
+test('таблица встаёт вместо карты, сортируется и открывает карточку', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Таблица' }).click();
+  const table = page.getByTestId('city-table');
+  await expect(table).toBeVisible();
+  // Слева при таблице — настройки: вес двигается, таблица справа видна.
+  await expect(page.getByTestId('weight-cost-of-living')).toBeVisible();
+  const sortSafety = table.getByTestId('sort-safety');
+
+  await sortSafety.click();
+  await sortSafety.click();
+
+  await expect(page).toHaveURL(/sort=safety:desc/);
+  // Пустой data-value — нет данных: Number('') дал бы 0 и сломал порядок.
+  const safety = (
+    await table
+      .getByTestId('table-row')
+      .locator('[data-factor-id="safety"]')
+      .evaluateAll((cells) => cells.slice(0, 10).map((cell) => cell.getAttribute('data-value')))
+  )
+    .filter((value) => value !== null && value !== '')
+    .map(Number);
+  expect(safety).toEqual([...safety].sort((a, b) => b - a));
+
+  const firstRow = table.getByTestId('table-row').first();
+  const cityName = await firstRow.getByRole('rowheader').innerText();
+  await firstRow.locator('td').last().click();
+
+  await expect(
+    page.getByTestId('city-card').getByRole('heading', { name: cityName }),
+  ).toBeVisible();
+});
