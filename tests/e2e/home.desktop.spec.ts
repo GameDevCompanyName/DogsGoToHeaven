@@ -62,3 +62,17 @@ test('сравнение из карточки и списка показыва�
   await sheet.getByTestId('compare-column').first().getByRole('button', { name: 'Убрать' }).click();
   await expect(sheet.getByTestId('compare-column')).toHaveCount(1);
 });
+
+test('доход показывает остаток у города и сортирует сначала по карману', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Настройки' }).click();
+  await page.getByTestId('budget-input').fill('2000');
+  await page.getByRole('tab', { name: 'Города' }).click();
+
+  await expect(page.getByTestId('city-list-item').first()).toContainText(/Останется|Не по карману/);
+
+  await page.getByRole('checkbox', { name: 'Сначала по карману' }).click();
+
+  await expect(page).toHaveURL(/b=2000/);
+  await expect(page).toHaveURL(/bp=1/);
+});

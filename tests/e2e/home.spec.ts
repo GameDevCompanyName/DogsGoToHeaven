@@ -170,3 +170,17 @@ test('сравнение двух городов показывает табли
   await expect(sheet.getByTestId('compare-column')).toHaveCount(2);
   await expect(sheet.getByRole('rowheader').first()).toBeVisible();
 });
+
+test('доход показывает остаток у города и сортирует сначала по карману', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Настройки');
+  await page.getByTestId('budget-input').fill('2000');
+  await openSection(page, 'Города');
+
+  await expect(page.getByTestId('city-list-item').first()).toContainText(/Останется|Не по карману/);
+
+  await page.getByRole('checkbox', { name: 'Сначала по карману' }).click();
+
+  await expect(page).toHaveURL(/b=2000/);
+  await expect(page).toHaveURL(/bp=1/);
+});
