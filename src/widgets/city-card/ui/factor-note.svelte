@@ -12,30 +12,29 @@
   import { hasNote, loadNote } from '@/shared/api';
   import type { DatasetCity } from '@/shared/lib/ranking';
 
-  import { LEGALIZATION_FACTOR_ID } from '../config/legalization';
+  import type { NoteBlock } from '../config/notes';
 
-  interface Props {
+  interface Props extends NoteBlock {
     city: DatasetCity;
   }
 
-  let { city }: Props = $props();
+  let { city, factorId, title, valueLabel }: Props = $props();
 
   const ranking = getRankingContext();
-  const factor = ranking.dataset.factors.find((item) => item.id === LEGALIZATION_FACTOR_ID);
-  const unit = ranking.dataset.provenance[LEGALIZATION_FACTOR_ID]?.unit;
 
-  const countryId = $derived(city.countryId);
-  const hasLegalizationNote = $derived(hasNote(LEGALIZATION_FACTOR_ID, countryId));
-  const notePromise = $derived(
-    hasLegalizationNote ? loadNote(LEGALIZATION_FACTOR_ID, countryId) : null,
-  );
-  /** Оценка с единицей из выборки: «4 из 5». */
-  const scoreLabel = $derived.by(() => {
-    const score = city.values[LEGALIZATION_FACTOR_ID];
-    return factor && typeof score === 'number'
-      ? (formatValue(score, factor, unit)?.primary ?? null)
+  const factor = $derived(ranking.dataset.factors.find((item) => item.id === factorId));
+  const unit = $derived(ranking.dataset.provenance[factorId]?.unit);
+  /** Ключ обзора — по уровню фактора: город или страна. */
+  const noteKey = $derived(factor?.level === 'city' ? city.id : city.countryId);
+  const notePromise = $derived(hasNote(factorId, noteKey) ? loadNote(factorId, noteKey) : null);
+  /** Значение фактора в формате реестра: «4 из 5», «≈ 12 %». */
+  const valueText = $derived.by(() => {
+    const value = city.values[factorId];
+    return factor && typeof value === 'number'
+      ? (formatValue(value, factor, unit)?.primary ?? null)
       : null;
   });
+  const titleId = $derived(`${factorId}-note-title`);
 
   /** Абзацы раздела: разделены пустой строкой. Markdown внутри не разбираем. */
   function toParagraphs(body: string): string[] {
@@ -53,20 +52,21 @@
 
 {#if notePromise}
   <section
-    aria-labelledby="legalization-title"
+    aria-labelledby={titleId}
     class="flex flex-col gap-3"
-    data-testid="legalization-note"
+    data-testid="factor-note"
+    data-factor={factorId}
   >
-    <h2 id="legalization-title" class="text-lg font-semibold">
-      Легализация: {city.countryName}
+    <h2 id={titleId} class="text-lg font-semibold">
+      {title}: {city.countryName}
     </h2>
     {#await notePromise}
       <p class="text-sm text-foreground/70">Загружаем справку…</p>
     {:then note}
       {#if note}
         <div class="flex flex-col gap-1 text-sm text-foreground/70">
-          {#if scoreLabel}
-            <p class="text-base font-medium text-foreground">Оценка {scoreLabel}</p>
+          {#if valueText}
+            <p class="text-base font-medium text-foreground">{valueLabel} {valueText}</p>
           {/if}
           <p>Проверено {formatDate(note.checkedAt)}</p>
           <p>Справка по открытым источникам, не юридическая консультация.</p>
