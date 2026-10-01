@@ -1,0 +1,33 @@
+{
+  "id": "nomad-visa-income.claude-research-2026",
+  "factorId": "nomad-visa-income",
+  "source": {
+    "name": "Оценка Claude по открытым источникам",
+    "url": "https://github.com/GameDevCompanyName/DogsGoToHeaven/blob/main/docs/collect-research.md",
+    "period": "2026-10",
+    "collectedAt": "2026-10-01",
+    "notes": "Строка «Минимальный доход: N $ в месяц» в разделе «Вердикт» обзоров data/notes/nomad-visa; только страны, где виза есть и доход указан."
+  },
+  "unit": "$ в месяц",
+  "values": {
+    "ae": 3500,
+    "bg": 2920,
+    "br": 1500,
+    "cy": 3950,
+    "es": 3220,
+    "gr": 3950,
+    "hr": 4090,
+    "hu": 3390,
+    "id": 5000,
+    "it": 2400,
+    "kr": 6420,
+    "kz": 3000,
+    "me": 2030,
+    "my": 2000,
+    "pt": 4160,
+    "ro": 5900,
+    "si": 3620,
+    "tr": 3000,
+    "za": 3300
+  }
+}

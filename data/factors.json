@@ -119,6 +119,7 @@
       },
       "defaultWeight": 6,
       "defaultEnabled": true,
+      "activeSample": "remote-tax.claude-research-2026",
       "presentation": {
         "format": "percent",
         "hint": "Какую долю дохода удалённый фрилансер с 60 000 $ в год отдаст на налоги и обязательные взносы при самом выгодном законном режиме для новоприбывшего. Расчёт Claude по открытым источникам, подробности — в справке ниже.",
@@ -607,7 +608,7 @@
       "definition": "Есть ли действующая виза цифрового кочевника, доступная гражданам РФ",
       "group": "legalization",
       "level": "country",
-      "activeSample": "nomad-visa.wikipedia-2026",
+      "activeSample": "nomad-visa.research-2026",
       "categories": [
         {
           "code": "yes",
@@ -635,6 +636,7 @@
       },
       "defaultWeight": 3,
       "defaultEnabled": false,
+      "activeSample": "nomad-visa-income.claude-research-2026",
       "presentation": {
         "format": "usd-per-month",
         "hint": "Какой доход в месяц нужно подтвердить для визы цифрового кочевника. Страны без такой визы в сравнении не участвуют.",
@@ -815,6 +817,7 @@
       },
       "defaultWeight": 5,
       "defaultEnabled": true,
+      "activeSample": "banking-ease.claude-research-2026",
       "presentation": {
         "format": "score-5",
         "hint": "Оценка Claude по открытым источникам: насколько реально гражданину РФ открыть счёт, получить карту и переводить деньги, от 1 до 5. Подробности — в справке ниже.",
