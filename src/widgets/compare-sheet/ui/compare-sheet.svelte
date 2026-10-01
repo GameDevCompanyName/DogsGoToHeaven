@@ -89,13 +89,17 @@
       <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
         <thead>
           <tr>
-            <th scope="col" class="sticky left-0 z-10 w-28 min-w-28 bg-popover md:w-56 md:min-w-56">
+            <!-- Шапка липнет сверху, первый столбец — слева; угол выше обоих при прокрутке. -->
+            <th
+              scope="col"
+              class="sticky top-0 left-0 z-20 w-28 min-w-28 bg-popover md:w-56 md:min-w-56"
+            >
               <span class="sr-only">Фактор</span>
             </th>
             {#each columns as column (column.city.id)}
               <th
                 scope="col"
-                class="w-44 min-w-44 p-3 text-left align-top font-normal md:w-56 md:min-w-56"
+                class="sticky top-0 z-10 w-44 min-w-44 bg-popover p-3 text-left align-top font-normal md:w-56 md:min-w-56"
                 data-testid="compare-column"
               >
                 <div class="flex flex-col gap-2">
@@ -131,6 +135,7 @@
                     variant="outline"
                     size="xs"
                     class="w-fit"
+                    aria-label="Убрать {column.city.name} из сравнения"
                     onclick={() => handleRemove(column.city.id)}
                   >
                     <XIcon aria-hidden="true" />
