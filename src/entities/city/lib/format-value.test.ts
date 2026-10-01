@@ -32,6 +32,11 @@ describe('formatValue', () => {
     expect(format('percent-max', 45)?.primary).toBe(`до 45${S}%`);
   });
 
+  it('shows an effective rate as an approximate percent', () => {
+    expect(format('percent', 12)?.primary).toBe(`≈${S}12${S}%`);
+    expect(format('percent', 12.46)?.primary).toBe(`≈${S}12,5${S}%`);
+  });
+
   it('shows an index out of 100', () => {
     expect(format('index-100', 63.4)?.primary).toBe(`63 из 100`);
   });
