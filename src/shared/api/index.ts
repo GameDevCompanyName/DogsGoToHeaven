@@ -1,1 +1,1 @@
-export { hasNote, loadNote, loadRawData, SAMPLE_FILES } from './dataset';
+export { hasNote, LINK_FILES, loadLinks, loadNote, loadRawData, SAMPLE_FILES } from './dataset';

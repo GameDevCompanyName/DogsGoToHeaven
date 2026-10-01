@@ -13,6 +13,13 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
       adapter: adapter(),
+      prerender: {
+        // Хеш главной — не якорь, а состояние: ссылки лендинга `/#p=<персона>` ведут на настройки,
+        // элемента с таким id нет и не будет. Прочие битые якоря по-прежнему ломают сборку.
+        handleMissingId: ({ id, message }) => {
+          if (!id.startsWith('p=')) throw new Error(message);
+        },
+      },
       alias: {
         '@': 'src',
         '@data': 'data',

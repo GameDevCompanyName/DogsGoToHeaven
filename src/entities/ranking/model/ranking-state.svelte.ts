@@ -13,6 +13,8 @@ import {
   type RankingSettings,
 } from '@/shared/lib/ranking';
 
+import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
+import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
 /** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
@@ -27,21 +29,36 @@ export interface RankedCityView {
   weaknesses: FactorContribution[];
 }
 
+/** Город сравнения: строки выдачи нет, если город скрыт фильтрами или покрытием. */
+export interface ComparedCity {
+  city: DatasetCity;
+  view: RankedCityView | null;
+}
+
+/** Фильтр, который в одиночку отсекает больше всего городов. */
+export interface RestrictiveFilter {
+  factorId: FactorId;
+  excludedCount: number;
+}
+
 /**
- * Реактивная обёртка над движком ранжирования: настройки, пресеты и выбранный город.
+ * Реактивная обёртка над движком ранжирования: настройки, персона и выбранный город.
  * Выдача пересчитывается при любой правке настроек.
  */
 export class RankingState {
   readonly dataset: Dataset;
   readonly presets: Preset[];
+  /** Персона, которую берёт хеш без `p`; её нетронутые настройки пишутся пустым хешем. */
+  readonly defaultPresetId: string | null;
   readonly #base: RankingSettings;
   readonly #cityById: Readonly<Record<CityId, DatasetCity>>;
   readonly #datalessIds: readonly FactorId[];
 
-  durationPresetId = $state<string | null>(null);
-  incomePresetId = $state<string | null>(null);
+  presetId = $state<string | null>(null);
   settings = $state<RankingSettings>({ weights: {}, enabled: {}, ranges: {}, filters: {} });
   selectedCityId = $state<CityId | null>(null);
+  /** Города сравнения в порядке выбора, не больше трёх. */
+  compareIds = $state<CityId[]>([]);
 
   // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
@@ -79,13 +96,76 @@ export class RankingState {
 
   readonly hiddenByFilter = $derived(this.filteredCities.length);
 
+  /** Опорные настройки: база реестра и выбранная персона. */
+  readonly presetSettings: RankingSettings = $derived.by(() => this.#settingsFor(this.presetId));
+
+  readonly #diff = $derived.by(() =>
+    diffSettings(this.presetSettings, this.settings, this.dataset.factors),
+  );
+
+  /** Факторы, чьи вес, галочка, диапазон или фильтр отличаются от персоны, в порядке реестра. */
+  readonly changedFactorIds: FactorId[] = $derived.by(() =>
+    changedFactorIdsOf(this.#diff, this.dataset.factors),
+  );
+
+  /**
+   * Хеш адреса без `#`: персона, отличия от неё, открытый город и города сравнения. Открытый
+   * город берётся из показанного, чтобы ссылка не несла отсечённый фильтрами. Города сравнения
+   * пишутся все: выбор не теряется, пока пользователь двигает фильтр. Нетронутая персона
+   * по умолчанию — пустой хеш: простой заход не переписывает адрес.
+   */
+  readonly urlHash = $derived.by(() => {
+    const cityId = this.selected?.city.id ?? null;
+    const compareIds = this.compareIds;
+    const isUntouchedDefault =
+      this.presetId === this.defaultPresetId && this.changedFactorIds.length === 0;
+    if (isUntouchedDefault && cityId === null && compareIds.length === 0) return '';
+    return serializeState({ presetId: this.presetId, ...this.#diff, cityId, compareIds });
+  });
+
+  /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
+  readonly totalWeight = $derived.by(() =>
+    this.dataset.factors.reduce(
+      (sum, { id }) => (this.settings.enabled[id] ? sum + (this.settings.weights[id] ?? 0) : sum),
+      0,
+    ),
+  );
+
+  /** При равенстве побеждает фильтр, который раньше в реестре. */
+  readonly mostRestrictiveFilter: RestrictiveFilter | null = $derived.by(() => {
+    const counts: Record<FactorId, number> = {};
+    for (const excluded of this.result.excluded) {
+      for (const factorId of excluded.failedFilterIds) {
+        counts[factorId] = (counts[factorId] ?? 0) + 1;
+      }
+    }
+    let best: RestrictiveFilter | null = null;
+    for (const { id: factorId } of this.dataset.factors) {
+      const excludedCount = counts[factorId] ?? 0;
+      if (excludedCount > (best?.excludedCount ?? 0)) best = { factorId, excludedCount };
+    }
+    return best;
+  });
+
   readonly selected: RankedCityView | null = $derived(
     this.rankedCities.find((view) => view.city.id === this.selectedCityId) ?? null,
   );
 
-  constructor(dataset: Dataset, presets: Preset[]) {
+  /** Города сравнения в порядке выбора, со строкой выдачи, если город показан. */
+  readonly compared: ComparedCity[] = $derived.by(() =>
+    this.compareIds.flatMap((cityId) => {
+      const city = this.#cityById[cityId];
+      if (!city) return [];
+      return [{ city, view: this.rankedCities.find((view) => view.city.id === cityId) ?? null }];
+    }),
+  );
+
+  readonly isCompareFull = $derived(this.compareIds.length >= MAX_COMPARE);
+
+  constructor(dataset: Dataset, presets: Preset[], defaultPresetId: string | null = null) {
     this.dataset = dataset;
     this.presets = presets;
+    this.defaultPresetId = defaultPresetId;
     this.#cityById = Object.fromEntries(dataset.cities.map((city) => [city.id, city]));
     this.#datalessIds = dataset.factors
       .filter((factor) => dataset.provenance[factor.id] === undefined)
@@ -94,21 +174,55 @@ export class RankingState {
     this.settings = this.#withoutDataless(this.#base);
   }
 
+  /** Пересобирает настройки из базы реестра и персоны; ручные правки сбрасываются. */
+  applyPreset(presetId: string | null) {
+    this.presetId = this.presets.some((preset) => preset.id === presetId) ? presetId : null;
+    this.settings = this.#settingsFor(this.presetId);
+  }
+
+  /** Выбор персоны пользователем: повторный выбор текущей правки не трогает, сброс — отдельно. */
+  selectPreset(presetId: string | null) {
+    if (presetId !== this.presetId) this.applyPreset(presetId);
+  }
+
+  resetToPreset() {
+    this.applyPreset(this.presetId);
+  }
+
   /**
-   * Пересобирает настройки из базы реестра и выбранных пресетов; ручные правки сбрасываются.
-   * Пресет дохода накладывается после пресета срока и выигрывает на общих ключах.
+   * Состояние целиком из хеша адреса, с `#` или без: персона (без `p` — по умолчанию) и поверх
+   * неё отличия. Ручные правки, которых нет в хеше, сбрасываются.
    */
-  applyPresets(durationId: string | null, incomeId: string | null) {
-    this.durationPresetId = durationId;
-    this.incomePresetId = incomeId;
-    const duration = this.presets.find(
-      (preset) => preset.kind === 'duration' && preset.id === durationId,
-    );
-    const income = this.presets.find(
-      (preset) => preset.kind === 'income' && preset.id === incomeId,
-    );
-    const active = [duration, income].filter((preset) => preset !== undefined);
-    this.settings = this.#withoutDataless(applyPresets(this.#base, active, this.dataset.factors));
+  applyHash(hash: string) {
+    const url = parseState(hash, {
+      factors: this.dataset.factors,
+      presetIds: this.presets.map((preset) => preset.id),
+      cityIds: this.dataset.cities.map((city) => city.id),
+    });
+    this.#restore({
+      ...url,
+      presetId: url.presetId === undefined ? this.defaultPresetId : url.presetId,
+    });
+  }
+
+  /** Персона из ссылки и поверх неё отличия; то, что сеттеры не примут, отбрасывается. */
+  #restore(url: UrlState) {
+    if (url.presetId !== undefined) this.applyPreset(url.presetId);
+    for (const [factorId, weight] of Object.entries(url.weights)) this.setWeight(factorId, weight);
+    for (const [factorId, isOn] of Object.entries(url.enabled)) this.setEnabled(factorId, isOn);
+    for (const [factorId, range] of Object.entries(url.ranges)) this.setRange(factorId, range);
+    for (const [factorId, filter] of Object.entries(url.filters)) {
+      if (filter === null || !('allowed' in filter)) this.setNumericFilter(factorId, filter);
+      else this.setCategoryFilter(factorId, filter.allowed);
+    }
+    this.selectCity(url.cityId);
+    this.compareIds = [...url.compareIds];
+  }
+
+  /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
+  weightShare(factorId: FactorId): number {
+    if (!this.settings.enabled[factorId] || this.totalWeight === 0) return 0;
+    return (this.settings.weights[factorId] ?? 0) / this.totalWeight;
   }
 
   /**
@@ -154,8 +268,41 @@ export class RankingState {
     this.settings.filters[factorId] = { allowed };
   }
 
+  /** Галочки всех числовых факторов группы, у которых есть данные. */
+  setGroupEnabled(groupId: string, isEnabled: boolean) {
+    for (const factor of this.dataset.factors) {
+      if (factor.group === groupId && factor.kind === 'numeric') {
+        this.setEnabled(factor.id, isEnabled);
+      }
+    }
+  }
+
+  resetFilters() {
+    this.settings.filters = {};
+  }
+
   selectCity(cityId: CityId | null) {
     this.selectedCityId = cityId;
+  }
+
+  /** Добавляет город в сравнение или убирает; четвёртый город не добавляется. */
+  toggleCompare(cityId: CityId) {
+    if (this.compareIds.includes(cityId)) {
+      this.compareIds = this.compareIds.filter((id) => id !== cityId);
+    } else if (!this.isCompareFull && Object.hasOwn(this.#cityById, cityId)) {
+      this.compareIds = [...this.compareIds, cityId];
+    }
+  }
+
+  clearCompare() {
+    this.compareIds = [];
+  }
+
+  #settingsFor(presetId: string | null): RankingSettings {
+    const preset = this.presets.find(({ id }) => id === presetId);
+    return this.#withoutDataless(
+      applyPresets(this.#base, preset ? [preset] : [], this.dataset.factors),
+    );
   }
 
   /**

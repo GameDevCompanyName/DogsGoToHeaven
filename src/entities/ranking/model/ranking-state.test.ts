@@ -97,17 +97,15 @@ function makeDataset(cities?: DatasetCity[]): Dataset {
   };
 }
 
+function preset(id: string, fields: Partial<Preset> = {}): Preset {
+  return { id, name: id, description: 'Тест', highlights: ['тест'], ...fields };
+}
+
 const PRESETS: Preset[] = [
-  { id: 'month', kind: 'duration', name: 'На месяц', weights: { rent: 9 } },
-  { id: 'forever', kind: 'duration', name: 'Насовсем', weights: { safety: 9 } },
-  { id: 'remote', kind: 'income', name: 'Удалённо', filters: { visa: { allowed: ['free'] } } },
-  {
-    id: 'local',
-    kind: 'income',
-    name: 'На месте',
-    enabled: { ease: true },
-    filters: { ease: { min: 3 } },
-  },
+  preset('month', { weights: { rent: 9 } }),
+  preset('forever', { weights: { safety: 9 } }),
+  preset('remote', { filters: { visa: { allowed: ['free'] } } }),
+  preset('local', { enabled: { ease: true }, filters: { ease: { min: 3 } } }),
 ];
 
 function firstCityId(state: RankingState): string | undefined {
@@ -115,33 +113,31 @@ function firstCityId(state: RankingState): string | undefined {
 }
 
 describe('RankingState', () => {
-  it('rebuilds settings from presets and drops manual edits', () => {
+  it('rebuilds settings from a preset and drops manual edits', () => {
     const state = new RankingState(makeDataset(), PRESETS);
-    state.applyPresets('month', null);
+    state.applyPreset('month');
     state.setWeight('safety', 10);
     state.setNumericFilter('rent', { max: 150 });
     state.setEnabled('safety', false);
     state.setRange('rent', [0, 1]);
 
-    state.applyPresets('forever', null);
+    state.applyPreset('forever');
 
     expect(state.settings.weights).toMatchObject({ rent: 5, safety: 9 });
     expect(state.settings.filters).toEqual({});
     expect(state.settings.enabled.safety).toBe(true);
     expect(state.settings.ranges).toEqual({});
-    expect(state.durationPresetId).toBe('forever');
+    expect(state.presetId).toBe('forever');
   });
 
-  it('lets the income preset win over the duration preset on a shared key', () => {
-    const presets: Preset[] = [
-      { id: 'frugal', kind: 'income', name: 'Экономно', weights: { rent: 2 } },
-      { id: 'month', kind: 'duration', name: 'На месяц', weights: { rent: 9 } },
-    ];
-    const state = new RankingState(makeDataset(), presets);
+  it('falls back to the registry defaults for an unknown preset', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('month');
 
-    state.applyPresets('month', 'frugal');
+    state.applyPreset('ghost');
 
-    expect(state.settings.weights.rent).toBe(2);
+    expect(state.presetId).toBeNull();
+    expect(state.settings.weights.rent).toBe(5);
   });
 
   it('ignores edits to a factor without data', () => {
@@ -180,7 +176,7 @@ describe('RankingState', () => {
   it('keeps factors without data switched off and unfiltered', () => {
     const state = new RankingState(makeDataset(), PRESETS);
 
-    state.applyPresets(null, 'local');
+    state.applyPreset('local');
 
     expect(state.settings.enabled.ease).toBe(false);
     expect(state.settings.filters.ease).toBeUndefined();
@@ -216,6 +212,162 @@ describe('RankingState', () => {
     state.setNumericFilter('rent', {});
 
     expect(state.settings.filters.rent).toBeUndefined();
+  });
+
+  it('lists factors that differ from the preset and forgets them once they match again', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    expect(state.changedFactorIds).toEqual([]);
+
+    state.setWeight('safety', 3);
+    state.setCategoryFilter('visa', null);
+    state.setWeight('rent', 9);
+    state.setWeight('rent', 5);
+
+    expect(state.changedFactorIds).toEqual(['safety', 'visa']);
+  });
+
+  it('resets to the preset', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    state.setEnabled('rent', false);
+    state.setCategoryFilter('visa', ['required']);
+
+    state.resetToPreset();
+
+    expect(state.changedFactorIds).toEqual([]);
+    expect(state.settings.enabled.rent).toBe(true);
+    expect(state.settings.filters.visa).toEqual({ allowed: ['free'] });
+  });
+
+  it('names the filter that alone excludes the most cities', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    expect(state.mostRestrictiveFilter).toBeNull();
+
+    state.setCategoryFilter('visa', ['free']);
+    state.setNumericFilter('rent', { max: 150 });
+
+    expect(state.mostRestrictiveFilter).toEqual({ factorId: 'rent', excludedCount: 2 });
+  });
+
+  it('breaks a tie between the strictest filters by registry order', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.setCategoryFilter('visa', ['free']);
+    state.setNumericFilter('rent', { max: 250 });
+
+    expect(state.mostRestrictiveFilter).toEqual({ factorId: 'rent', excludedCount: 1 });
+  });
+
+  it('resets every filter, the preset ones included', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.applyPreset('remote');
+    state.setNumericFilter('rent', { max: 150 });
+
+    state.resetFilters();
+
+    expect(state.settings.filters).toEqual({});
+    expect(state.hiddenByFilter).toBe(0);
+  });
+
+  it('switches a whole group on and off, leaving factors without data alone', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.setGroupEnabled('g', false);
+    expect(state.settings.enabled).toEqual({ rent: false, safety: false, ease: false });
+
+    state.setGroupEnabled('g', true);
+    expect(state.settings.enabled).toEqual({ rent: true, safety: true, ease: false });
+  });
+
+  it('gives each enabled factor its share of the total weight', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    expect(state.weightShare('rent')).toBeCloseTo(5 / 6);
+    state.setEnabled('safety', false);
+    expect(state.weightShare('safety')).toBe(0);
+    expect(state.weightShare('rent')).toBe(1);
+  });
+
+  it('restores the same settings and city from its own url hash', () => {
+    const base = makeDataset();
+    const dataset: Dataset = {
+      ...base,
+      factors: [
+        ...base.factors,
+        {
+          id: 'warmth',
+          kind: 'numeric',
+          presentation: PRESENTATION,
+          name: 'Тепло',
+          definition: 'Тест',
+          group: 'g',
+          level: 'city',
+          scoring: { type: 'range', defaultRange: [10, 20] },
+          defaultWeight: 1,
+          defaultEnabled: false,
+        },
+      ],
+      provenance: { ...base.provenance, warmth: SOURCE },
+    };
+    const source = new RankingState(dataset, PRESETS);
+    source.applyPreset('remote');
+    source.setWeight('rent', 9);
+    source.setEnabled('safety', false);
+    source.setRange('warmth', [5, 25]);
+    source.setCategoryFilter('visa', null);
+    source.setNumericFilter('safety', { min: 20 });
+    source.selectCity('gamma');
+
+    const target = new RankingState(dataset, PRESETS);
+    target.applyHash(source.urlHash);
+
+    expect(target.presetId).toBe('remote');
+    expect(target.settings).toEqual(source.settings);
+    expect(target.selectedCityId).toBe('gamma');
+  });
+
+  it('applies a hash over manual edits, the default persona when the hash names none', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'forever');
+    state.applyHash('#p=month&c=beta');
+    state.setWeight('safety', 7);
+
+    state.applyHash('#w=rent:2');
+
+    expect(state.presetId).toBe('forever');
+    expect(state.settings.weights).toMatchObject({ rent: 2, safety: 9 });
+    expect(state.selectedCityId).toBeNull();
+  });
+
+  it('keeps manual edits when the current persona is picked again', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.selectPreset('month');
+    state.setWeight('safety', 7);
+
+    state.selectPreset('month');
+
+    expect(state.settings.weights.safety).toBe(7);
+    expect(state.changedFactorIds).toEqual(['safety']);
+  });
+
+  it('writes an empty hash for the untouched default persona', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    expect(state.urlHash).toBe('');
+
+    state.setWeight('safety', 3);
+
+    expect(state.urlHash).toBe('p=month&w=safety:3');
+  });
+
+  it('never writes a city that the filters hide', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.selectCity('beta');
+    expect(state.urlHash).toContain('c=beta');
+
+    state.setCategoryFilter('visa', ['free']);
+
+    expect(state.urlHash).not.toContain('c=');
   });
 
   it('counts cities hidden by coverage', () => {
@@ -273,6 +425,63 @@ function viewOf(state: RankingState, cityId: string) {
 function factorIds(contributions: { factorId: string }[] | undefined) {
   return contributions?.map((contribution) => contribution.factorId);
 }
+
+describe('RankingState compare', () => {
+  it('compares up to three cities and toggles one off on a second press', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    for (const cityId of ['alpha', 'beta', 'gamma', 'delta']) state.toggleCompare(cityId);
+    expect(state.compareIds).toEqual(['alpha', 'beta', 'gamma']);
+    expect(state.isCompareFull).toBe(true);
+
+    state.toggleCompare('beta');
+
+    expect(state.compareIds).toEqual(['alpha', 'gamma']);
+  });
+
+  it('keeps a compared city that the filters hide, without a place in the list', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleCompare('beta');
+    state.toggleCompare('alpha');
+
+    state.setCategoryFilter('visa', ['free']);
+
+    expect(state.compared.map(({ city, view }) => [city.id, view?.ranked.rank ?? null])).toEqual([
+      ['beta', null],
+      ['alpha', 1],
+    ]);
+  });
+
+  it('writes the compared cities to the url hash and reads them back', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    state.toggleCompare('gamma');
+    state.toggleCompare('alpha');
+    expect(state.urlHash).toBe('p=month&cmp=gamma|alpha');
+
+    const target = new RankingState(makeDataset(), PRESETS, 'month');
+    target.applyHash(state.urlHash);
+
+    expect(target.compareIds).toEqual(['gamma', 'alpha']);
+  });
+
+  it('ignores ids that are not cities, including inherited object keys', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleCompare('constructor');
+    state.toggleCompare('nowhere');
+
+    expect(state.compareIds).toEqual([]);
+  });
+
+  it('clears the comparison', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleCompare('alpha');
+
+    state.clearCompare();
+
+    expect(state.compareIds).toEqual([]);
+  });
+});
 
 describe('RankingState strengths and weaknesses', () => {
   it('takes up to three strengths by contribution', () => {
