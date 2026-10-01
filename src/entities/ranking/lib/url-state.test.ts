@@ -62,6 +62,7 @@ const FULL: UrlState = {
   },
   cityId: 'tbilisi',
   compareIds: ['belgrade', 'tbilisi'],
+  sort: { factorId: 'rent', direction: 'desc' },
 };
 
 describe('url state', () => {
@@ -127,5 +128,17 @@ describe('url state', () => {
   it('reads at most three known compared cities without repeats', () => {
     const state = parseState('cmp=atlantis|tbilisi|tbilisi|belgrade|yerevan|batumi', CONTEXT);
     expect(state.compareIds).toEqual(['tbilisi', 'belgrade', 'yerevan']);
+  });
+
+  it('writes the table sort as factor and direction', () => {
+    expect(
+      serializeState({ ...EMPTY_URL_STATE, sort: { factorId: 'rent', direction: 'asc' } }),
+    ).toBe('sort=rent:asc');
+  });
+
+  it('drops a sort by an unknown or categorical factor or in an unknown direction', () => {
+    for (const hash of ['sort=ghost:asc', 'sort=entry-visa:asc', 'sort=rent:up', 'sort=rent']) {
+      expect(parseState(hash, CONTEXT).sort).toBeNull();
+    }
   });
 });

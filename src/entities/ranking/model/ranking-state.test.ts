@@ -483,6 +483,61 @@ describe('RankingState compare', () => {
   });
 });
 
+describe('RankingState table sort', () => {
+  it('cycles a column through ascending, descending and back to the score order', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleSort('safety');
+    expect(state.sort).toEqual({ factorId: 'safety', direction: 'asc' });
+    state.toggleSort('safety');
+    expect(state.sort).toEqual({ factorId: 'safety', direction: 'desc' });
+    state.toggleSort('safety');
+    expect(state.sort).toBeNull();
+  });
+
+  it('starts another column ascending', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleSort('safety');
+    state.toggleSort('safety');
+
+    state.toggleSort('rent');
+
+    expect(state.sort).toEqual({ factorId: 'rent', direction: 'asc' });
+  });
+
+  it('ignores a categorical factor and a factor without data', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleSort('visa');
+    state.toggleSort('ease');
+
+    expect(state.sort).toBeNull();
+  });
+
+  it('orders the table rows by the sorted factor and keeps the places', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    const scoreOrder = state.rankedCities.map(({ city }) => city.id);
+
+    state.toggleSort('safety');
+    state.toggleSort('safety');
+
+    expect(state.tableCities.map(({ city }) => city.id)).toEqual(['gamma', 'beta', 'alpha']);
+    expect(state.rankedCities.map(({ city }) => city.id)).toEqual(scoreOrder);
+  });
+
+  it('writes the sort to the url hash and reads it back', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    state.toggleSort('rent');
+    expect(state.urlHash).toBe('p=month&sort=rent:asc');
+
+    const target = new RankingState(makeDataset(), PRESETS, 'month');
+    target.applyHash(state.urlHash);
+
+    expect(target.sort).toEqual({ factorId: 'rent', direction: 'asc' });
+  });
+});
+
 describe('RankingState strengths and weaknesses', () => {
   it('takes up to three strengths by contribution', () => {
     const state = new RankingState(makeProfileDataset(), []);
