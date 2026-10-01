@@ -57,7 +57,7 @@
           />
         {/if}
         <div class="flex flex-wrap items-center gap-2">
-          <CompareToggle cityId={view.city.id} />
+          <CompareToggle cityId={view.city.id} cityName={view.city.name} />
           <ShareButton isCompact />
         </div>
       </Sheet.Header>

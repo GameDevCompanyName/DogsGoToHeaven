@@ -107,7 +107,7 @@
                 onselect={handleSelect}
               />
             </div>
-            <CompareToggle cityId={view.city.id} isCompact />
+            <CompareToggle cityId={view.city.id} cityName={view.city.name} isCompact />
           </li>
         {/each}
       </ol>

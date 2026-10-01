@@ -9,11 +9,14 @@
 
   interface Props {
     cityId: CityId;
+    /** Для имени кнопки-иконки: в списке рядом десятки одинаковых «Сравнить». */
+    cityName: string;
     /** Маленькая кнопка-иконка для строки списка; по умолчанию — с подписью, для карточки. */
     isCompact?: boolean;
   }
 
-  let { cityId, isCompact = false }: Props = $props();
+  let { cityId, cityName, isCompact = false }: Props = $props();
+  const hintId = $props.id();
 
   const ranking = getRankingContext();
 
@@ -22,6 +25,8 @@
   const isDisabled = $derived(!isPressed && ranking.isCompareFull);
 
   function handleClick() {
+    // Погасшая кнопка остаётся в фокусе, чтобы объяснение было слышно, но ничего не делает.
+    if (isDisabled) return;
     ranking.toggleCompare(cityId);
   }
 </script>
@@ -31,11 +36,11 @@
   variant={isPressed ? 'secondary' : isCompact ? 'ghost' : 'outline'}
   size={isCompact ? 'icon-sm' : 'sm'}
   aria-pressed={isPressed}
-  aria-label={isCompact ? 'Сравнить' : undefined}
-  title={isDisabled ? `Сравнить можно до ${MAX_COMPARE} городов` : 'Сравнить'}
-  disabled={isDisabled}
+  aria-label={isCompact ? `Сравнить: ${cityName}` : undefined}
+  aria-disabled={isDisabled}
+  aria-describedby={isDisabled ? hintId : undefined}
   data-testid="compare-toggle"
-  class={cn(isPressed && 'ring-1 ring-foreground')}
+  class={cn(isPressed && 'ring-1 ring-foreground', isDisabled && 'cursor-not-allowed opacity-50')}
   onclick={handleClick}
 >
   {#if isPressed}
@@ -47,3 +52,6 @@
     Сравнить
   {/if}
 </Button>
+{#if isDisabled}
+  <span id={hintId} class="sr-only">Сравнить можно до {MAX_COMPARE} городов</span>
+{/if}
