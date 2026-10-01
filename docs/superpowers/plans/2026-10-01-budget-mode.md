@@ -8,11 +8,12 @@
 
 ## Rulings
 
-- Leftover = budget − `cost-of-living` − `rent`, only when all three are numbers; otherwise `null` and no line in the list (the card says the data is missing).
-- Tone from the exact leftover: ≥ 30 % of budget good «с запасом», ≥ 10 % ok «хватит», ≥ 0 bad «впритык», < 0 bad «не по карману». Shown amount is rounded to $10 with «≈».
+- Leftover = budget − `cost-of-living` − `rent`, only when all three are numbers; otherwise `null`, and both the list and the card say in a neutral line that the data is missing.
+- Tone from the exact leftover: ≥ 30 % of budget good «с запасом», ≥ 10 % ok «хватит», ≥ 0 bad «впритык», < 0 bad «Не по карману» (the label comes from the lib in both branches). Shown amount and the card breakdown are rounded to $10 like the factor rows; a deficit rounds up, and a rounded zero shows as «< $10», never «$0».
 - Affordable-first order: known non-negative leftover by leftover desc, then unknown leftover, then negative leftover (least negative first); ties keep score order. `rank` is never touched.
-- `bp=1` is kept in state even without a budget, but the toggle is only shown and applied when a budget is set.
-- Budget input: integers ≥ 0; empty, negative or garbage clears it. No debounce: ranking does not depend on it.
+- Affordable-first needs a budget: `setAffordableFirst` ignores it without one, `setBudget(null)` switches it off, and `bp=1` is written only together with `b=`.
+- Budget input: whole dollars > 0; `0` (in the field or as `b=0`) means no budget. The field is `type="text" inputmode="numeric"` and parses itself: empty clears the budget, a partial entry like «1999.» leaves it as is. No debounce: ranking does not depend on it.
+- The budget survives persona changes on purpose: it is the person's income, not a persona setting.
 
 ## Tasks
 
