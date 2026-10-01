@@ -13,11 +13,19 @@
 <script lang="ts">
   import { CityListItem, profileChips } from '@/entities/city';
   import { describeFilter, getRankingContext } from '@/entities/ranking';
+  import { CompareBar, CompareToggle } from '@/features/compare-toggle';
   import { type PluralForms, pluralize } from '@/shared/lib/plural';
   import type { CityId } from '@/shared/lib/ranking';
   import { Button } from '@/shared/ui/button';
   import { Input } from '@/shared/ui/input';
   import { ScrollArea } from '@/shared/ui/scroll-area';
+
+  interface Props {
+    /** Открыть экран сравнения из плашки над списком. */
+    oncompareopen: () => void;
+  }
+
+  let { oncompareopen }: Props = $props();
 
   const ranking = getRankingContext();
   const factorsById = new Map(ranking.dataset.factors.map((factor) => [factor.id, factor]));
@@ -73,6 +81,7 @@
       bind:value={query}
     />
   </div>
+  <CompareBar onopen={oncompareopen} />
   <ScrollArea class="min-h-0 flex-1">
     <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
     <p class="sr-only" aria-live="polite">
@@ -84,15 +93,21 @@
     {#if visibleCities.length > 0}
       <ol class="divide-y" aria-label="Города по баллу">
         {#each visibleCities as view (view.city.id)}
-          <li>
-            <CityListItem
-              city={view.city}
-              ranked={view.ranked}
-              percentile={view.percentile}
-              chips={listChips(profileChips(view, view.city, factorsById, ranking.settings.ranges))}
-              isSelected={ranking.selectedCityId === view.city.id}
-              onselect={handleSelect}
-            />
+          <!-- Кнопка сравнения — соседка строки, а не её часть: кнопку в кнопку не вложить. -->
+          <li class="flex items-center pr-2">
+            <div class="min-w-0 flex-1">
+              <CityListItem
+                city={view.city}
+                ranked={view.ranked}
+                percentile={view.percentile}
+                chips={listChips(
+                  profileChips(view, view.city, factorsById, ranking.settings.ranges),
+                )}
+                isSelected={ranking.selectedCityId === view.city.id}
+                onselect={handleSelect}
+              />
+            </div>
+            <CompareToggle cityId={view.city.id} cityName={view.city.name} isCompact />
           </li>
         {/each}
       </ol>

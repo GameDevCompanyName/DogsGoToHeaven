@@ -46,7 +46,7 @@ const CONTEXT = {
     },
   ] satisfies Factor[],
   presetIds: ['remote-long', 'family'],
-  cityIds: ['tbilisi', 'belgrade'],
+  cityIds: ['tbilisi', 'belgrade', 'yerevan', 'batumi'],
 };
 
 const FULL: UrlState = {
@@ -61,6 +61,7 @@ const FULL: UrlState = {
     'winter-temp': null,
   },
   cityId: 'tbilisi',
+  compareIds: ['belgrade', 'tbilisi'],
 };
 
 describe('url state', () => {
@@ -115,5 +116,16 @@ describe('url state', () => {
   it('reads a switched-off persona', () => {
     expect(parseState('p=-', CONTEXT).presetId).toBeNull();
     expect(serializeState({ ...EMPTY_URL_STATE, presetId: null })).toBe('p=-');
+  });
+
+  it('writes the compared cities in the order they were picked', () => {
+    expect(serializeState({ ...EMPTY_URL_STATE, compareIds: ['tbilisi', 'belgrade'] })).toBe(
+      'cmp=tbilisi|belgrade',
+    );
+  });
+
+  it('reads at most three known compared cities without repeats', () => {
+    const state = parseState('cmp=atlantis|tbilisi|tbilisi|belgrade|yerevan|batumi', CONTEXT);
+    expect(state.compareIds).toEqual(['tbilisi', 'belgrade', 'yerevan']);
   });
 });

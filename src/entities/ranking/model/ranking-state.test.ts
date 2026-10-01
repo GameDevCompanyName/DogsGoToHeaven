@@ -426,6 +426,63 @@ function factorIds(contributions: { factorId: string }[] | undefined) {
   return contributions?.map((contribution) => contribution.factorId);
 }
 
+describe('RankingState compare', () => {
+  it('compares up to three cities and toggles one off on a second press', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    for (const cityId of ['alpha', 'beta', 'gamma', 'delta']) state.toggleCompare(cityId);
+    expect(state.compareIds).toEqual(['alpha', 'beta', 'gamma']);
+    expect(state.isCompareFull).toBe(true);
+
+    state.toggleCompare('beta');
+
+    expect(state.compareIds).toEqual(['alpha', 'gamma']);
+  });
+
+  it('keeps a compared city that the filters hide, without a place in the list', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleCompare('beta');
+    state.toggleCompare('alpha');
+
+    state.setCategoryFilter('visa', ['free']);
+
+    expect(state.compared.map(({ city, view }) => [city.id, view?.ranked.rank ?? null])).toEqual([
+      ['beta', null],
+      ['alpha', 1],
+    ]);
+  });
+
+  it('writes the compared cities to the url hash and reads them back', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    state.toggleCompare('gamma');
+    state.toggleCompare('alpha');
+    expect(state.urlHash).toBe('p=month&cmp=gamma|alpha');
+
+    const target = new RankingState(makeDataset(), PRESETS, 'month');
+    target.applyHash(state.urlHash);
+
+    expect(target.compareIds).toEqual(['gamma', 'alpha']);
+  });
+
+  it('ignores ids that are not cities, including inherited object keys', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleCompare('constructor');
+    state.toggleCompare('nowhere');
+
+    expect(state.compareIds).toEqual([]);
+  });
+
+  it('clears the comparison', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleCompare('alpha');
+
+    state.clearCompare();
+
+    expect(state.compareIds).toEqual([]);
+  });
+});
+
 describe('RankingState strengths and weaknesses', () => {
   it('takes up to three strengths by contribution', () => {
     const state = new RankingState(makeProfileDataset(), []);

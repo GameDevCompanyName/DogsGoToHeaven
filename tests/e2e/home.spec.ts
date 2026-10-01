@@ -2,6 +2,11 @@ import { expect, type Page, test } from '@playwright/test';
 
 // Тайлы и WebGL в CI не гарантированы: проверяем DOM, от карты — только контейнер.
 
+// Флаг лендинга стоит заранее: без него главная без хеша уводит на /start.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('dogs:onboarded', '1'));
+});
+
 function openSection(page: Page, name: 'Карта' | 'Города' | 'Настройки') {
   return page.getByRole('navigation', { name: 'Разделы' }).getByRole('button', { name }).click();
 }
@@ -148,4 +153,20 @@ test('ссылка, вставленная в открытую вкладку, �
   await expect(personaCard(page, 'Семья с детьми')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByTestId('persona-status')).toBeHidden();
   await expect(page).toHaveURL(/#p=family$/);
+});
+
+test('сравнение двух городов показывает таблицу с двумя колонками', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Города');
+  const toggles = page.getByTestId('compare-toggle');
+
+  await toggles.nth(0).click();
+  await toggles.nth(1).click();
+
+  await expect(toggles.nth(0)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/cmp=[\w-]+\|[\w-]+/);
+  await page.getByTestId('compare-bar').getByRole('button', { name: 'Открыть' }).click();
+  const sheet = page.getByTestId('compare-sheet');
+  await expect(sheet.getByTestId('compare-column')).toHaveCount(2);
+  await expect(sheet.getByRole('rowheader').first()).toBeVisible();
 });

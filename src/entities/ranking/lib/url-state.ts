@@ -12,6 +12,8 @@ export interface UrlState {
   ranges: Record<FactorId, [number, number]>;
   filters: Record<FactorId, FactorFilter | null>;
   cityId: CityId | null;
+  /** Города сравнения в порядке выбора, не больше `MAX_COMPARE`. */
+  compareIds: CityId[];
 }
 
 /** Что известно парсеру: всё прочее в хеше отбрасывается. */
@@ -28,15 +30,18 @@ export const EMPTY_URL_STATE: Readonly<UrlState> = Object.freeze({
   ranges: {},
   filters: {},
   cityId: null,
+  compareIds: [],
 });
 
 /** Персона снята или фильтр снят. */
 const NONE = '-';
 const MAX_WEIGHT = 10;
+/** Больше трёх колонок сравнения на телефоне не прочитать. */
+export const MAX_COMPARE = 3;
 /** Интервал «от-до», любой край пустой; числа могут быть отрицательными: `-5-24`, `-40`, `60-`. */
 const INTERVAL_PATTERN = /^(-?\d+(?:\.\d+)?)?-(-?\d+(?:\.\d+)?)?$/;
 
-/** Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&c=tbilisi`. */
+/** Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&c=tbilisi&cmp=tbilisi|belgrade`. */
 export function serializeState(state: UrlState): string {
   const enabledEntries = Object.entries(state.enabled);
   const parts: [string, string[]][] = [
@@ -47,6 +52,7 @@ export function serializeState(state: UrlState): string {
     ['r', Object.entries(state.ranges).map(([id, [low, high]]) => `${id}:${low}-${high}`)],
     ['f', Object.entries(state.filters).map(([id, filter]) => `${id}:${formatFilter(filter)}`)],
     ['c', state.cityId === null ? [] : [state.cityId]],
+    ['cmp', state.compareIds.length === 0 ? [] : [state.compareIds.join('|')]],
   ];
   return parts
     .filter(([, values]) => values.length > 0)
@@ -56,7 +62,14 @@ export function serializeState(state: UrlState): string {
 
 /** Читает хеш с `#` или без. Мусор, неизвестные факторы, персоны и города молча отбрасываются. */
 export function parseState(hash: string, context: UrlStateContext): UrlState {
-  const state: UrlState = { ...EMPTY_URL_STATE, weights: {}, enabled: {}, ranges: {}, filters: {} };
+  const state: UrlState = {
+    ...EMPTY_URL_STATE,
+    weights: {},
+    enabled: {},
+    ranges: {},
+    filters: {},
+    compareIds: [],
+  };
   const factorsById = new Map(context.factors.map((factor) => [factor.id, factor]));
   const numericOf = (id: string) => {
     const factor = factorsById.get(id);
@@ -69,6 +82,9 @@ export function parseState(hash: string, context: UrlStateContext): UrlState {
       else if (context.presetIds.includes(value)) state.presetId = value;
     } else if (key === 'c') {
       if (context.cityIds.includes(value)) state.cityId = value;
+    } else if (key === 'cmp') {
+      const known = value.split('|').filter((id) => context.cityIds.includes(id));
+      state.compareIds = [...new Set(known)].slice(0, MAX_COMPARE);
     } else if (key === 'on' || key === 'off') {
       for (const id of value.split(',')) {
         if (numericOf(id)) state.enabled[id] = key === 'on';

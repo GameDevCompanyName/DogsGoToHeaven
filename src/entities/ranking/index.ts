@@ -1,4 +1,5 @@
 export { describeFilter } from './lib/describe-filter';
+export { MAX_COMPARE } from './lib/url-state';
 export {
   createRankingState,
   DEFAULT_PRESET_ID,
@@ -6,6 +7,7 @@ export {
   setRankingContext,
 } from './model/context';
 export {
+  type ComparedCity,
   type RankedCityView,
   RankingState,
   type RestrictiveFilter,

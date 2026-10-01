@@ -14,7 +14,7 @@ import {
 } from '@/shared/lib/ranking';
 
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
-import { parseState, serializeState, type UrlState } from '../lib/url-state';
+import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
 /** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
@@ -27,6 +27,12 @@ export interface RankedCityView {
   strengths: FactorContribution[];
   /** До двух учтённых факторов с оценкой до 0.33, по доле веса. */
   weaknesses: FactorContribution[];
+}
+
+/** Город сравнения: строки выдачи нет, если город скрыт фильтрами или покрытием. */
+export interface ComparedCity {
+  city: DatasetCity;
+  view: RankedCityView | null;
 }
 
 /** Фильтр, который в одиночку отсекает больше всего городов. */
@@ -51,6 +57,8 @@ export class RankingState {
   presetId = $state<string | null>(null);
   settings = $state<RankingSettings>({ weights: {}, enabled: {}, ranges: {}, filters: {} });
   selectedCityId = $state<CityId | null>(null);
+  /** Города сравнения в порядке выбора, не больше трёх. */
+  compareIds = $state<CityId[]>([]);
 
   // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
@@ -101,16 +109,18 @@ export class RankingState {
   );
 
   /**
-   * Хеш адреса без `#`: персона, отличия от неё и открытый город. Город берётся из показанного,
-   * чтобы ссылка не несла отсечённый фильтрами. Нетронутая персона по умолчанию — пустой хеш:
-   * простой заход не переписывает адрес.
+   * Хеш адреса без `#`: персона, отличия от неё, открытый город и города сравнения. Открытый
+   * город берётся из показанного, чтобы ссылка не несла отсечённый фильтрами. Города сравнения
+   * пишутся все: выбор не теряется, пока пользователь двигает фильтр. Нетронутая персона
+   * по умолчанию — пустой хеш: простой заход не переписывает адрес.
    */
   readonly urlHash = $derived.by(() => {
     const cityId = this.selected?.city.id ?? null;
+    const compareIds = this.compareIds;
     const isUntouchedDefault =
       this.presetId === this.defaultPresetId && this.changedFactorIds.length === 0;
-    if (isUntouchedDefault && cityId === null) return '';
-    return serializeState({ presetId: this.presetId, ...this.#diff, cityId });
+    if (isUntouchedDefault && cityId === null && compareIds.length === 0) return '';
+    return serializeState({ presetId: this.presetId, ...this.#diff, cityId, compareIds });
   });
 
   /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
@@ -140,6 +150,17 @@ export class RankingState {
   readonly selected: RankedCityView | null = $derived(
     this.rankedCities.find((view) => view.city.id === this.selectedCityId) ?? null,
   );
+
+  /** Города сравнения в порядке выбора, со строкой выдачи, если город показан. */
+  readonly compared: ComparedCity[] = $derived.by(() =>
+    this.compareIds.flatMap((cityId) => {
+      const city = this.#cityById[cityId];
+      if (!city) return [];
+      return [{ city, view: this.rankedCities.find((view) => view.city.id === cityId) ?? null }];
+    }),
+  );
+
+  readonly isCompareFull = $derived(this.compareIds.length >= MAX_COMPARE);
 
   constructor(dataset: Dataset, presets: Preset[], defaultPresetId: string | null = null) {
     this.dataset = dataset;
@@ -195,6 +216,7 @@ export class RankingState {
       else this.setCategoryFilter(factorId, filter.allowed);
     }
     this.selectCity(url.cityId);
+    this.compareIds = [...url.compareIds];
   }
 
   /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
@@ -261,6 +283,19 @@ export class RankingState {
 
   selectCity(cityId: CityId | null) {
     this.selectedCityId = cityId;
+  }
+
+  /** Добавляет город в сравнение или убирает; четвёртый город не добавляется. */
+  toggleCompare(cityId: CityId) {
+    if (this.compareIds.includes(cityId)) {
+      this.compareIds = this.compareIds.filter((id) => id !== cityId);
+    } else if (!this.isCompareFull && Object.hasOwn(this.#cityById, cityId)) {
+      this.compareIds = [...this.compareIds, cityId];
+    }
+  }
+
+  clearCompare() {
+    this.compareIds = [];
   }
 
   #settingsFor(presetId: string | null): RankingSettings {
