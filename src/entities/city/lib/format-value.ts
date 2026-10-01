@@ -1,3 +1,4 @@
+import { formatUsd } from '@/shared/lib/budget';
 import { type PluralForms, pluralize } from '@/shared/lib/plural';
 import type { Factor, FactorValue, NumericFormat, NumericPresentation } from '@/shared/lib/ranking';
 
@@ -105,8 +106,8 @@ function formatNumber(
       };
     case 'usd-per-year':
       return {
-        primary: `≈${NBSP}${usd(roundTo(value / 12, 100))} в месяц до налогов`,
-        secondary: `${usd(roundTo(value, 1000))} в год`,
+        primary: `≈${NBSP}${formatUsd(roundTo(value / 12, 100))} в месяц до налогов`,
+        secondary: `${formatUsd(roundTo(value, 1000))} в год`,
       };
     case 'percent-max':
       return { primary: number === 0 ? `0${NBSP}%` : `до ${shown}${NBSP}%` };
@@ -134,7 +135,7 @@ function formatNumber(
       return { primary: label ? `${shown}${NBSP}${label}` : shown };
     }
     case 'usd-per-month':
-      return { primary: `≈${NBSP}${usd(roundTo(value, 10))} в месяц` };
+      return { primary: `≈${NBSP}${formatUsd(roundTo(value, 10))} в месяц` };
     case 'population':
       return { primary: formatPopulation(value) };
   }
@@ -161,10 +162,6 @@ export function formatPopulation(value: number): string {
   if (value >= 1_000_000) return `${ONE_DECIMAL.format(value / 1_000_000)}${NBSP}млн`;
   if (value >= 100_000) return `${INTEGER.format(value / 1_000)}${NBSP}тыс.`;
   return INTEGER.format(value);
-}
-
-function usd(amount: number): string {
-  return `$${INTEGER.format(amount)}`;
 }
 
 function roundTo(value: number, step: number): number {
