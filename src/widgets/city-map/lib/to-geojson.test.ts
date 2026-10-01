@@ -16,6 +16,7 @@ function makeView(id: string, score: number | null, percentile: number | null): 
     percentile,
     strengths: [],
     weaknesses: [],
+    leftover: null,
   };
 }
 

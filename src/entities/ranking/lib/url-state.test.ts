@@ -60,6 +60,8 @@ const FULL: UrlState = {
     rent: { max: -2.5 },
     'winter-temp': null,
   },
+  budget: 2500,
+  isAffordableFirst: true,
   cityId: 'tbilisi',
   compareIds: ['belgrade', 'tbilisi'],
 };
@@ -127,5 +129,23 @@ describe('url state', () => {
   it('reads at most three known compared cities without repeats', () => {
     const state = parseState('cmp=atlantis|tbilisi|tbilisi|belgrade|yerevan|batumi', CONTEXT);
     expect(state.compareIds).toEqual(['tbilisi', 'belgrade', 'yerevan']);
+  });
+
+  it('writes the budget and the affordable-first switch', () => {
+    expect(serializeState({ ...EMPTY_URL_STATE, budget: 2500, isAffordableFirst: true })).toBe(
+      'b=2500&bp=1',
+    );
+  });
+
+  it('drops a negative, fractional or garbage budget', () => {
+    for (const raw of ['-100', '12.5', 'abc', '', '1e3']) {
+      expect(parseState(`b=${raw}`, CONTEXT).budget).toBeNull();
+    }
+    expect(parseState('b=0', CONTEXT).budget).toBe(0);
+  });
+
+  it('reads the affordable-first switch only as one', () => {
+    expect(parseState('bp=1', CONTEXT).isAffordableFirst).toBe(true);
+    expect(parseState('bp=yes', CONTEXT).isAffordableFirst).toBe(false);
   });
 });

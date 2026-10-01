@@ -11,6 +11,10 @@ export interface UrlState {
   enabled: Record<FactorId, boolean>;
   ranges: Record<FactorId, [number, number]>;
   filters: Record<FactorId, FactorFilter | null>;
+  /** Доход в месяц, целые USD от нуля; `null` — режим бюджета выключен. */
+  budget: number | null;
+  /** Список «сначала по карману» вместо порядка по баллу. */
+  isAffordableFirst: boolean;
   cityId: CityId | null;
   /** Города сравнения в порядке выбора, не больше `MAX_COMPARE`. */
   compareIds: CityId[];
@@ -29,6 +33,8 @@ export const EMPTY_URL_STATE: Readonly<UrlState> = Object.freeze({
   enabled: {},
   ranges: {},
   filters: {},
+  budget: null,
+  isAffordableFirst: false,
   cityId: null,
   compareIds: [],
 });
@@ -41,7 +47,7 @@ export const MAX_COMPARE = 3;
 /** Интервал «от-до», любой край пустой; числа могут быть отрицательными: `-5-24`, `-40`, `60-`. */
 const INTERVAL_PATTERN = /^(-?\d+(?:\.\d+)?)?-(-?\d+(?:\.\d+)?)?$/;
 
-/** Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&c=tbilisi&cmp=tbilisi|belgrade`. */
+/** Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&b=2500&bp=1&c=tbilisi&cmp=tbilisi|belgrade`. */
 export function serializeState(state: UrlState): string {
   const enabledEntries = Object.entries(state.enabled);
   const parts: [string, string[]][] = [
@@ -51,6 +57,8 @@ export function serializeState(state: UrlState): string {
     ['off', enabledEntries.filter(([, isOn]) => !isOn).map(([id]) => id)],
     ['r', Object.entries(state.ranges).map(([id, [low, high]]) => `${id}:${low}-${high}`)],
     ['f', Object.entries(state.filters).map(([id, filter]) => `${id}:${formatFilter(filter)}`)],
+    ['b', state.budget === null ? [] : [String(state.budget)]],
+    ['bp', state.isAffordableFirst ? ['1'] : []],
     ['c', state.cityId === null ? [] : [state.cityId]],
     ['cmp', state.compareIds.length === 0 ? [] : [state.compareIds.join('|')]],
   ];
@@ -80,6 +88,11 @@ export function parseState(hash: string, context: UrlStateContext): UrlState {
     if (key === 'p') {
       if (value === NONE) state.presetId = null;
       else if (context.presetIds.includes(value)) state.presetId = value;
+    } else if (key === 'b') {
+      // Только целые доллары без знака: отрицательный доход и дробные копейки — мусор.
+      if (/^\d+$/.test(value) && Number.isSafeInteger(Number(value))) state.budget = Number(value);
+    } else if (key === 'bp') {
+      state.isAffordableFirst = value === '1';
     } else if (key === 'c') {
       if (context.cityIds.includes(value)) state.cityId = value;
     } else if (key === 'cmp') {
