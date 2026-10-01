@@ -171,6 +171,21 @@ test('сравнение двух городов показывает табли
   await expect(sheet.getByRole('rowheader').first()).toBeVisible();
 });
 
+test('доход показывает остаток у города и сортирует сначала по карману', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Настройки');
+  await page.getByTestId('budget-input').fill('2000');
+  await openSection(page, 'Города');
+
+  await expect(page.getByTestId('leftover-line').first()).toBeVisible();
+
+  await page.getByRole('checkbox', { name: 'Сначала по карману' }).click();
+
+  await expect(page.getByRole('list', { name: 'Города: сначала по карману' })).toBeVisible();
+  await expect(page).toHaveURL(/b=2000/);
+  await expect(page).toHaveURL(/bp=1/);
+});
+
 test('таблица сортируется по колонке и пишет сортировку в адрес', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Таблица');

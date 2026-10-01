@@ -25,6 +25,15 @@ describe('data/', () => {
     });
     expect(misnamed).toEqual([]);
   });
+
+  it('keeps the budget factors in USD per month', () => {
+    const { registry, samples } = loadRawData();
+    const units = ['cost-of-living', 'rent'].map((factorId) => {
+      const factor = registry.factors.find(({ id }) => id === factorId);
+      return samples.find(({ id }) => id === factor?.activeSample)?.unit;
+    });
+    expect(units).toEqual(['USD/мес', 'USD/мес']);
+  });
 });
 
 /** Обзоры в data/notes: папка — фактор со спекой, файл — ключ его уровня, содержимое — по спеке. */

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
 
-  import { profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
-  import { getRankingContext } from '@/entities/ranking';
+  import { LeftoverLine, profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
+  import { getRankingContext, monthlyCostsOf } from '@/entities/ranking';
   import { CompareToggle } from '@/features/compare-toggle';
   import { ShareButton } from '@/features/share-link';
   import { cn } from '@/shared/lib/utils';
@@ -22,6 +22,7 @@
   const chips = $derived(
     view ? profileChips(view, view.city, factorsById, ranking.settings.ranges) : null,
   );
+  const costs = $derived(view ? monthlyCostsOf(view.city) : null);
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) ranking.selectCity(null);
@@ -50,6 +51,15 @@
           </div>
           <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
         </div>
+        {#if ranking.budget !== null}
+          {#if view.leftover !== null && costs}
+            <LeftoverLine budget={ranking.budget} leftover={view.leftover} {costs} />
+          {:else}
+            <p class="text-sm text-foreground/70" data-testid="leftover-line">
+              Сколько останется, не посчитать: нет данных о расходах или аренде
+            </p>
+          {/if}
+        {/if}
         {#if chips}
           <SummaryLine
             strengths={chips.strengths}
