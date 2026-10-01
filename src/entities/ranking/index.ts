@@ -1,4 +1,5 @@
 export { describeFilter } from './lib/describe-filter';
+export { type CitySort, sortCities } from './lib/sort-cities';
 export { MAX_COMPARE } from './lib/url-state';
 export {
   createRankingState,
