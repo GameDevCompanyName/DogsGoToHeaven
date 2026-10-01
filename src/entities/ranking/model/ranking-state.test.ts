@@ -464,6 +464,15 @@ describe('RankingState compare', () => {
     expect(target.compareIds).toEqual(['gamma', 'alpha']);
   });
 
+  it('ignores ids that are not cities, including inherited object keys', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleCompare('constructor');
+    state.toggleCompare('nowhere');
+
+    expect(state.compareIds).toEqual([]);
+  });
+
   it('clears the comparison', () => {
     const state = new RankingState(makeDataset(), PRESETS);
     state.toggleCompare('alpha');

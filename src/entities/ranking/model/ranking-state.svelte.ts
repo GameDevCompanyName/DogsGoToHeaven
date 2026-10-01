@@ -289,7 +289,7 @@ export class RankingState {
   toggleCompare(cityId: CityId) {
     if (this.compareIds.includes(cityId)) {
       this.compareIds = this.compareIds.filter((id) => id !== cityId);
-    } else if (!this.isCompareFull && cityId in this.#cityById) {
+    } else if (!this.isCompareFull && Object.hasOwn(this.#cityById, cityId)) {
       this.compareIds = [...this.compareIds, cityId];
     }
   }
