@@ -24,6 +24,8 @@
 
   const question = $derived(QUIZ_QUESTIONS[step]);
   const progress = $derived(((step + 1) / total) * 100);
+  /** Вперёд пускает только ответ, поэтому все вопросы до текущего отвечены. */
+  const answered = $derived(step);
 
   function isComplete(partial: Partial<QuizAnswers>): partial is QuizAnswers {
     return QUIZ_QUESTIONS.every(({ id }) => partial[id] !== undefined);
@@ -61,9 +63,10 @@
       class="h-2 overflow-hidden rounded-full bg-muted"
       role="progressbar"
       aria-label="Пройдено вопросов"
-      aria-valuemin={1}
+      aria-valuemin={0}
       aria-valuemax={total}
-      aria-valuenow={step + 1}
+      aria-valuenow={answered}
+      aria-valuetext="Вопрос {step + 1} из {total}"
     >
       <div
         class="h-full rounded-full bg-foreground transition-[width]"

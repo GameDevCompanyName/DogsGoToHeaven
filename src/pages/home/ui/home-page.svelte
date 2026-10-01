@@ -56,7 +56,6 @@
   const panelTab = $derived<PanelTab>(section === 'map' ? 'cities' : section);
   /** На десктопе таблица ложится поверх карты на всю правую часть, на телефоне — экран панели. */
   const isWideTable = $derived(isDesktop.current && section === 'table');
-  const isSettingsVisible = $derived(panelTab === 'settings' || isWideTable);
 
   function handlePanelTabChange(value: string) {
     section = isPanelTab(value) ? value : 'cities';
@@ -119,20 +118,23 @@
           <ResultsList oncompareopen={() => (isCompareOpen = true)} />
         </Tabs.Content>
         <!-- Вкладки смонтированы все сразу, поэтому таблица — только пока открыта: тысячи ячеек
-             иначе пересчитывались бы на каждый шаг ползунка. На десктопе она справа, вместо карты. -->
+             иначе перерисовывались бы на каждый шаг ползунка. На десктопе она справа, вместо карты. -->
         <Tabs.Content value="table" class="min-h-0 flex-1 md:hidden">
           {#if section === 'table' && !isDesktop.current}
             <CityTable />
           {/if}
         </Tabs.Content>
-        <Tabs.Content value="settings" class="min-h-0 flex-1">
-          {#snippet child({ props })}
-            <!-- На десктопе при таблице слева настройки: двигаешь вес — видишь таблицу. -->
-            <div {...props} hidden={!isSettingsVisible}>
-              <SettingsPanel />
-            </div>
-          {/snippet}
-        </Tabs.Content>
+        {#if isWideTable}
+          <!-- На десктопе при таблице слева настройки: двигаешь вес — видишь таблицу. Активна
+               вкладка «Таблица», поэтому настройки тут не панель вкладок, а обычный блок. -->
+          <section aria-label="Настройки" class="min-h-0 flex-1 text-sm">
+            <SettingsPanel />
+          </section>
+        {:else}
+          <Tabs.Content value="settings" class="min-h-0 flex-1">
+            <SettingsPanel />
+          </Tabs.Content>
+        {/if}
       </Tabs.Root>
     </aside>
 
