@@ -3,14 +3,14 @@
   import { toneClasses } from '@/shared/lib/tone';
   import { cn } from '@/shared/lib/utils';
 
-  import { NBSP } from '../lib/format-value';
+  import { formatLeftoverAmount, roundTo } from '../lib/format-value';
 
   interface Props {
     /** Доход в месяц, USD. */
     budget: number;
     /** Доход минус расходы и аренда, USD; меньше нуля — не по карману. */
     leftover: number;
-    /** Расходы и аренда для разбора «$2 500 − $640 расходы − $673 аренда»; без них — только итог. */
+    /** Расходы и аренда для разбора «$2 500 − $640 расходы − $670 аренда»; без них — только итог. */
     costs?: { living: number; rent: number };
   }
 
@@ -18,8 +18,13 @@
 
   const assessment = $derived(assessLeftover(leftover, budget));
   const isAffordable = $derived(leftover >= 0);
-  /** Итог до $10: расходы и аренда сами оценки, точность до доллара была бы ложной. */
-  const amount = $derived(`≈${NBSP}${formatUsd(Math.round(Math.abs(leftover) / 10) * 10)}`);
+  /** Итог и разбор до $10, как в строках факторов: расходы и аренда сами оценки. */
+  const amount = $derived(formatLeftoverAmount(leftover));
+  const breakdown = $derived(
+    costs
+      ? `${formatUsd(budget)} − ${formatUsd(roundTo(costs.living, 10))} расходы − ${formatUsd(roundTo(costs.rent, 10))} аренда`
+      : null,
+  );
   const chipClass = $derived(
     cn('rounded-full px-2 py-0.5 text-sm font-medium', toneClasses(assessment.tone).chip),
   );
@@ -32,13 +37,13 @@
       <span class="font-medium whitespace-nowrap">Останется {amount}</span>
       <span class={chipClass}>{assessment.label}</span>
     {:else}
-      <span class={chipClass}>Не по карману</span>
+      <span class={chipClass}>{assessment.label}</span>
       <span class="whitespace-nowrap text-foreground/70">не хватает {amount}</span>
     {/if}
   </span>
-  {#if costs}
+  {#if breakdown}
     <span class="text-sm text-foreground/70 tabular-nums" data-testid="leftover-breakdown">
-      {formatUsd(budget)} − {formatUsd(costs.living)} расходы − {formatUsd(costs.rent)} аренда
+      {breakdown}
     </span>
   {/if}
 </span>

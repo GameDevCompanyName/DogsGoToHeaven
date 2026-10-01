@@ -25,9 +25,9 @@ export function computeLeftover(
   return budget - costOfLiving - rent;
 }
 
-/** Тон и подпись остатка по доле дохода; меньше нуля — «не по карману». */
+/** Тон и подпись остатка по доле дохода; меньше нуля — «Не по карману»: подпись стоит первой. */
 export function assessLeftover(leftover: number, budget: number): LeftoverAssessment {
-  if (leftover < 0) return { tone: 'bad', label: 'не по карману' };
+  if (leftover < 0) return { tone: 'bad', label: 'Не по карману' };
   if (leftover >= budget * GOOD_SHARE) return { tone: 'good', label: 'с запасом' };
   if (leftover >= budget * OK_SHARE) return { tone: 'ok', label: 'хватит' };
   return { tone: 'bad', label: 'впритык' };

@@ -164,8 +164,18 @@ export function formatPopulation(value: number): string {
   return INTEGER.format(value);
 }
 
-function roundTo(value: number, step: number): number {
+/** Округление до шага: деньги показываем до $10 или $100, точность до доллара была бы ложной. */
+export function roundTo(value: number, step: number): number {
   return Math.round(value / step) * step;
+}
+
+/**
+ * Остаток или нехватка по модулю до $10. Нехватка округляется вверх, чтобы не выйти «$0», остаток
+ * меньше $5 — «< $10»: ноль читался бы как «ничего не останется».
+ */
+export function formatLeftoverAmount(leftover: number): string {
+  const amount = leftover < 0 ? Math.ceil(-leftover / 10) * 10 : roundTo(leftover, 10);
+  return amount === 0 ? `<${NBSP}$10` : `≈${NBSP}${formatUsd(amount)}`;
 }
 
 /** Форма слова для числа; у дробного — родительный падеж единственного: «1,5 года». */

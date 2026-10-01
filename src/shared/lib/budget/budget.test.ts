@@ -29,7 +29,7 @@ describe('assessLeftover', () => {
   });
 
   it('calls a negative leftover unaffordable', () => {
-    expect(assessLeftover(-1, 1000)).toEqual({ tone: 'bad', label: 'не по карману' });
+    expect(assessLeftover(-1, 1000)).toEqual({ tone: 'bad', label: 'Не по карману' });
   });
 });
 
