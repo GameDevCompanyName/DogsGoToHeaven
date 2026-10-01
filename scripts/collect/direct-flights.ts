@@ -93,6 +93,14 @@ const ALIASES: Record<string, string> = {
   'bangkok-suvarnabhumi': 'bangkok',
   'bangkok-don-mueang': 'bangkok',
   'tel-aviv-yafo': 'tel-aviv',
+  // Города раунда 3 (2026-10-01): таблицы называют направление по стране, острову или
+  // аэропорту, а не по городу. Берём только случаи, где этот аэропорт и есть аэропорт
+  // города: единственный международный аэропорт страны или острова рядом со столицей.
+  bahrain: 'manama', // Bahrain International Airport
+  mauritius: 'port-louis', // Sir Seewoosagur Ramgoolam International Airport
+  mahe: 'victoria-sc', // Seychelles International Airport на острове Маэ
+  goa: 'panaji', // «Goa–Dabolim», «Goa–Mopa»: аэропорты штата Гоа
+  'issyk-kul': 'cholpon-ata', // Issyk-Kul International Airport у Чолпон-Аты
 };
 
 const MONTHS = [

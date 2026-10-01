@@ -127,7 +127,12 @@ const COUNTRY_STATUS: CountryStatus[] = [
     reason: '«introduced the Digital Nomad Visa (VITEM XIV) under Resolution 45/2021»',
   },
   { heading: 'Cayman Islands', status: 'yes', reason: 'нет в data/countries.json' },
-  { heading: 'Costa Rica', status: 'yes', reason: 'нет в data/countries.json' },
+  {
+    heading: 'Costa Rica',
+    countryId: 'cr',
+    status: 'yes',
+    reason: '«On August 11, 2021, Costa Rica passed a law granting visas to digital nomads»',
+  },
   {
     heading: 'Croatia',
     countryId: 'hr',
@@ -193,9 +198,9 @@ const COUNTRY_STATUS: CountryStatus[] = [
   },
   {
     heading: 'Mauritius',
+    countryId: 'mu',
     status: 'no',
-    reason:
-      '«announced that it would be expanding its premium visa to digital nomads» — анонс; нет в data/countries.json',
+    reason: '«announced that it would be expanding its premium visa to digital nomads» — анонс',
   },
   {
     heading: 'Philippines',
@@ -389,6 +394,32 @@ const VISA_POLICY_COUNTRY_NAMES: Record<string, string> = {
   uz: 'Uzbekistan',
   vn: 'Vietnam',
   za: 'South Africa',
+  // Страны раунда 3 (2026-10-01).
+  al: 'Albania',
+  ba: 'Bosnia and Herzegovina',
+  bh: 'Bahrain',
+  cl: 'Chile',
+  co: 'Colombia',
+  cr: 'Costa Rica',
+  do: 'Dominican Republic',
+  ec: 'Ecuador',
+  jo: 'Jordan',
+  ke: 'Kenya',
+  kh: 'Cambodia',
+  kw: 'Kuwait',
+  la: 'Laos',
+  lk: 'Sri Lanka',
+  md: 'Moldova',
+  mk: 'North Macedonia',
+  mu: 'Mauritius',
+  np: 'Nepal',
+  pa: 'Panama',
+  py: 'Paraguay',
+  qa: 'Qatar',
+  sc: 'Seychelles',
+  tn: 'Tunisia',
+  tz: 'Tanzania',
+  uy: 'Uruguay',
 };
 
 const VISA_POLICY_KEYWORDS = ['digital nomad', 'nomad visa', 'remote work visa', 'remote worker'];

@@ -95,6 +95,27 @@ const COUNTRY_ALIASES: Record<string, string> = {
   Montenegro: 'me',
   Egypt: 'eg',
   Morocco: 'ma',
+  // Страны раунда 3, написание сверено с кэшем таблицы 2026-10-01. Бахрейна, Танзании,
+  // Парагвая, Лаоса, Маврикия и Сейшел в таблице нет.
+  Albania: 'al',
+  'Bosnia And Herzegovina': 'ba',
+  Cambodia: 'kh',
+  Chile: 'cl',
+  Colombia: 'co',
+  'Costa Rica': 'cr',
+  'Dominican Republic': 'do',
+  Ecuador: 'ec',
+  Jordan: 'jo',
+  Kenya: 'ke',
+  Kuwait: 'kw',
+  Moldova: 'md',
+  Nepal: 'np',
+  'North Macedonia': 'mk',
+  Panama: 'pa',
+  Qatar: 'qa',
+  'Sri Lanka': 'lk',
+  Tunisia: 'tn',
+  Uruguay: 'uy',
 };
 
 interface Country {

@@ -113,6 +113,30 @@ const COUNTRY_NAMES: Record<string, string[]> = {
   uz: ['Uzbekistan'],
   vn: ['Vietnam'],
   za: ['South Africa'],
+  // Страны раунда 3: написание сверено с кэшем таблиц рейтингов 2026-10-01. Лаоса, Маврикия
+  // и Сейшел в таблицах нет, их названий здесь нет.
+  al: ['Albania'],
+  ba: ['Bosnia And Herzegovina'],
+  bh: ['Bahrain'],
+  cl: ['Chile'],
+  co: ['Colombia'],
+  cr: ['Costa Rica'],
+  do: ['Dominican Republic'],
+  ec: ['Ecuador'],
+  jo: ['Jordan'],
+  ke: ['Kenya'],
+  kh: ['Cambodia'],
+  kw: ['Kuwait'],
+  lk: ['Sri Lanka'],
+  md: ['Moldova'],
+  mk: ['North Macedonia'],
+  np: ['Nepal'],
+  pa: ['Panama'],
+  py: ['Paraguay'],
+  qa: ['Qatar'],
+  tn: ['Tunisia'],
+  tz: ['Tanzania'],
+  uy: ['Uruguay'],
 };
 
 /**
@@ -127,6 +151,8 @@ const CITY_ALIASES: Record<string, string> = {
   bangalore: 'bengaluru', // Numbeo использует старое английское название
   'ad-dammam': 'dammam', // Numbeo: "Ad Dammam, Saudi Arabia"
   gent: 'ghent', // Numbeo: "Gent, Belgium" (нидерландское написание)
+  'freiburg-im-breisgau': 'freiburg', // Numbeo: "Freiburg im Breisgau, Germany"
+  'palma-de-mallorca': 'palma', // Numbeo: "Palma de Mallorca, Spain"
 };
 
 // --- утилиты ------------------------------------------------------------------
