@@ -76,12 +76,15 @@ test('таблица встаёт вместо карты, сортируетс�
   await sortSafety.click();
 
   await expect(page).toHaveURL(/sort=safety:desc/);
-  const safety = await table
-    .getByTestId('table-row')
-    .locator('[data-factor-id="safety"]')
-    .evaluateAll((cells) =>
-      cells.slice(0, 10).map((cell) => Number(cell.getAttribute('data-value'))),
-    );
+  // Пустой data-value — нет данных: Number('') дал бы 0 и сломал порядок.
+  const safety = (
+    await table
+      .getByTestId('table-row')
+      .locator('[data-factor-id="safety"]')
+      .evaluateAll((cells) => cells.slice(0, 10).map((cell) => cell.getAttribute('data-value')))
+  )
+    .filter((value) => value !== null && value !== '')
+    .map(Number);
   expect(safety).toEqual([...safety].sort((a, b) => b - a));
 
   const firstRow = table.getByTestId('table-row').first();

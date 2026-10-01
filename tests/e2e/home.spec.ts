@@ -176,23 +176,28 @@ test('таблица сортируется по колонке и пишет с
   await openSection(page, 'Таблица');
   const table = page.getByTestId('city-table');
   const header = table.getByRole('columnheader').filter({ has: page.getByTestId('sort-rent') });
-  const rents = () =>
-    table
-      .getByTestId('table-row')
-      .locator('[data-factor-id="rent"]')
-      .evaluateAll((cells) => cells.slice(0, 10).map((cell) => cell.getAttribute('data-value')));
+  // Пустой data-value — нет данных: Number('') дал бы 0 и сломал порядок.
+  const rents = async () =>
+    (
+      await table
+        .getByTestId('table-row')
+        .locator('[data-factor-id="rent"]')
+        .evaluateAll((cells) => cells.slice(0, 10).map((cell) => cell.getAttribute('data-value')))
+    )
+      .filter((value) => value !== null && value !== '')
+      .map(Number);
 
   await table.getByTestId('sort-rent').click();
 
   await expect(header).toHaveAttribute('aria-sort', 'ascending');
   await expect(page).toHaveURL(/sort=rent:asc/);
-  const ascending = (await rents()).map(Number);
+  const ascending = await rents();
   expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
 
   await table.getByTestId('sort-rent').click();
 
   await expect(header).toHaveAttribute('aria-sort', 'descending');
   await expect(page).toHaveURL(/sort=rent:desc/);
-  const descending = (await rents()).map(Number);
+  const descending = await rents();
   expect(descending).toEqual([...descending].sort((a, b) => b - a));
 });
