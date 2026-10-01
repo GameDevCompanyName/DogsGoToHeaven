@@ -59,6 +59,7 @@ function displayDecimals(value: number, format: NumericFormat): number | null {
       return Math.abs(value) >= 10 ? 0 : 1;
     case 'pm25':
     case 'percent-max':
+    case 'percent':
     case 'years':
     case 'score-5':
       return 1;
@@ -109,6 +110,8 @@ function formatNumber(
       };
     case 'percent-max':
       return { primary: number === 0 ? `0${NBSP}%` : `до ${shown}${NBSP}%` };
+    case 'percent':
+      return { primary: `≈${NBSP}${shown}${NBSP}%` };
     case 'index-100':
       return { primary: `${shown} из 100` };
     case 'pm25':

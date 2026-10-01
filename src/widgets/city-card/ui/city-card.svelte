@@ -8,8 +8,9 @@
   import { cn } from '@/shared/lib/utils';
   import * as Sheet from '@/shared/ui/sheet';
 
+  import { NOTE_BLOCKS } from '../config/notes';
   import FactorBreakdown from './factor-breakdown.svelte';
-  import LegalizationNote from './legalization-note.svelte';
+  import FactorNote from './factor-note.svelte';
   import PeopleLinks from './people-links.svelte';
   import ReferenceBlock from './reference-block.svelte';
 
@@ -64,7 +65,9 @@
       <div class="flex flex-col gap-8 px-4 pb-8">
         <FactorBreakdown {view} />
         <ReferenceBlock city={view.city} />
-        <LegalizationNote city={view.city} />
+        {#each NOTE_BLOCKS as block (block.factorId)}
+          <FactorNote city={view.city} {...block} />
+        {/each}
         <PeopleLinks city={view.city} />
       </div>
     {/if}

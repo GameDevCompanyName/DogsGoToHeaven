@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { linksFileSchema } from '@/shared/lib/links';
-import { parseNote } from '@/shared/lib/notes';
+import { NOTE_SPECS, parseNote } from '@/shared/lib/notes';
 import { validateRawData } from '@/shared/lib/ranking';
 
 import { LINK_FILES } from './load-links';
@@ -27,7 +27,7 @@ describe('data/', () => {
   });
 });
 
-/** Обзоры в data/notes: папка — фактор, файл — ключ его уровня, содержимое — по брифу. */
+/** Обзоры в data/notes: папка — фактор со спекой, файл — ключ его уровня, содержимое — по спеке. */
 const NOTE_FILES = import.meta.glob<string>('@data/notes/*/*.md', {
   query: '?raw',
   import: 'default',
@@ -35,7 +35,7 @@ const NOTE_FILES = import.meta.glob<string>('@data/notes/*/*.md', {
 });
 
 describe('data/notes', () => {
-  it('every note belongs to a known factor and key and parses', () => {
+  it('every note belongs to a factor with a spec and a known key and parses', () => {
     const raw = loadRawData();
     const factorsById = new Map(raw.registry.factors.map((factor) => [factor.id, factor]));
     const cityIds = new Set(raw.cities.map((city) => city.id));
@@ -53,10 +53,15 @@ describe('data/notes', () => {
         problems.push(`${path}: неизвестный фактор "${factorId}"`);
         continue;
       }
+      const spec = NOTE_SPECS[factorId];
+      if (!spec) {
+        problems.push(`${path}: у фактора "${factorId}" нет спеки обзора в shared/lib/notes`);
+        continue;
+      }
       const known = factor.level === 'city' ? cityIds : countryIds;
       if (!known.has(key)) problems.push(`${path}: неизвестный ключ "${key}"`);
       try {
-        const note = parseNote(content);
+        const note = parseNote(content, spec);
         if (note.countryId !== key)
           problems.push(`${path}: countryId "${note.countryId}" ≠ имени файла`);
       } catch (error) {
