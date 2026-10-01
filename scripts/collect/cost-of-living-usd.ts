@@ -9,7 +9,8 @@
  * (COUNTRY_NAMES и CITY_ALIASES скопированы оттуда); сомнительные не берём.
  * Затем один запрос на сопоставленный город, пауза 1,5 с, User-Agent проекта,
  * каждый ответ кэшируется в scripts/collect/.cache/numbeo-city/. Если сайт отвечает
- * 403/429, прогон останавливается: защиту не обходим.
+ * 403, а также три 429 подряд (после ожидания по Retry-After и экспоненциальной паузы)
+ * прогон останавливается: защиту не обходим. Кэш по городам позволяет продолжить с места остановки.
  *
  * Numbeo печатает сумму в двух валютах ("€1,454.9 ($1,644.7)" или "$703.2 (R$3,643.4)"),
  * порядок зависит от города. Берём сумму с голым "$" (не "R$", "HK$" и т.п.).
@@ -48,7 +49,11 @@ const RANKINGS_URL = 'https://www.numbeo.com/cost-of-living/rankings.jsp';
 const RANKINGS_CACHE_PATH = join(CACHE_DIR, 'cost-of-living-rankings-jsp.html');
 const CITY_URL = 'https://www.numbeo.com/cost-of-living/in/';
 const SAMPLE_ID = 'cost-of-living.numbeo-usd-2026';
-const PAUSE_MS = 1500;
+const PAUSE_MS = 6000;
+const BACKOFF_START_MS = 60_000;
+const MAX_CONSECUTIVE_429 = 3;
+/** Ждать дольше часа бессмысленно (и не влезает в setTimeout): прогон останавливается. */
+const MAX_WAIT_MS = 60 * 60 * 1000;
 const PROGRESS_EVERY = 20;
 const FALLBACK_PERIOD = '2026-10';
 
@@ -188,16 +193,29 @@ function decodeEntities(text: string): string {
 
 class BlockedError extends Error {}
 
+/** Сколько раз Numbeo ответил 429: подряд (для отказа) и за весь прогон (для отчёта). */
+const throttle = { consecutive: 0, total: 0 };
+
+/** Retry-After: секунды или дата HTTP; null, если заголовка нет или он непонятен. */
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds) * 1000;
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? null : Math.max(0, date - Date.now());
+}
+
 // --- загрузка с кэшем -----------------------------------------------------------
 
 /**
- * Запрос к Numbeo; 403/429 останавливают прогон. Возвращает null для прочих ошибок.
+ * Запрос к Numbeo. 403 останавливает прогон. На 429 ждём max(Retry-After, 60 с * 2^n)
+ * и повторяем; третий 429 подряд останавливает прогон. Возвращает null для прочих ошибок.
  * Редирект на канонический адрес ("Astana" -> "Astana-Nur-Sultan-Kazakhstan") идёт вручную:
  * при нём теряется displayCurrency=USD, поэтому добавляем его к адресу назначения.
  */
 async function request(url: string, redirects = 2): Promise<string | null> {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    if (attempt > 0) await sleep(PAUSE_MS);
+  let networkErrors = 0;
+  for (;;) {
     let response: Response;
     try {
       response = await fetch(url, {
@@ -209,13 +227,39 @@ async function request(url: string, redirects = 2): Promise<string | null> {
         },
       });
     } catch {
+      networkErrors += 1;
+      if (networkErrors >= 2) return null;
+      await sleep(PAUSE_MS);
       continue;
     }
-    if (response.status === 403 || response.status === 429) {
+    if (response.status === 403) {
       throw new BlockedError(
-        `Numbeo ответил ${response.status} на ${url}. Обходить защиту нельзя: прогон остановлен.`,
+        `Numbeo ответил 403 на ${url}. Обходить защиту нельзя: прогон остановлен.`,
       );
     }
+    if (response.status === 429) {
+      throttle.consecutive += 1;
+      throttle.total += 1;
+      if (throttle.consecutive >= MAX_CONSECUTIVE_429) {
+        throw new BlockedError(
+          `Numbeo ответил 429 ${MAX_CONSECUTIVE_429} раза подряд на ${url}. Прогон остановлен, повторите позже: кэш сохранён.`,
+        );
+      }
+      const backoff = BACKOFF_START_MS * 2 ** (throttle.consecutive - 1);
+      const retryAfter = parseRetryAfterMs(response.headers.get('retry-after'));
+      const wait = Math.max(backoff, retryAfter ?? 0);
+      if (wait > MAX_WAIT_MS) {
+        throw new BlockedError(
+          `Numbeo ответил 429 с Retry-After=${response.headers.get('retry-after')} (ждать больше часа) на ${url}. Прогон остановлен до этой даты: кэш сохранён.`,
+        );
+      }
+      console.log(
+        `  429 (${throttle.consecutive} подряд, всего ${throttle.total}), Retry-After=${response.headers.get('retry-after') ?? 'нет'}, жду ${Math.round(wait / 1000)} с`,
+      );
+      await sleep(wait);
+      continue;
+    }
+    throttle.consecutive = 0;
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location && redirects > 0) {
       const next = new URL(location, url);
@@ -227,9 +271,8 @@ async function request(url: string, redirects = 2): Promise<string | null> {
       return request(next.toString(), redirects - 1);
     }
     if (response.ok) return response.text();
-    if (response.status === 404) return null;
+    return null;
   }
-  return null;
 }
 
 async function loadRankings(): Promise<string> {
@@ -415,7 +458,9 @@ async function main(): Promise<void> {
 
   if (blocked) {
     console.error(blocked);
-    console.error(`Остановлено на ${values.size} городах; файл не записан.`);
+    console.error(
+      `Остановлено на ${values.size} городах из ${wanted.length}, ответов 429 за прогон: ${throttle.total}; файл не записан.`,
+    );
     process.exitCode = 1;
     return;
   }
@@ -463,6 +508,7 @@ async function main(): Promise<void> {
   console.log(
     `Заполнено ${filled} из ${cityIds.length} (${Math.round((filled / cityIds.length) * 100)}%), сетевых запросов ${requests}`,
   );
+  console.log(`Ответов 429 за прогон: ${throttle.total}`);
   console.log(`Первые ненайденные: ${missing.slice(0, 10).join(', ') || '—'}`);
   console.log(
     'Этапы:',
