@@ -483,6 +483,70 @@ describe('RankingState compare', () => {
   });
 });
 
+describe('RankingState table sort', () => {
+  it('cycles a column through ascending, descending and back to the score order', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleSort('safety');
+    expect(state.sort).toEqual({ factorId: 'safety', direction: 'asc' });
+    state.toggleSort('safety');
+    expect(state.sort).toEqual({ factorId: 'safety', direction: 'desc' });
+    state.toggleSort('safety');
+    expect(state.sort).toBeNull();
+  });
+
+  it('starts another column ascending', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    state.toggleSort('safety');
+    state.toggleSort('safety');
+
+    state.toggleSort('rent');
+
+    expect(state.sort).toEqual({ factorId: 'rent', direction: 'asc' });
+  });
+
+  it('ignores a categorical factor and a factor without data', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    state.toggleSort('visa');
+    state.toggleSort('ease');
+
+    expect(state.sort).toBeNull();
+  });
+
+  it('orders the table rows by the sorted factor and keeps the places', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+    const scoreOrder = state.rankedCities.map(({ city }) => city.id);
+
+    state.toggleSort('safety');
+    state.toggleSort('safety');
+
+    expect(state.tableCities.map(({ city }) => city.id)).toEqual(['gamma', 'beta', 'alpha']);
+    expect(state.rankedCities.map(({ city }) => city.id)).toEqual(scoreOrder);
+  });
+
+  it('writes the sort to the url hash and reads it back', () => {
+    const state = new RankingState(makeDataset(), PRESETS, 'month');
+    state.applyHash('');
+    state.toggleSort('rent');
+    expect(state.urlHash).toBe('p=month&sort=rent:asc');
+
+    const target = new RankingState(makeDataset(), PRESETS, 'month');
+    target.applyHash(state.urlHash);
+
+    expect(target.sort).toEqual({ factorId: 'rent', direction: 'asc' });
+  });
+
+  it('drops a sort from the url hash by a factor the header cannot sort', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    for (const hash of ['sort=ease:asc', 'sort=visa:desc']) {
+      state.applyHash(hash);
+      expect(state.sort, hash).toBeNull();
+    }
+  });
+});
+
 describe('RankingState strengths and weaknesses', () => {
   it('takes up to three strengths by contribution', () => {
     const state = new RankingState(makeProfileDataset(), []);
@@ -525,5 +589,93 @@ describe('RankingState strengths and weaknesses', () => {
     const state = new RankingState(makeProfileDataset(), []);
 
     expect(state.rankedCities.map((view) => view.percentile)).toEqual([1, 0.5, 0]);
+  });
+});
+
+describe('RankingState budget', () => {
+  /** Расходы без аренды: у alpha есть, у beta нет, gamma дороже дохода в 1000. */
+  function makeBudgetDataset(): Dataset {
+    return makeDataset([
+      makeCity('alpha', { rent: 100, 'cost-of-living': 400, safety: 10, visa: 'free' }),
+      makeCity('beta', { rent: 200, safety: 50, visa: 'required' }),
+      makeCity('gamma', { rent: 300, 'cost-of-living': 900, safety: 90, visa: 'free' }),
+    ]);
+  }
+
+  it('leaves the income minus living costs and rent for every city with both numbers', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+    expect(state.rankedCities.map((view) => view.leftover)).toEqual([null, null, null]);
+
+    state.setBudget(1000);
+
+    expect(viewOf(state, 'alpha')?.leftover).toBe(500);
+    expect(viewOf(state, 'beta')?.leftover).toBeNull();
+    expect(viewOf(state, 'gamma')?.leftover).toBe(-200);
+  });
+
+  it('keeps only a whole non-negative income', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+
+    state.setBudget(1999.6);
+    expect(state.budget).toBe(2000);
+    state.setBudget(-5);
+    expect(state.budget).toBeNull();
+    state.setBudget(Number.NaN);
+    expect(state.budget).toBeNull();
+  });
+
+  it('treats a zero income as no income', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+
+    state.setBudget(0);
+    expect(state.budget).toBeNull();
+    state.setBudget(0.4);
+    expect(state.budget).toBeNull();
+  });
+
+  it('switches affordable-first off when the income is cleared', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+    state.setBudget(1000);
+    state.setAffordableFirst(true);
+
+    state.setBudget(null);
+
+    expect(state.isAffordableFirst).toBe(false);
+  });
+
+  it('keeps a clean hash for a stray affordable-first link without an income', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS, 'month');
+
+    state.applyHash('bp=1');
+
+    expect(state.isAffordableFirst).toBe(false);
+    expect(state.urlHash).toBe('');
+  });
+
+  it('does not change the score order or the ranks', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+    const before = state.rankedCities.map((view) => [view.city.id, view.ranked.rank]);
+
+    state.setBudget(1000);
+    state.setAffordableFirst(true);
+
+    expect(state.rankedCities.map((view) => [view.city.id, view.ranked.rank])).toEqual(before);
+  });
+
+  it('writes the budget and the switch to the url hash and reads them back', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS, 'month');
+    state.applyHash('');
+    state.setBudget(2500);
+    state.setAffordableFirst(true);
+    expect(state.urlHash).toBe('p=month&b=2500&bp=1');
+
+    const target = new RankingState(makeBudgetDataset(), PRESETS, 'month');
+    target.applyHash(state.urlHash);
+    expect(target.budget).toBe(2500);
+    expect(target.isAffordableFirst).toBe(true);
+
+    target.applyHash('');
+    expect(target.budget).toBeNull();
+    expect(target.isAffordableFirst).toBe(false);
   });
 });

@@ -1,36 +1,44 @@
 /**
  * Разбор файла обзора `data/notes/<factorId>/<key>.md`: YAML-шапка с тремя полями,
- * пять разделов второго уровня в фиксированном порядке и строка «Оценка: N из 5»
- * в последнем разделе. Без зависимостей: шапка плоская, полноценный YAML не нужен.
+ * разделы второго уровня в порядке из спеки фактора и строка значения в последнем разделе.
+ * Без зависимостей: шапка плоская, полноценный YAML не нужен.
  */
-
-export const NOTE_SECTIONS = [
-  'Въезд',
-  'Пути к ВНЖ',
-  'ПМЖ и гражданство',
-  'Подводные камни',
-  'Вердикт',
-] as const;
+import { LEGALIZATION_SPEC, type NoteSpec } from './specs';
 
 export interface NoteSection {
   title: string;
   body: string;
 }
 
-export interface Note {
+export interface Note<V = unknown> {
   countryId: string;
   checkedAt: string;
   sources: string[];
   sections: NoteSection[];
+  /** Значение из последнего раздела, тип — по спеке фактора. */
+  value: V;
+}
+
+/** Обзор легализации: `score` — то же, что `value`, имя из первой версии формата. */
+export interface ScoreNote extends Note<number> {
   /** Оценка 1–5 из раздела «Вердикт». */
   score: number;
 }
 
-const MIN_SOURCES = 3;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const SCORE_PATTERN = /Оценка:\s*(\d)\s*из\s*5/u;
 
-export function parseNote(raw: string): Note {
+/** Без спеки разбирает обзор легализации, как до появления других факторов. */
+export function parseNote(raw: string): ScoreNote;
+export function parseNote<V>(raw: string, spec: NoteSpec<V>): Note<V>;
+export function parseNote<V>(raw: string, spec?: NoteSpec<V>): Note<V> | ScoreNote {
+  if (spec === undefined) {
+    const note = parseWithSpec(raw, LEGALIZATION_SPEC);
+    return { ...note, score: note.value };
+  }
+  return parseWithSpec(raw, spec);
+}
+
+function parseWithSpec<V>(raw: string, spec: NoteSpec<V>): Note<V> {
   const { frontmatter, body } = splitFrontmatter(raw);
   const countryId = requireField(frontmatter, 'countryId');
   const checkedAt = requireField(frontmatter, 'checkedAt');
@@ -38,19 +46,20 @@ export function parseNote(raw: string): Note {
     throw new Error(`checkedAt: ожидается дата YYYY-MM-DD, получено "${checkedAt}"`);
   }
   const sources = frontmatter.sources ?? [];
-  if (sources.length < MIN_SOURCES) {
-    throw new Error(`sources: нужно не меньше ${MIN_SOURCES} ссылок, найдено ${sources.length}`);
+  if (sources.length < spec.minSources) {
+    throw new Error(
+      `sources: нужно не меньше ${spec.minSources} ссылок, найдено ${sources.length}`,
+    );
   }
 
-  const sections = splitSections(body);
+  const sections = splitSections(body, spec.sections);
+  const lastTitle = spec.sections[spec.sections.length - 1] ?? '';
   const verdict = sections[sections.length - 1]?.body ?? '';
-  const scoreMatch = SCORE_PATTERN.exec(verdict);
-  const score = scoreMatch ? Number(scoreMatch[1]) : Number.NaN;
-  if (!Number.isInteger(score) || score < 1 || score > 5) {
-    throw new Error('Вердикт: ожидается строка «Оценка: N из 5», где N от 1 до 5');
-  }
+  const match = spec.value.pattern.exec(verdict);
+  const value = match ? spec.value.parse(match, verdict) : null;
+  if (value === null) throw new Error(`${lastTitle}: ожидается ${spec.value.expected}`);
 
-  return { countryId, checkedAt, sources, sections, score };
+  return { countryId, checkedAt, sources, sections, value };
 }
 
 interface Frontmatter {
@@ -91,7 +100,7 @@ function requireField(frontmatter: Frontmatter, key: 'countryId' | 'checkedAt'):
   return value;
 }
 
-function splitSections(body: string): NoteSection[] {
+function splitSections(body: string, expectedTitles: readonly string[]): NoteSection[] {
   const parts = body.split(/^## /m).slice(1);
   const sections = parts.map((part) => {
     const newline = part.indexOf('\n');
@@ -100,15 +109,17 @@ function splitSections(body: string): NoteSection[] {
     return { title, body: text };
   });
   const titles = sections.map((section) => section.title);
-  NOTE_SECTIONS.forEach((expected, index) => {
+  expectedTitles.forEach((expected, index) => {
     if (titles[index] !== expected) {
       throw new Error(
         `Раздел ${index + 1}: ожидается «## ${expected}», найдено «${titles[index] ?? 'ничего'}»`,
       );
     }
   });
-  if (sections.length !== NOTE_SECTIONS.length) {
-    throw new Error(`Ожидается ровно ${NOTE_SECTIONS.length} разделов, найдено ${sections.length}`);
+  if (sections.length !== expectedTitles.length) {
+    throw new Error(
+      `Ожидается ровно ${expectedTitles.length} разделов, найдено ${sections.length}`,
+    );
   }
   return sections;
 }

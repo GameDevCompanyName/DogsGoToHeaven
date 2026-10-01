@@ -30,7 +30,7 @@
       "id": "cost-of-living",
       "kind": "numeric",
       "name": "Стоимость жизни",
-      "definition": "Индекс стоимости жизни без аренды, Нью-Йорк = 100",
+      "definition": "Месячные расходы одного человека без аренды, USD; расчёт по индексу Numbeo относительно Нью-Йорка",
       "group": "money",
       "level": "city",
       "scoring": {
@@ -38,10 +38,10 @@
       },
       "defaultWeight": 8,
       "defaultEnabled": true,
-      "activeSample": "cost-of-living.numbeo-2026",
+      "activeSample": "cost-of-living.numbeo-index-usd-2026",
       "presentation": {
-        "format": "nyc-index",
-        "hint": "Индекс Numbeo: цены на еду, транспорт и услуги без аренды; Нью-Йорк = 100, меньше — дешевле.",
+        "format": "usd-per-month",
+        "hint": "Сколько в среднем тратит один человек в месяц на еду, транспорт, связь и развлечения без аренды. Оценка: индекс Numbeo, умноженный на расходы в Нью-Йорке ($1 665).",
         "chip": {
           "good": "дёшево",
           "bad": "дорого"
@@ -108,21 +108,74 @@
       }
     },
     {
-      "id": "tax-burden",
+      "id": "remote-tax",
       "kind": "numeric",
-      "name": "Налоговая нагрузка",
-      "definition": "Максимальная ставка налога на доходы физических лиц, %",
+      "name": "Налоги для удалёнщика",
+      "definition": "Эффективная ставка налогов и обязательных взносов для удалённого фрилансера с доходом 60 000 $ в год по самому выгодному законному режиму, доступному новоприбывшему иностранцу (ИП, самозанятость, режим кочевника, обычный НДФЛ), %; расчёт Claude по открытым источникам, правило в docs/collect-research.md",
       "group": "money",
       "level": "country",
       "scoring": {
         "type": "lower-better"
       },
-      "defaultWeight": 4,
+      "defaultWeight": 6,
+      "defaultEnabled": true,
+      "activeSample": "remote-tax.claude-research-2026",
+      "presentation": {
+        "format": "percent",
+        "hint": "Какую долю дохода удалённый фрилансер с 60 000 $ в год отдаст на налоги и обязательные взносы при самом выгодном законном режиме для новоприбывшего. Расчёт Claude по открытым источникам, подробности — в справке ниже.",
+        "chip": {
+          "good": "низкий налог для удалёнщика",
+          "bad": "высокий налог для удалёнщика"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "оценка проекта",
+          "source": "https://github.com/GameDevCompanyName/DogsGoToHeaven/blob/main/docs/collect-research.md",
+          "levels": [
+            {
+              "max": 5,
+              "label": "почти нет налога",
+              "tone": "good"
+            },
+            {
+              "max": 15,
+              "label": "низкая",
+              "tone": "good"
+            },
+            {
+              "max": 25,
+              "label": "умеренная",
+              "tone": "ok"
+            },
+            {
+              "max": 35,
+              "label": "высокая",
+              "tone": "bad"
+            },
+            {
+              "label": "очень высокая",
+              "tone": "bad"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tax-burden",
+      "kind": "numeric",
+      "name": "Налоговая нагрузка",
+      "definition": "Максимальная ставка налога на доходы физических лиц для наёмного работника, %",
+      "group": "money",
+      "level": "country",
+      "scoring": {
+        "type": "lower-better"
+      },
+      "defaultWeight": 2,
       "defaultEnabled": true,
       "activeSample": "tax-burden.wikipedia-2026",
       "presentation": {
         "format": "percent-max",
-        "hint": "Максимальная ставка налога на доходы физлиц в стране; ставка для вашего дохода может быть ниже. В среднем по Европе — 38,5 %.",
+        "hint": "Максимальная ставка налога на доходы для наёмного работника; ставка для вашего дохода может быть ниже. В среднем по Европе — 38,5 %. Для фрилансера смотри «Налоги для удалёнщика».",
         "chip": {
           "good": "низкие налоги",
           "bad": "высокие налоги"
@@ -555,7 +608,7 @@
       "definition": "Есть ли действующая виза цифрового кочевника, доступная гражданам РФ",
       "group": "legalization",
       "level": "country",
-      "activeSample": "nomad-visa.wikipedia-2026",
+      "activeSample": "nomad-visa.research-2026",
       "categories": [
         {
           "code": "yes",
@@ -569,6 +622,33 @@
       "presentation": {
         "format": "category",
         "hint": "Есть ли виза цифрового кочевника, доступная гражданам РФ: удобный путь для удалёнщика."
+      }
+    },
+    {
+      "id": "nomad-visa-income",
+      "kind": "numeric",
+      "name": "Доход для визы кочевника",
+      "definition": "Минимальный подтверждённый доход для визы цифрового кочевника, доступной гражданам РФ, USD в месяц; нет визы — нет значения; по обзорам Claude, правило в docs/collect-research.md",
+      "group": "legalization",
+      "level": "country",
+      "scoring": {
+        "type": "lower-better"
+      },
+      "defaultWeight": 3,
+      "defaultEnabled": false,
+      "activeSample": "nomad-visa-income.claude-research-2026",
+      "presentation": {
+        "format": "usd-per-month",
+        "hint": "Какой доход в месяц нужно подтвердить для визы цифрового кочевника. Страны без такой визы в сравнении не участвуют.",
+        "chip": {
+          "good": "доступная виза кочевника",
+          "bad": "дорогая виза кочевника"
+        },
+        "bands": {
+          "type": "percentile",
+          "phrase": "ниже, чем у {n} % стран",
+          "inversePhrase": "выше, чем у {n} % стран"
+        }
       }
     },
     {
@@ -719,6 +799,59 @@
             },
             {
               "label": "очень высокий",
+              "tone": "good"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "banking-ease",
+      "kind": "numeric",
+      "name": "Банки и переводы",
+      "definition": "Оценка Claude по открытым источникам: насколько реально гражданину РФ открыть счёт, получить карту и переводить деньги, 1 — практически невозможно, 5 — счёт за день по паспорту; рубрика в docs/collect-research.md",
+      "group": "adaptation",
+      "level": "country",
+      "scoring": {
+        "type": "higher-better"
+      },
+      "defaultWeight": 5,
+      "defaultEnabled": true,
+      "activeSample": "banking-ease.claude-research-2026",
+      "presentation": {
+        "format": "score-5",
+        "hint": "Оценка Claude по открытым источникам: насколько реально гражданину РФ открыть счёт, получить карту и переводить деньги, от 1 до 5. Подробности — в справке ниже.",
+        "chip": {
+          "good": "доступные банки",
+          "bad": "проблемы с банками"
+        },
+        "bands": {
+          "type": "absolute",
+          "sourceName": "рубрика проекта",
+          "source": "https://github.com/GameDevCompanyName/DogsGoToHeaven/blob/main/docs/collect-research.md",
+          "levels": [
+            {
+              "max": 1,
+              "label": "практически невозможно",
+              "tone": "bad"
+            },
+            {
+              "max": 2,
+              "label": "сложно",
+              "tone": "bad"
+            },
+            {
+              "max": 3,
+              "label": "с условиями",
+              "tone": "ok"
+            },
+            {
+              "max": 4,
+              "label": "доступно",
+              "tone": "good"
+            },
+            {
+              "label": "просто",
               "tone": "good"
             }
           ]

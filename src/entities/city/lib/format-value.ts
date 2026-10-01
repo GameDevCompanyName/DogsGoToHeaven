@@ -1,3 +1,4 @@
+import { formatUsd } from '@/shared/lib/budget';
 import { type PluralForms, pluralize } from '@/shared/lib/plural';
 import type { Factor, FactorValue, NumericFormat, NumericPresentation } from '@/shared/lib/ranking';
 
@@ -59,6 +60,7 @@ function displayDecimals(value: number, format: NumericFormat): number | null {
       return Math.abs(value) >= 10 ? 0 : 1;
     case 'pm25':
     case 'percent-max':
+    case 'percent':
     case 'years':
     case 'score-5':
       return 1;
@@ -104,11 +106,13 @@ function formatNumber(
       };
     case 'usd-per-year':
       return {
-        primary: `≈${NBSP}${usd(roundTo(value / 12, 100))} в месяц до налогов`,
-        secondary: `${usd(roundTo(value, 1000))} в год`,
+        primary: `≈${NBSP}${formatUsd(roundTo(value / 12, 100))} в месяц до налогов`,
+        secondary: `${formatUsd(roundTo(value, 1000))} в год`,
       };
     case 'percent-max':
       return { primary: number === 0 ? `0${NBSP}%` : `до ${shown}${NBSP}%` };
+    case 'percent':
+      return { primary: `≈${NBSP}${shown}${NBSP}%` };
     case 'index-100':
       return { primary: `${shown} из 100` };
     case 'pm25':
@@ -131,7 +135,7 @@ function formatNumber(
       return { primary: label ? `${shown}${NBSP}${label}` : shown };
     }
     case 'usd-per-month':
-      return { primary: `≈${NBSP}${usd(roundTo(value, 10))} в месяц` };
+      return { primary: `≈${NBSP}${formatUsd(roundTo(value, 10))} в месяц` };
     case 'population':
       return { primary: formatPopulation(value) };
   }
@@ -160,12 +164,18 @@ export function formatPopulation(value: number): string {
   return INTEGER.format(value);
 }
 
-function usd(amount: number): string {
-  return `$${INTEGER.format(amount)}`;
+/** Округление до шага: деньги показываем до $10 или $100, точность до доллара была бы ложной. */
+export function roundTo(value: number, step: number): number {
+  return Math.round(value / step) * step;
 }
 
-function roundTo(value: number, step: number): number {
-  return Math.round(value / step) * step;
+/**
+ * Остаток или нехватка по модулю до $10. Нехватка округляется вверх, чтобы не выйти «$0», остаток
+ * меньше $5 — «< $10»: ноль читался бы как «ничего не останется».
+ */
+export function formatLeftoverAmount(leftover: number): string {
+  const amount = leftover < 0 ? Math.ceil(-leftover / 10) * 10 : roundTo(leftover, 10);
+  return amount === 0 ? `<${NBSP}$10` : `≈${NBSP}${formatUsd(amount)}`;
 }
 
 /** Форма слова для числа; у дробного — родительный падеж единственного: «1,5 года». */

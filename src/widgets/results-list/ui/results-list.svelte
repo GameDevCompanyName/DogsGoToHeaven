@@ -11,9 +11,11 @@
 </script>
 
 <script lang="ts">
-  import { CityListItem, profileChips } from '@/entities/city';
+  import { CityListItem, LeftoverLine, profileChips } from '@/entities/city';
   import { describeFilter, getRankingContext } from '@/entities/ranking';
+  import { AffordableFirstToggle } from '@/features/budget-mode';
   import { CompareBar, CompareToggle } from '@/features/compare-toggle';
+  import { orderByAffordability } from '@/shared/lib/budget';
   import { type PluralForms, pluralize } from '@/shared/lib/plural';
   import type { CityId } from '@/shared/lib/ranking';
   import { Button } from '@/shared/ui/button';
@@ -33,11 +35,16 @@
   let query = $state('');
 
   const needle = $derived(normalize(query.trim()));
+  /** Порядок «сначала по карману» только переставляет строки: место по баллу у города прежнее. */
+  const isAffordableOrder = $derived(ranking.budget !== null && ranking.isAffordableFirst);
+  const orderedCities = $derived(
+    isAffordableOrder ? orderByAffordability(ranking.rankedCities) : ranking.rankedCities,
+  );
   /** Поиск только прячет строки: ранжирование не пересчитывается, место города остаётся прежним. */
   const visibleCities = $derived(
     needle === ''
-      ? ranking.rankedCities
-      : ranking.rankedCities.filter(
+      ? orderedCities
+      : orderedCities.filter(
           ({ city }) =>
             normalize(city.name).includes(needle) || normalize(city.countryName).includes(needle),
         ),
@@ -81,6 +88,11 @@
       bind:value={query}
     />
   </div>
+  {#if ranking.budget !== null}
+    <div class="border-b px-4 py-2">
+      <AffordableFirstToggle />
+    </div>
+  {/if}
   <CompareBar onopen={oncompareopen} />
   <ScrollArea class="min-h-0 flex-1">
     <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
@@ -91,7 +103,10 @@
       {/if}
     </p>
     {#if visibleCities.length > 0}
-      <ol class="divide-y" aria-label="Города по баллу">
+      <ol
+        class="divide-y"
+        aria-label={isAffordableOrder ? 'Города: сначала по карману' : 'Города по баллу'}
+      >
         {#each visibleCities as view (view.city.id)}
           <!-- Кнопка сравнения — соседка строки, а не её часть: кнопку в кнопку не вложить. -->
           <li class="flex items-center pr-2">
@@ -105,7 +120,17 @@
                 )}
                 isSelected={ranking.selectedCityId === view.city.id}
                 onselect={handleSelect}
-              />
+              >
+                {#if ranking.budget !== null}
+                  {#if view.leftover !== null}
+                    <LeftoverLine budget={ranking.budget} leftover={view.leftover} />
+                  {:else}
+                    <span class="text-sm text-foreground/70" data-testid="leftover-line">
+                      остаток не посчитать: нет данных об аренде или расходах
+                    </span>
+                  {/if}
+                {/if}
+              </CityListItem>
             </div>
             <CompareToggle cityId={view.city.id} cityName={view.city.name} isCompact />
           </li>

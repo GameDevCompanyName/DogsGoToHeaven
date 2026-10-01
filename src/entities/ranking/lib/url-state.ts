@@ -1,5 +1,7 @@
 import type { CityId, Factor, FactorFilter, FactorId } from '@/shared/lib/ranking';
 
+import type { CitySort } from './sort-cities';
+
 /**
  * Состояние в хеше адреса: персона и только отличия от «база + персона», чтобы ссылка была
  * короткой. `presetId`: `undefined` — в ссылке персоны нет, `null` — персона снята.
@@ -11,9 +13,15 @@ export interface UrlState {
   enabled: Record<FactorId, boolean>;
   ranges: Record<FactorId, [number, number]>;
   filters: Record<FactorId, FactorFilter | null>;
+  /** Доход в месяц, целые USD больше нуля; `null` — режим бюджета выключен. */
+  budget: number | null;
+  /** Список «сначала по карману» вместо порядка по баллу; пишется только вместе с доходом. */
+  isAffordableFirst: boolean;
   cityId: CityId | null;
   /** Города сравнения в порядке выбора, не больше `MAX_COMPARE`. */
   compareIds: CityId[];
+  /** Сортировка таблицы; `null` — по баллу. */
+  sort: CitySort | null;
 }
 
 /** Что известно парсеру: всё прочее в хеше отбрасывается. */
@@ -29,8 +37,11 @@ export const EMPTY_URL_STATE: Readonly<UrlState> = Object.freeze({
   enabled: {},
   ranges: {},
   filters: {},
+  budget: null,
+  isAffordableFirst: false,
   cityId: null,
   compareIds: [],
+  sort: null,
 });
 
 /** Персона снята или фильтр снят. */
@@ -41,7 +52,9 @@ export const MAX_COMPARE = 3;
 /** Интервал «от-до», любой край пустой; числа могут быть отрицательными: `-5-24`, `-40`, `60-`. */
 const INTERVAL_PATTERN = /^(-?\d+(?:\.\d+)?)?-(-?\d+(?:\.\d+)?)?$/;
 
-/** Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&c=tbilisi&cmp=tbilisi|belgrade`. */
+/**
+ * Хеш без `#`: `p=family&w=rent:9&off=safety&f=safety:60-&b=2500&bp=1&c=tbilisi&cmp=tbilisi|belgrade&sort=rent:asc`.
+ */
 export function serializeState(state: UrlState): string {
   const enabledEntries = Object.entries(state.enabled);
   const parts: [string, string[]][] = [
@@ -51,8 +64,11 @@ export function serializeState(state: UrlState): string {
     ['off', enabledEntries.filter(([, isOn]) => !isOn).map(([id]) => id)],
     ['r', Object.entries(state.ranges).map(([id, [low, high]]) => `${id}:${low}-${high}`)],
     ['f', Object.entries(state.filters).map(([id, filter]) => `${id}:${formatFilter(filter)}`)],
+    ['b', state.budget === null ? [] : [String(state.budget)]],
+    ['bp', state.budget !== null && state.isAffordableFirst ? ['1'] : []],
     ['c', state.cityId === null ? [] : [state.cityId]],
     ['cmp', state.compareIds.length === 0 ? [] : [state.compareIds.join('|')]],
+    ['sort', state.sort === null ? [] : [`${state.sort.factorId}:${state.sort.direction}`]],
   ];
   return parts
     .filter(([, values]) => values.length > 0)
@@ -80,6 +96,12 @@ export function parseState(hash: string, context: UrlStateContext): UrlState {
     if (key === 'p') {
       if (value === NONE) state.presetId = null;
       else if (context.presetIds.includes(value)) state.presetId = value;
+    } else if (key === 'b') {
+      // Только целые доллары больше нуля: нулевой и отрицательный доход и копейки — мусор.
+      const budget = Number(value);
+      if (/^\d+$/.test(value) && Number.isSafeInteger(budget) && budget > 0) state.budget = budget;
+    } else if (key === 'bp') {
+      state.isAffordableFirst = value === '1';
     } else if (key === 'c') {
       if (context.cityIds.includes(value)) state.cityId = value;
     } else if (key === 'cmp') {
@@ -102,6 +124,11 @@ export function parseState(hash: string, context: UrlStateContext): UrlState {
         if (isRange && interval?.min !== undefined && interval.max !== undefined) {
           state.ranges[id] = [interval.min, interval.max];
         }
+      }
+    } else if (key === 'sort') {
+      const [id, direction] = pairs(value, ',')[0] ?? [];
+      if (id && numericOf(id) && (direction === 'asc' || direction === 'desc')) {
+        state.sort = { factorId: id, direction };
       }
     } else if (key === 'f') {
       for (const [id, raw] of pairs(value, ';')) {

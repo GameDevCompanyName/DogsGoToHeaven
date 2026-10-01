@@ -1,5 +1,7 @@
 export { describeFilter } from './lib/describe-filter';
-export { MAX_COMPARE } from './lib/url-state';
+export { type MonthlyCosts, monthlyCostsOf } from './lib/monthly-costs';
+export { type CitySort, sortCities } from './lib/sort-cities';
+export { EMPTY_URL_STATE, MAX_COMPARE, serializeState } from './lib/url-state';
 export {
   createRankingState,
   DEFAULT_PRESET_ID,

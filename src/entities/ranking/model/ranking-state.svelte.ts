@@ -1,3 +1,4 @@
+import { computeLeftover } from '@/shared/lib/budget';
 import {
   applyPresets,
   type CityId,
@@ -13,7 +14,9 @@ import {
   type RankingSettings,
 } from '@/shared/lib/ranking';
 
+import { monthlyCostsOf } from '../lib/monthly-costs';
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
+import { type CitySort, sortCities } from '../lib/sort-cities';
 import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
@@ -27,6 +30,11 @@ export interface RankedCityView {
   strengths: FactorContribution[];
   /** До двух учтённых факторов с оценкой до 0.33, по доле веса. */
   weaknesses: FactorContribution[];
+  /**
+   * Сколько останется от дохода в месяц после расходов и аренды, USD; меньше нуля — не по
+   * карману. `null` — дохода нет или у города нет числа по расходам или аренде.
+   */
+  leftover: number | null;
 }
 
 /** Город сравнения: строки выдачи нет, если город скрыт фильтрами или покрытием. */
@@ -59,6 +67,12 @@ export class RankingState {
   selectedCityId = $state<CityId | null>(null);
   /** Города сравнения в порядке выбора, не больше трёх. */
   compareIds = $state<CityId[]>([]);
+  /** Доход в месяц, целые USD; `null` — режим бюджета выключен. На балл не влияет. */
+  budget = $state<number | null>(null);
+  /** Список «сначала по карману»: включается, только когда задан доход. */
+  isAffordableFirst = $state(false);
+  /** Сортировка таблицы по фактору; `null` — по баллу. */
+  sort = $state<CitySort | null>(null);
 
   // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
@@ -78,10 +92,14 @@ export class RankingState {
           percentile: ranked.score === null ? null : (percentiles.get(ranked.score) ?? null),
           strengths: strengthsOf(ranked.contributions),
           weaknesses: weaknessesOf(ranked.contributions),
+          leftover: leftoverOf(this.budget, city),
         },
       ];
     });
   });
+
+  /** Строки таблицы: выдача в порядке сортировки, места остаются по баллу. */
+  readonly tableCities: RankedCityView[] = $derived(sortCities(this.rankedCities, this.sort));
 
   readonly filteredCities: DatasetCity[] = $derived(
     this.result.excluded.flatMap((excluded) => {
@@ -109,18 +127,32 @@ export class RankingState {
   );
 
   /**
-   * Хеш адреса без `#`: персона, отличия от неё, открытый город и города сравнения. Открытый
-   * город берётся из показанного, чтобы ссылка не несла отсечённый фильтрами. Города сравнения
-   * пишутся все: выбор не теряется, пока пользователь двигает фильтр. Нетронутая персона
-   * по умолчанию — пустой хеш: простой заход не переписывает адрес.
+   * Хеш адреса без `#`: персона, отличия от неё, бюджет, открытый город, города сравнения и
+   * сортировка таблицы.
+   * Открытый город берётся из показанного, чтобы ссылка не несла отсечённый фильтрами. Города
+   * сравнения пишутся все: выбор не теряется, пока пользователь двигает фильтр. Нетронутая
+   * персона по умолчанию без бюджета — пустой хеш: простой заход не переписывает адрес.
    */
   readonly urlHash = $derived.by(() => {
     const cityId = this.selected?.city.id ?? null;
-    const compareIds = this.compareIds;
+    const { budget, compareIds, isAffordableFirst, sort } = this;
+    // Без дохода «сначала по карману» всегда выключен: см. `setAffordableFirst`.
     const isUntouchedDefault =
-      this.presetId === this.defaultPresetId && this.changedFactorIds.length === 0;
-    if (isUntouchedDefault && cityId === null && compareIds.length === 0) return '';
-    return serializeState({ presetId: this.presetId, ...this.#diff, cityId, compareIds });
+      this.presetId === this.defaultPresetId &&
+      this.changedFactorIds.length === 0 &&
+      budget === null;
+    if (isUntouchedDefault && cityId === null && compareIds.length === 0 && sort === null) {
+      return '';
+    }
+    return serializeState({
+      presetId: this.presetId,
+      ...this.#diff,
+      budget,
+      isAffordableFirst,
+      cityId,
+      compareIds,
+      sort,
+    });
   });
 
   /** Сумма весов включённых факторов: знаменатель доли фактора в балле. */
@@ -215,8 +247,11 @@ export class RankingState {
       if (filter === null || !('allowed' in filter)) this.setNumericFilter(factorId, filter);
       else this.setCategoryFilter(factorId, filter.allowed);
     }
+    this.setBudget(url.budget);
+    this.setAffordableFirst(url.isAffordableFirst);
     this.selectCity(url.cityId);
     this.compareIds = [...url.compareIds];
+    this.sort = url.sort && this.#canSort(url.sort.factorId) ? { ...url.sort } : null;
   }
 
   /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
@@ -281,6 +316,21 @@ export class RankingState {
     this.settings.filters = {};
   }
 
+  /**
+   * Доход округляется до доллара; ноль, отрицательный или не число снимает режим бюджета, а с ним
+   * и порядок «сначала по карману».
+   */
+  setBudget(budget: number | null) {
+    const rounded = budget !== null && Number.isFinite(budget) ? Math.round(budget) : 0;
+    this.budget = rounded > 0 ? rounded : null;
+    if (this.budget === null) this.isAffordableFirst = false;
+  }
+
+  /** Без дохода остатка нет, сортировать не по чему: переключатель не включается. */
+  setAffordableFirst(isAffordableFirst: boolean) {
+    this.isAffordableFirst = isAffordableFirst && this.budget !== null;
+  }
+
   selectCity(cityId: CityId | null) {
     this.selectedCityId = cityId;
   }
@@ -296,6 +346,23 @@ export class RankingState {
 
   clearCompare() {
     this.compareIds = [];
+  }
+
+  /**
+   * Клик по заголовку таблицы: по возрастанию, затем по убыванию, затем снова по баллу.
+   * Сортируются только числовые факторы с данными.
+   */
+  toggleSort(factorId: FactorId) {
+    if (!this.#canSort(factorId)) return;
+    if (this.sort?.factorId !== factorId) this.sort = { factorId, direction: 'asc' };
+    else if (this.sort.direction === 'asc') this.sort = { factorId, direction: 'desc' };
+    else this.sort = null;
+  }
+
+  /** Колонки таблицы — числовые факторы с данными: только по ним и есть сортировка. */
+  #canSort(factorId: FactorId): boolean {
+    const factor = this.dataset.factors.find(({ id }) => id === factorId);
+    return factor?.kind === 'numeric' && this.hasData(factorId);
   }
 
   #settingsFor(presetId: string | null): RankingSettings {
@@ -321,4 +388,9 @@ export class RankingState {
     }
     return { ...settings, enabled, filters };
   }
+}
+
+function leftoverOf(budget: number | null, city: DatasetCity): number | null {
+  const costs = monthlyCostsOf(city);
+  return computeLeftover(budget, costs?.living, costs?.rent);
 }

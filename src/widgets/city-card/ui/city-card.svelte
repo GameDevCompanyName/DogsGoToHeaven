@@ -1,15 +1,16 @@
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
 
-  import { profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
-  import { getRankingContext } from '@/entities/ranking';
+  import { LeftoverLine, profileChips, ScoreBadge, SummaryLine } from '@/entities/city';
+  import { getRankingContext, monthlyCostsOf } from '@/entities/ranking';
   import { CompareToggle } from '@/features/compare-toggle';
   import { ShareButton } from '@/features/share-link';
   import { cn } from '@/shared/lib/utils';
   import * as Sheet from '@/shared/ui/sheet';
 
+  import { NOTE_BLOCKS } from '../config/notes';
   import FactorBreakdown from './factor-breakdown.svelte';
-  import LegalizationNote from './legalization-note.svelte';
+  import FactorNote from './factor-note.svelte';
   import PeopleLinks from './people-links.svelte';
   import ReferenceBlock from './reference-block.svelte';
 
@@ -21,6 +22,7 @@
   const chips = $derived(
     view ? profileChips(view, view.city, factorsById, ranking.settings.ranges) : null,
   );
+  const costs = $derived(view ? monthlyCostsOf(view.city) : null);
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) ranking.selectCity(null);
@@ -49,6 +51,15 @@
           </div>
           <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
         </div>
+        {#if ranking.budget !== null}
+          {#if view.leftover !== null && costs}
+            <LeftoverLine budget={ranking.budget} leftover={view.leftover} {costs} />
+          {:else}
+            <p class="text-sm text-foreground/70" data-testid="leftover-line">
+              Сколько останется, не посчитать: нет данных о расходах или аренде
+            </p>
+          {/if}
+        {/if}
         {#if chips}
           <SummaryLine
             strengths={chips.strengths}
@@ -64,7 +75,9 @@
       <div class="flex flex-col gap-8 px-4 pb-8">
         <FactorBreakdown {view} />
         <ReferenceBlock city={view.city} />
-        <LegalizationNote city={view.city} />
+        {#each NOTE_BLOCKS as block (block.factorId)}
+          <FactorNote city={view.city} {...block} />
+        {/each}
         <PeopleLinks city={view.city} />
       </div>
     {/if}

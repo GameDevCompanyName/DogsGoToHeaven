@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { formatUsd } from '@/shared/lib/budget';
 import type { NumericFormat } from '@/shared/lib/ranking';
 
-import { formatValue, NBSP } from './format-value';
+import { formatLeftoverAmount, formatValue, NBSP } from './format-value';
 import { CATEGORICAL, makeNumeric } from './test-factors';
 
 /** Неразрывный пробел: им отделены проценты, единицы и разряды. */
@@ -30,6 +31,11 @@ describe('formatValue', () => {
 
   it('shows a top tax rate as a ceiling', () => {
     expect(format('percent-max', 45)?.primary).toBe(`до 45${S}%`);
+  });
+
+  it('shows an effective rate as an approximate percent', () => {
+    expect(format('percent', 12)?.primary).toBe(`≈${S}12${S}%`);
+    expect(format('percent', 12.46)?.primary).toBe(`≈${S}12,5${S}%`);
   });
 
   it('shows an index out of 100', () => {
@@ -87,5 +93,21 @@ describe('formatValue', () => {
     expect(formatValue(null, makeNumeric({ format: 'relative-only' }))).toEqual({
       primary: 'нет данных',
     });
+  });
+});
+
+describe('formatLeftoverAmount', () => {
+  it('rounds a leftover to ten dollars', () => {
+    expect(formatLeftoverAmount(1187)).toBe(`≈${NBSP}${formatUsd(1190)}`);
+  });
+
+  it('rounds a shortfall up so it never shows as zero', () => {
+    expect(formatLeftoverAmount(-3)).toBe(`≈${NBSP}$10`);
+    expect(formatLeftoverAmount(-1201)).toBe(`≈${NBSP}${formatUsd(1210)}`);
+  });
+
+  it('says under ten dollars instead of zero', () => {
+    expect(formatLeftoverAmount(4)).toBe(`<${NBSP}$10`);
+    expect(formatLeftoverAmount(0)).toBe(`<${NBSP}$10`);
   });
 });
