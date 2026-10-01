@@ -30,7 +30,7 @@
       "id": "cost-of-living",
       "kind": "numeric",
       "name": "Стоимость жизни",
-      "definition": "Индекс стоимости жизни без аренды, Нью-Йорк = 100",
+      "definition": "Месячные расходы одного человека без аренды, USD; расчёт по индексу Numbeo относительно Нью-Йорка",
       "group": "money",
       "level": "city",
       "scoring": {
@@ -38,10 +38,10 @@
       },
       "defaultWeight": 8,
       "defaultEnabled": true,
-      "activeSample": "cost-of-living.numbeo-2026",
+      "activeSample": "cost-of-living.numbeo-index-usd-2026",
       "presentation": {
-        "format": "nyc-index",
-        "hint": "Индекс Numbeo: цены на еду, транспорт и услуги без аренды; Нью-Йорк = 100, меньше — дешевле.",
+        "format": "usd-per-month",
+        "hint": "Сколько в среднем тратит один человек в месяц на еду, транспорт, связь и развлечения без аренды. Оценка: индекс Numbeo, умноженный на расходы в Нью-Йорке ($1 665).",
         "chip": {
           "good": "дёшево",
           "bad": "дорого"
