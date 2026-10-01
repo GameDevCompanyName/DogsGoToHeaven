@@ -225,7 +225,7 @@ export class RankingState {
     }
     this.selectCity(url.cityId);
     this.compareIds = [...url.compareIds];
-    this.sort = url.sort && this.hasData(url.sort.factorId) ? { ...url.sort } : null;
+    this.sort = url.sort && this.#canSort(url.sort.factorId) ? { ...url.sort } : null;
   }
 
   /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
@@ -312,11 +312,16 @@ export class RankingState {
    * Сортируются только числовые факторы с данными.
    */
   toggleSort(factorId: FactorId) {
-    const factor = this.dataset.factors.find(({ id }) => id === factorId);
-    if (factor?.kind !== 'numeric' || !this.hasData(factorId)) return;
+    if (!this.#canSort(factorId)) return;
     if (this.sort?.factorId !== factorId) this.sort = { factorId, direction: 'asc' };
     else if (this.sort.direction === 'asc') this.sort = { factorId, direction: 'desc' };
     else this.sort = null;
+  }
+
+  /** Колонки таблицы — числовые факторы с данными: только по ним и есть сортировка. */
+  #canSort(factorId: FactorId): boolean {
+    const factor = this.dataset.factors.find(({ id }) => id === factorId);
+    return factor?.kind === 'numeric' && this.hasData(factorId);
   }
 
   #settingsFor(presetId: string | null): RankingSettings {

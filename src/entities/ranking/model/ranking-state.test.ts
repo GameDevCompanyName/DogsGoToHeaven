@@ -536,6 +536,15 @@ describe('RankingState table sort', () => {
 
     expect(target.sort).toEqual({ factorId: 'rent', direction: 'asc' });
   });
+
+  it('drops a sort from the url hash by a factor the header cannot sort', () => {
+    const state = new RankingState(makeDataset(), PRESETS);
+
+    for (const hash of ['sort=ease:asc', 'sort=visa:desc']) {
+      state.applyHash(hash);
+      expect(state.sort, hash).toBeNull();
+    }
+  });
 });
 
 describe('RankingState strengths and weaknesses', () => {

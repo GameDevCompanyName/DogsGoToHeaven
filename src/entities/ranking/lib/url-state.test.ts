@@ -141,4 +141,15 @@ describe('url state', () => {
       expect(parseState(hash, CONTEXT).sort).toBeNull();
     }
   });
+
+  it('reads only the first sort pair and ignores the rest', () => {
+    expect(parseState('sort=rent:asc,ghost:desc', CONTEXT).sort).toEqual({
+      factorId: 'rent',
+      direction: 'asc',
+    });
+  });
+
+  it('reads the sort direction case-sensitively', () => {
+    expect(parseState('sort=rent:ASC', CONTEXT).sort).toBeNull();
+  });
 });
