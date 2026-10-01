@@ -7,9 +7,19 @@
   const ranking = getRankingContext();
   const id = $props.id();
 
-  /** Пустое или непонятое поле снимает режим бюджета; округление и отсев — в `setBudget`. */
-  function handleBudgetChange(value: number | null | undefined) {
-    ranking.setBudget(value ?? null);
+  /** Поле показывает доход без разрядов: так набранное и показанное не расходятся. */
+  function readBudget(): string {
+    return ranking.budget === null ? '' : String(ranking.budget);
+  }
+
+  /**
+   * Пустое поле снимает режим бюджета, целое число — ставит; недонабранное вроде «1999.» доход
+   * не трогает, чтобы он не пропадал посреди ввода. Ноль снимается в `setBudget`.
+   */
+  function handleBudgetChange(value: string) {
+    const digits = value.replace(/\s/g, '');
+    if (digits === '') ranking.setBudget(null);
+    else if (/^\d+$/.test(digits)) ranking.setBudget(Number(digits));
   }
 
   function handleClear() {
@@ -25,14 +35,14 @@
   <div class="flex gap-2">
     <Input
       id="{id}-input"
-      type="number"
+      type="text"
       inputmode="numeric"
-      min="0"
-      step="100"
+      pattern="[0-9]*"
+      autocomplete="off"
       placeholder="Например, 2500"
       aria-describedby="{id}-help"
       data-testid="budget-input"
-      bind:value={() => ranking.budget, handleBudgetChange}
+      bind:value={readBudget, handleBudgetChange}
     />
     {#if ranking.budget !== null}
       <Button variant="outline" onclick={handleClear}>Очистить</Button>

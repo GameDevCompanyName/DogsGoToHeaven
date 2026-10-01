@@ -69,10 +69,11 @@ test('доход показывает остаток у города и сорт
   await page.getByTestId('budget-input').fill('2000');
   await page.getByRole('tab', { name: 'Города' }).click();
 
-  await expect(page.getByTestId('city-list-item').first()).toContainText(/Останется|Не по карману/);
+  await expect(page.getByTestId('leftover-line').first()).toBeVisible();
 
   await page.getByRole('checkbox', { name: 'Сначала по карману' }).click();
 
+  await expect(page.getByRole('list', { name: 'Города: сначала по карману' })).toBeVisible();
   await expect(page).toHaveURL(/b=2000/);
   await expect(page).toHaveURL(/bp=1/);
 });

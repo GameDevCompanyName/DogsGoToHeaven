@@ -121,8 +121,14 @@
                 isSelected={ranking.selectedCityId === view.city.id}
                 onselect={handleSelect}
               >
-                {#if ranking.budget !== null && view.leftover !== null}
-                  <LeftoverLine budget={ranking.budget} leftover={view.leftover} />
+                {#if ranking.budget !== null}
+                  {#if view.leftover !== null}
+                    <LeftoverLine budget={ranking.budget} leftover={view.leftover} />
+                  {:else}
+                    <span class="text-sm text-foreground/70" data-testid="leftover-line">
+                      остаток не посчитать: нет данных об аренде или расходах
+                    </span>
+                  {/if}
                 {/if}
               </CityListItem>
             </div>
