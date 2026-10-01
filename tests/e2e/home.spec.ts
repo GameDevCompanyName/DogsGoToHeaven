@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('dogs:onboarded', '1'));
 });
 
-function openSection(page: Page, name: 'Карта' | 'Города' | 'Настройки') {
+function openSection(page: Page, name: 'Карта' | 'Города' | 'Таблица' | 'Настройки') {
   return page.getByRole('navigation', { name: 'Разделы' }).getByRole('button', { name }).click();
 }
 
@@ -183,4 +183,35 @@ test('доход показывает остаток у города и сорт
 
   await expect(page).toHaveURL(/b=2000/);
   await expect(page).toHaveURL(/bp=1/);
+});
+
+test('таблица сортируется по колонке и пишет сортировку в адрес', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Таблица');
+  const table = page.getByTestId('city-table');
+  const header = table.getByRole('columnheader').filter({ has: page.getByTestId('sort-rent') });
+  // Пустой data-value — нет данных: Number('') дал бы 0 и сломал порядок.
+  const rents = async () =>
+    (
+      await table
+        .getByTestId('table-row')
+        .locator('[data-factor-id="rent"]')
+        .evaluateAll((cells) => cells.slice(0, 10).map((cell) => cell.getAttribute('data-value')))
+    )
+      .filter((value) => value !== null && value !== '')
+      .map(Number);
+
+  await table.getByTestId('sort-rent').click();
+
+  await expect(header).toHaveAttribute('aria-sort', 'ascending');
+  await expect(page).toHaveURL(/sort=rent:asc/);
+  const ascending = await rents();
+  expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
+
+  await table.getByTestId('sort-rent').click();
+
+  await expect(header).toHaveAttribute('aria-sort', 'descending');
+  await expect(page).toHaveURL(/sort=rent:desc/);
+  const descending = await rents();
+  expect(descending).toEqual([...descending].sort((a, b) => b - a));
 });

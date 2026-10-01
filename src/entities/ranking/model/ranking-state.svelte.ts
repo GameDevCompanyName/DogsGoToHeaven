@@ -16,6 +16,7 @@ import {
 
 import { monthlyCostsOf } from '../lib/monthly-costs';
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
+import { type CitySort, sortCities } from '../lib/sort-cities';
 import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
 
@@ -70,6 +71,8 @@ export class RankingState {
   budget = $state<number | null>(null);
   /** Список «сначала по карману»: работает, только когда задан доход. */
   isAffordableFirst = $state(false);
+  /** Сортировка таблицы по фактору; `null` — по баллу. */
+  sort = $state<CitySort | null>(null);
 
   // Через функцию: $derived ленив и в обоих видах прочтёт датасет уже после конструктора, но
   // TypeScript видит в инициализаторе поля чтение ещё не присвоенного `this.dataset` и ругается.
@@ -94,6 +97,9 @@ export class RankingState {
       ];
     });
   });
+
+  /** Строки таблицы: выдача в порядке сортировки, места остаются по баллу. */
+  readonly tableCities: RankedCityView[] = $derived(sortCities(this.rankedCities, this.sort));
 
   readonly filteredCities: DatasetCity[] = $derived(
     this.result.excluded.flatMap((excluded) => {
@@ -121,21 +127,23 @@ export class RankingState {
   );
 
   /**
-   * Хеш адреса без `#`: персона, отличия от неё, бюджет, открытый город и города сравнения.
+   * Хеш адреса без `#`: персона, отличия от неё, бюджет, открытый город, города сравнения и
+   * сортировка таблицы.
    * Открытый город берётся из показанного, чтобы ссылка не несла отсечённый фильтрами. Города
    * сравнения пишутся все: выбор не теряется, пока пользователь двигает фильтр. Нетронутая
    * персона по умолчанию без бюджета — пустой хеш: простой заход не переписывает адрес.
    */
   readonly urlHash = $derived.by(() => {
     const cityId = this.selected?.city.id ?? null;
-    const compareIds = this.compareIds;
-    const { budget, isAffordableFirst } = this;
+    const { budget, compareIds, isAffordableFirst, sort } = this;
     const isUntouchedDefault =
       this.presetId === this.defaultPresetId &&
       this.changedFactorIds.length === 0 &&
       budget === null &&
       !isAffordableFirst;
-    if (isUntouchedDefault && cityId === null && compareIds.length === 0) return '';
+    if (isUntouchedDefault && cityId === null && compareIds.length === 0 && sort === null) {
+      return '';
+    }
     return serializeState({
       presetId: this.presetId,
       ...this.#diff,
@@ -143,6 +151,7 @@ export class RankingState {
       isAffordableFirst,
       cityId,
       compareIds,
+      sort,
     });
   });
 
@@ -242,6 +251,7 @@ export class RankingState {
     this.setAffordableFirst(url.isAffordableFirst);
     this.selectCity(url.cityId);
     this.compareIds = [...url.compareIds];
+    this.sort = url.sort && this.#canSort(url.sort.factorId) ? { ...url.sort } : null;
   }
 
   /** Доля веса фактора в балле, 0–1; у выключенного — 0. */
@@ -331,6 +341,23 @@ export class RankingState {
 
   clearCompare() {
     this.compareIds = [];
+  }
+
+  /**
+   * Клик по заголовку таблицы: по возрастанию, затем по убыванию, затем снова по баллу.
+   * Сортируются только числовые факторы с данными.
+   */
+  toggleSort(factorId: FactorId) {
+    if (!this.#canSort(factorId)) return;
+    if (this.sort?.factorId !== factorId) this.sort = { factorId, direction: 'asc' };
+    else if (this.sort.direction === 'asc') this.sort = { factorId, direction: 'desc' };
+    else this.sort = null;
+  }
+
+  /** Колонки таблицы — числовые факторы с данными: только по ним и есть сортировка. */
+  #canSort(factorId: FactorId): boolean {
+    const factor = this.dataset.factors.find(({ id }) => id === factorId);
+    return factor?.kind === 'numeric' && this.hasData(factorId);
   }
 
   #settingsFor(presetId: string | null): RankingSettings {

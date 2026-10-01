@@ -64,6 +64,7 @@ const FULL: UrlState = {
   isAffordableFirst: true,
   cityId: 'tbilisi',
   compareIds: ['belgrade', 'tbilisi'],
+  sort: { factorId: 'rent', direction: 'desc' },
 };
 
 describe('url state', () => {
@@ -147,5 +148,28 @@ describe('url state', () => {
   it('reads the affordable-first switch only as one', () => {
     expect(parseState('bp=1', CONTEXT).isAffordableFirst).toBe(true);
     expect(parseState('bp=yes', CONTEXT).isAffordableFirst).toBe(false);
+  });
+
+  it('writes the table sort as factor and direction', () => {
+    expect(
+      serializeState({ ...EMPTY_URL_STATE, sort: { factorId: 'rent', direction: 'asc' } }),
+    ).toBe('sort=rent:asc');
+  });
+
+  it('drops a sort by an unknown or categorical factor or in an unknown direction', () => {
+    for (const hash of ['sort=ghost:asc', 'sort=entry-visa:asc', 'sort=rent:up', 'sort=rent']) {
+      expect(parseState(hash, CONTEXT).sort).toBeNull();
+    }
+  });
+
+  it('reads only the first sort pair and ignores the rest', () => {
+    expect(parseState('sort=rent:asc,ghost:desc', CONTEXT).sort).toEqual({
+      factorId: 'rent',
+      direction: 'asc',
+    });
+  });
+
+  it('reads the sort direction case-sensitively', () => {
+    expect(parseState('sort=rent:ASC', CONTEXT).sort).toBeNull();
   });
 });
