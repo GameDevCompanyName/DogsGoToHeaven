@@ -12,8 +12,8 @@ export interface QuizSettings {
 }
 
 /**
- * Ближайшая персона по сумме «сигналов» ответов (косинус векторов весов) и поверх неё правки
- * ответов. Вес из нескольких ответов берётся наибольший; фактор, которому ответ дал вес,
+ * Ближайшая персона по сумме «сигналов» ответов (косинус векторов весов) среди тех, что
+ * допускают ответы (`personas`, сейчас — срок отъезда), и поверх неё правки ответов. Вес из нескольких ответов берётся наибольший; фактор, которому ответ дал вес,
  * включается, даже если персона его выключала. Неизвестные ответы пропускаются.
  */
 export function quizToSettings(answers: Partial<QuizAnswers>, presets: Preset[]): QuizSettings {
@@ -22,7 +22,7 @@ export function quizToSettings(answers: Partial<QuizAnswers>, presets: Preset[])
     return option ? [option] : [];
   });
   const settings: QuizSettings = {
-    presetId: closestPresetId(sumSignals(chosen), presets),
+    presetId: closestPresetId(sumSignals(chosen), candidatesOf(chosen, presets)),
     weights: {},
     enabled: {},
     ranges: {},
@@ -38,6 +38,13 @@ export function quizToSettings(answers: Partial<QuizAnswers>, presets: Preset[])
     Object.assign(settings.filters, overrides.filters);
   }
   return settings;
+}
+
+/** Персоны, которые допускает каждый ответ; если таких среди переданных нет — все. */
+function candidatesOf(options: QuizOption[], presets: Preset[]): Preset[] {
+  const pools = options.flatMap(({ personas }) => (personas ? [personas] : []));
+  const candidates = presets.filter(({ id }) => pools.every((pool) => pool.includes(id)));
+  return candidates.length > 0 ? candidates : presets;
 }
 
 function sumSignals(options: QuizOption[]): Record<FactorId, number> {

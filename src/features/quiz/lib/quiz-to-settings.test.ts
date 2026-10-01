@@ -46,6 +46,40 @@ describe('quizToSettings', () => {
     expect(quizToSettings({ ...NEUTRAL, term: 'months' }, PRESETS).presetId).toBe('short-stay');
   });
 
+  it('keeps a one-to-two-year stay off the short-stay persona and its visa filter', () => {
+    const answers: QuizAnswers = {
+      term: 'years',
+      income: 'remote-russia',
+      climate: 'warm-winter',
+      priority: 'cheap',
+      size: 'small',
+    };
+
+    const { presetId } = quizToSettings(answers, PRESETS);
+
+    expect(presetId).toBe('warm-cheap');
+    // Тот же ввод — та же персона: при равенстве побеждает первая в списке, случайности нет.
+    expect(quizToSettings(answers, PRESETS).presetId).toBe(presetId);
+  });
+
+  it('lets the term decide the persona pool for every combination of answers', () => {
+    const pools: Record<string, string[]> = {
+      months: ['short-stay'],
+      years: ['remote-long', 'warm-cheap', 'local-career'],
+      forever: ['for-good', 'family', 'local-career'],
+    };
+    for (const answers of allAnswers()) {
+      const { presetId } = quizToSettings(answers, PRESETS);
+      expect(pools[answers.term], JSON.stringify(answers)).toContain(presetId);
+    }
+  });
+
+  it('picks a settled persona for a permanent move where safety matters most', () => {
+    const { presetId } = quizToSettings({ ...NEUTRAL, term: 'forever', priority: 'safe' }, PRESETS);
+
+    expect(['family', 'for-good']).toContain(presetId);
+  });
+
   it('asks for a warm winter with a weight and a range', () => {
     const settings = quizToSettings({ ...NEUTRAL, climate: 'warm-winter' }, PRESETS);
 
@@ -88,6 +122,12 @@ describe('quizToSettings', () => {
       for (const factorId of [weights, enabled, ranges, option.signal].flatMap(Object.keys)) {
         expect(factorsById.get(factorId)?.kind, `${option.id}: ${factorId}`).toBe('numeric');
       }
+      for (const presetId of option.personas ?? []) {
+        expect(
+          PRESETS.map(({ id }) => id),
+          `${option.id}: ${presetId}`,
+        ).toContain(presetId);
+      }
       for (const [factorId, filter] of Object.entries(filters)) {
         const factor = factorsById.get(factorId);
         expect(factor, `${option.id}: ${factorId}`).toBeDefined();
@@ -99,3 +139,14 @@ describe('quizToSettings', () => {
     }
   });
 });
+
+/** Все сочетания ответов: по варианту на каждый вопрос. */
+function allAnswers(): QuizAnswers[] {
+  return QUIZ_QUESTIONS.reduce<Partial<QuizAnswers>[]>(
+    (combos, question) =>
+      combos.flatMap((combo) =>
+        question.options.map((option) => ({ ...combo, [question.id]: option.id })),
+      ),
+    [{}],
+  ).filter((combo): combo is QuizAnswers => QUIZ_QUESTIONS.every(({ id }) => id in combo));
+}

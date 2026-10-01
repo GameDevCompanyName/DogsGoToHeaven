@@ -64,15 +64,15 @@ test('опрос из лендинга открывает карту с подо
   await answer('Чтобы было дёшево');
   await answer('Небольшой');
 
-  await expect(page).toHaveURL(/\/#p=[\w-]+&/);
+  // Срок «на год-два» держит выбор среди долгих персон: тёплая зима и дешевизна — «Тепло и недорого».
+  await expect(page).toHaveURL(/\/#p=warm-cheap&/);
   await expect(page).toHaveURL(/r=[^&]*winter-temp:12-25/);
   expect(await page.evaluate(() => localStorage.getItem('dogs:onboarded'))).toBe('1');
   await page
     .getByRole('navigation', { name: 'Разделы' })
     .getByRole('button', { name: 'Настройки' })
     .click();
-  const presetId = /#p=([\w-]+)/.exec(page.url())?.[1];
   await expect(
-    page.locator(`[data-testid="persona-card"][data-preset-id="${presetId}"]`),
+    page.locator('[data-testid="persona-card"][data-preset-id="warm-cheap"]'),
   ).toHaveAttribute('aria-pressed', 'true');
 });

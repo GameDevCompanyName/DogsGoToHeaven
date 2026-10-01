@@ -15,6 +15,12 @@ export interface QuizOption {
   label: string;
   /** Что ответ говорит о приоритетах: по сумме этих весов выбирается ближайшая персона. */
   signal: Record<FactorId, number>;
+  /**
+   * Персоны, из которых вообще можно выбирать при таком ответе; сигналы решают только среди них.
+   * Так срок отъезда решает за всех: «на год-два» не попадёт в короткую поездку с её визовым
+   * фильтром, сколько бы ни перевесили остальные ответы.
+   */
+  personas?: string[];
   overrides: QuizOverrides;
 }
 
@@ -36,6 +42,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
       {
         id: 'months',
         label: 'На пару месяцев',
+        personas: ['short-stay'],
         signal: { rent: 9, 'cost-of-living': 9, 'moscow-time-diff': 7, 'internet-speed': 7 },
         overrides: {
           filters: { 'entry-visa': { allowed: ['visa-free', 'visa-on-arrival', 'e-visa'] } },
@@ -44,6 +51,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
       {
         id: 'years',
         label: 'На год-два',
+        personas: ['remote-long', 'warm-cheap', 'local-career'],
         signal: {
           'cost-of-living': 8,
           rent: 8,
@@ -56,6 +64,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
       {
         id: 'forever',
         label: 'Насовсем',
+        personas: ['for-good', 'family', 'local-career'],
         signal: { 'time-to-citizenship': 10, 'legalization-ease': 9, safety: 8, healthcare: 8 },
         overrides: { weights: { 'time-to-citizenship': 10, 'legalization-ease': 9 } },
       },
