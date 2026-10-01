@@ -138,11 +138,14 @@ describe('url state', () => {
     );
   });
 
-  it('drops a negative, fractional or garbage budget', () => {
-    for (const raw of ['-100', '12.5', 'abc', '', '1e3']) {
+  it('drops a zero, negative, fractional or garbage budget', () => {
+    for (const raw of ['0', '00', '-100', '12.5', 'abc', '', '1e3']) {
       expect(parseState(`b=${raw}`, CONTEXT).budget).toBeNull();
     }
-    expect(parseState('b=0', CONTEXT).budget).toBe(0);
+  });
+
+  it('writes the affordable-first switch only together with a budget', () => {
+    expect(serializeState({ ...EMPTY_URL_STATE, isAffordableFirst: true })).toBe('');
   });
 
   it('reads the affordable-first switch only as one', () => {

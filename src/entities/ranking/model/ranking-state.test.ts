@@ -624,6 +624,34 @@ describe('RankingState budget', () => {
     expect(state.budget).toBeNull();
   });
 
+  it('treats a zero income as no income', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+
+    state.setBudget(0);
+    expect(state.budget).toBeNull();
+    state.setBudget(0.4);
+    expect(state.budget).toBeNull();
+  });
+
+  it('switches affordable-first off when the income is cleared', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS);
+    state.setBudget(1000);
+    state.setAffordableFirst(true);
+
+    state.setBudget(null);
+
+    expect(state.isAffordableFirst).toBe(false);
+  });
+
+  it('keeps a clean hash for a stray affordable-first link without an income', () => {
+    const state = new RankingState(makeBudgetDataset(), PRESETS, 'month');
+
+    state.applyHash('bp=1');
+
+    expect(state.isAffordableFirst).toBe(false);
+    expect(state.urlHash).toBe('');
+  });
+
   it('does not change the score order or the ranks', () => {
     const state = new RankingState(makeBudgetDataset(), PRESETS);
     const before = state.rankedCities.map((view) => [view.city.id, view.ranked.rank]);

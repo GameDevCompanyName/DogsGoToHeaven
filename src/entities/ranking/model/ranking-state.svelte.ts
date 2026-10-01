@@ -69,7 +69,7 @@ export class RankingState {
   compareIds = $state<CityId[]>([]);
   /** Доход в месяц, целые USD; `null` — режим бюджета выключен. На балл не влияет. */
   budget = $state<number | null>(null);
-  /** Список «сначала по карману»: работает, только когда задан доход. */
+  /** Список «сначала по карману»: включается, только когда задан доход. */
   isAffordableFirst = $state(false);
   /** Сортировка таблицы по фактору; `null` — по баллу. */
   sort = $state<CitySort | null>(null);
@@ -136,11 +136,11 @@ export class RankingState {
   readonly urlHash = $derived.by(() => {
     const cityId = this.selected?.city.id ?? null;
     const { budget, compareIds, isAffordableFirst, sort } = this;
+    // Без дохода «сначала по карману» всегда выключен: см. `setAffordableFirst`.
     const isUntouchedDefault =
       this.presetId === this.defaultPresetId &&
       this.changedFactorIds.length === 0 &&
-      budget === null &&
-      !isAffordableFirst;
+      budget === null;
     if (isUntouchedDefault && cityId === null && compareIds.length === 0 && sort === null) {
       return '';
     }
@@ -316,14 +316,19 @@ export class RankingState {
     this.settings.filters = {};
   }
 
-  /** Доход округляется до доллара; отрицательный или не число снимает режим бюджета. */
+  /**
+   * Доход округляется до доллара; ноль, отрицательный или не число снимает режим бюджета, а с ним
+   * и порядок «сначала по карману».
+   */
   setBudget(budget: number | null) {
-    this.budget =
-      budget !== null && Number.isFinite(budget) && budget >= 0 ? Math.round(budget) : null;
+    const rounded = budget !== null && Number.isFinite(budget) ? Math.round(budget) : 0;
+    this.budget = rounded > 0 ? rounded : null;
+    if (this.budget === null) this.isAffordableFirst = false;
   }
 
+  /** Без дохода остатка нет, сортировать не по чему: переключатель не включается. */
   setAffordableFirst(isAffordableFirst: boolean) {
-    this.isAffordableFirst = isAffordableFirst;
+    this.isAffordableFirst = isAffordableFirst && this.budget !== null;
   }
 
   selectCity(cityId: CityId | null) {
