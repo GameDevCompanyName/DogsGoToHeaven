@@ -25,7 +25,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { z } from 'zod';
+import { linksFileSchema } from '../../src/shared/lib/links';
 
 const DATA_DIR = join(import.meta.dirname, '..', '..', 'data');
 const CACHE_DIR = join(import.meta.dirname, '.cache', 'forum-awd');
@@ -265,8 +265,9 @@ async function main() {
     for (const id of owners) countryLinks[id] ??= { url: forumUrl(forum.id), title };
   }
 
+  // Заголовок — настоящий раздел форума: «Гонконг и Макао» один на оба города.
   const addCity = (city: City, forum: ForumRef) => {
-    cityLinks[city.id] ??= { url: forumUrl(forum.id), title: city.name };
+    cityLinks[city.id] ??= { url: forumUrl(forum.id), title: cleanTitle(forum.title) };
   };
 
   // 2. Города: подфорумы стран, посвящённые одному городу; город должен лежать в стране родителя.
@@ -321,12 +322,8 @@ async function main() {
     countries: sortKeys(countryLinks),
     cities: sortKeys(cityLinks),
   };
-  const linkSchema = z.object({ url: z.string().url(), title: z.string().min(1) });
-  z.object({
-    source: z.object({ name: z.string(), url: z.string().url(), collectedAt: z.string() }),
-    countries: z.record(z.string(), linkSchema),
-    cities: z.record(z.string(), linkSchema),
-  }).parse(output);
+  // Та же схема, что проверяет data.test.ts: битый файл не запишется.
+  linksFileSchema.parse(output);
 
   t = Date.now();
   if (isDebugRun) {

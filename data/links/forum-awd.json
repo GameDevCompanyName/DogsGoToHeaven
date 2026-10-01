@@ -285,7 +285,7 @@
   "cities": {
     "hong-kong": {
       "url": "https://forum.awd.ru/viewforum.php?f=1363",
-      "title": "Гонконг"
+      "title": "Гонконг и Макао"
     },
     "istanbul": {
       "url": "https://forum.awd.ru/viewforum.php?f=1398",
@@ -301,15 +301,15 @@
     },
     "macau": {
       "url": "https://forum.awd.ru/viewforum.php?f=1363",
-      "title": "Макао"
+      "title": "Гонконг и Макао"
     },
     "paris": {
       "url": "https://forum.awd.ru/viewforum.php?f=1468",
-      "title": "Париж"
+      "title": "Достопримечательности Парижа"
     },
     "prague": {
       "url": "https://forum.awd.ru/viewforum.php?f=1523",
-      "title": "Прага"
+      "title": "Прага, что посмотреть, интересные места"
     }
   }
 }

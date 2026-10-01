@@ -39,7 +39,7 @@
   >
     <h2 id="people-links-title" class="text-lg font-semibold">Почитать людей</h2>
     <ul class="flex flex-col gap-3">
-      {#each links as link (link.url)}
+      {#each links as link (link.sourceUrl)}
         <li class="flex flex-col gap-0.5">
           <a
             href={link.url}
