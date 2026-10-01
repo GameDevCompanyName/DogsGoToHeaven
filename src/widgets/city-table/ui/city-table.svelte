@@ -18,12 +18,13 @@
   );
 
   /**
-   * Ячейки по городу считаются от выдачи, а не от порядка строк: смена сортировки только
-   * переставляет строки, уровни заново не считаются.
+   * Ячейки по городу — от датасета и диапазонов, а не от выдачи: веса, фильтры и сортировка
+   * только меняют набор и порядок строк, а строка находит свои ячейки по id города. Заново
+   * ячейки считаются лишь при смене диапазона или персоны.
    */
   const cellsByCity = $derived(
     new Map(
-      ranking.rankedCities.map(({ city }) => [
+      ranking.dataset.cities.map((city) => [
         city.id,
         factors.map((factor) => {
           const value = city.values[factor.id] ?? null;
@@ -65,6 +66,12 @@
   function handleSelect(cityId: CityId) {
     ranking.selectCity(cityId);
   }
+
+  /** Клик по кнопке в строке она обрабатывает сама: город не выбирается дважды. */
+  function handleRowClick(event: MouseEvent, cityId: CityId) {
+    if (event.target instanceof Element && event.target.closest('button, a')) return;
+    handleSelect(cityId);
+  }
 </script>
 
 <div class="h-full overflow-auto" data-testid="city-table">
@@ -94,11 +101,7 @@
           >
             Страна
           </th>
-          <th
-            scope="col"
-            aria-sort={ranking.sort === null ? 'descending' : 'none'}
-            class="sticky top-0 z-10 border-b bg-background px-3 py-2 font-medium"
-          >
+          <th scope="col" class="sticky top-0 z-10 border-b bg-background px-3 py-2 font-medium">
             Балл
           </th>
           {#each factors as factor (factor.id)}
@@ -140,7 +143,7 @@
             class="group cursor-pointer"
             data-testid="table-row"
             data-city-id={view.city.id}
-            onclick={() => handleSelect(view.city.id)}
+            onclick={(event) => handleRowClick(event, view.city.id)}
           >
             <td class="border-b px-2 py-2 text-foreground/70 tabular-nums group-hover:bg-muted">
               {view.ranked.rank}
