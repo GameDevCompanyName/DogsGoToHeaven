@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   import { pluralize } from '@/shared/lib/plural';
   import type { CityId, DatasetCity, RankedCity } from '@/shared/lib/ranking';
   import { toneClasses } from '@/shared/lib/tone';
@@ -16,9 +18,11 @@
     chips: CityChip[];
     isSelected: boolean;
     onselect: (cityId: CityId) => void;
+    /** Строка под ярлыками, например остаток бюджета; только строчные элементы. */
+    children?: Snippet;
   }
 
-  let { city, ranked, percentile, chips, isSelected, onselect }: Props = $props();
+  let { city, ranked, percentile, chips, isSelected, onselect, children }: Props = $props();
 
   const missingCount = $derived(ranked.missingFactorIds.length);
 
@@ -67,6 +71,7 @@
         {/each}
       </span>
     {/if}
+    {@render children?.()}
   </span>
   <ScoreBadge score={ranked.score} {percentile} />
 </button>

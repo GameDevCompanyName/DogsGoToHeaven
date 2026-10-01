@@ -14,13 +14,10 @@ import {
   type RankingSettings,
 } from '@/shared/lib/ranking';
 
+import { monthlyCostsOf } from '../lib/monthly-costs';
 import { changedFactorIdsOf, diffSettings } from '../lib/settings-diff';
 import { MAX_COMPARE, parseState, serializeState, type UrlState } from '../lib/url-state';
 import { rankPercentiles, strengthsOf, weaknessesOf } from './city-profile';
-
-/** Факторы, из которых считается остаток бюджета: оба в USD в месяц. */
-const COST_OF_LIVING_ID = 'cost-of-living';
-const RENT_ID = 'rent';
 
 /** Строка выдачи: результат движка вместе с городом из датасета и объяснением места. */
 export interface RankedCityView {
@@ -92,11 +89,7 @@ export class RankingState {
           percentile: ranked.score === null ? null : (percentiles.get(ranked.score) ?? null),
           strengths: strengthsOf(ranked.contributions),
           weaknesses: weaknessesOf(ranked.contributions),
-          leftover: computeLeftover(
-            this.budget,
-            city.values[COST_OF_LIVING_ID],
-            city.values[RENT_ID],
-          ),
+          leftover: leftoverOf(this.budget, city),
         },
       ];
     });
@@ -363,4 +356,9 @@ export class RankingState {
     }
     return { ...settings, enabled, filters };
   }
+}
+
+function leftoverOf(budget: number | null, city: DatasetCity): number | null {
+  const costs = monthlyCostsOf(city);
+  return computeLeftover(budget, costs?.living, costs?.rent);
 }

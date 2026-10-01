@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getRankingContext } from '@/entities/ranking';
+  import { BudgetInput } from '@/features/budget-mode';
   import { FactorControl } from '@/features/factor-controls';
   import { PersonaPicker } from '@/features/persona-picker';
   import { ScrollArea } from '@/shared/ui/scroll-area';
@@ -28,6 +29,7 @@
 <ScrollArea class="h-full">
   <div class="flex flex-col gap-6 p-4 pb-8">
     <PersonaPicker />
+    <BudgetInput />
     {#each sections as { group, factors, toggleableIds } (group.id)}
       {@const enabledCount = countEnabled(toggleableIds)}
       <section aria-labelledby="group-{group.id}">

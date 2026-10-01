@@ -1,4 +1,5 @@
 export { describeFilter } from './lib/describe-filter';
+export { type MonthlyCosts, monthlyCostsOf } from './lib/monthly-costs';
 export { MAX_COMPARE } from './lib/url-state';
 export {
   createRankingState,
