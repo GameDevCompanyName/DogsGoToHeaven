@@ -43,3 +43,36 @@ test('ссылка с настройками открывает карту, ми
   await expect(page.getByTestId('city-map')).toBeVisible();
   await expect(page).toHaveURL(/#p=family$/);
 });
+
+test('опрос из лендинга открывает карту с подобранной персоной', async ({ page }) => {
+  await page.goto('/start');
+  await page.getByTestId('start-quiz').click();
+  await expect(page).toHaveURL(/\/quiz$/);
+  const progress = page.getByTestId('quiz-progress');
+  const answer = (label: string) => page.getByRole('button', { name: label }).click();
+
+  await answer('На год-два');
+  await expect(progress).toHaveText('Вопрос 2 из 5');
+  await page.getByRole('button', { name: 'Назад' }).click();
+  await expect(page.getByRole('button', { name: 'На год-два' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await answer('На год-два');
+  await answer('Удалённая работа, доход из России');
+  await answer('Тёплая зима важна');
+  await answer('Чтобы было дёшево');
+  await answer('Небольшой');
+
+  await expect(page).toHaveURL(/\/#p=[\w-]+&/);
+  await expect(page).toHaveURL(/r=[^&]*winter-temp:12-25/);
+  expect(await page.evaluate(() => localStorage.getItem('dogs:onboarded'))).toBe('1');
+  await page
+    .getByRole('navigation', { name: 'Разделы' })
+    .getByRole('button', { name: 'Настройки' })
+    .click();
+  const presetId = /#p=([\w-]+)/.exec(page.url())?.[1];
+  await expect(
+    page.locator(`[data-testid="persona-card"][data-preset-id="${presetId}"]`),
+  ).toHaveAttribute('aria-pressed', 'true');
+});
