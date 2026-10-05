@@ -109,7 +109,8 @@
             {#if group.rows.length === 0}
               <p class="text-sm text-foreground/70">{group.empty}</p>
             {:else}
-              <ul class="flex flex-col gap-5">
+              <!-- Два столбца с той же точки, где карточка становится вдвое шире (см. --city-card-width). -->
+              <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
                 {#each group.rows as row (row.factor.id)}
                   <li class="flex flex-col gap-1.5">
                     <div class="flex items-start gap-2">

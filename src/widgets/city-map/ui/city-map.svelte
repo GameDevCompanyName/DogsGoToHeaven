@@ -22,9 +22,6 @@
 
   type MapStatus = 'loading' | 'ready' | 'failed';
 
-  /** Ширина карточки города справа на десктопе, чтобы выбранный город не прятался под ней. */
-  const DESKTOP_CARD_WIDTH = 420;
-
   const ranking = getRankingContext();
 
   /** Карта с загруженным стилем и слоями городов; до загрузки — null. */
@@ -112,9 +109,15 @@
    */
   function cardOffset(loaded: MapLibreMap): PointLike {
     if (window.matchMedia('(min-width: 768px)').matches) {
-      return [-DESKTOP_CARD_WIDTH / 2, 0];
+      return [-cardWidth() / 2, 0];
     }
     return [0, -Math.round(loaded.getContainer().clientHeight / 4)];
+  }
+
+  /** Ширина карточки города задана в app.css, чтобы карта и карточка не разошлись. */
+  function cardWidth(): number {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--city-card-width');
+    return Number.parseFloat(raw) || 440;
   }
 
   $effect(() => {
