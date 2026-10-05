@@ -175,7 +175,7 @@
               <td
                 class={cn(
                   'border-b px-3 py-2 whitespace-nowrap tabular-nums',
-                  cell.tone ? toneClasses(cell.tone).chip : 'text-foreground/60',
+                  cell.tone ? toneClasses(cell.tone).chip : 'text-muted-foreground',
                 )}
                 title={cell.levelLabel ?? undefined}
                 data-factor-id={cell.factorId}

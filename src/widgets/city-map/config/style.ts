@@ -1,6 +1,6 @@
 import type { AddLayerObject } from 'maplibre-gl';
 
-import { TONE_HEX } from '@/shared/lib/tone';
+import { PALETTE_HEX, TONE_HEX } from '@/shared/lib/tone';
 
 // Типы спецификации стиля maplibre-gl наружу не отдаёт, берём их из типа слоя.
 type CircleLayer = Extract<AddLayerObject, { type: 'circle' }>;
@@ -50,7 +50,7 @@ export const CITY_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': RADIUS,
-    'circle-stroke-color': '#ffffff',
+    'circle-stroke-color': PALETTE_HEX.paper,
     'circle-stroke-width': 1,
   },
 };
@@ -63,7 +63,7 @@ export const SELECTED_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 8, 8, 13],
-    'circle-stroke-color': '#171717',
+    'circle-stroke-color': PALETTE_HEX.ink,
     'circle-stroke-width': 3,
   },
 };
