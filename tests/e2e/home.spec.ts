@@ -23,9 +23,10 @@ test('карта и список городов на месте', async ({ page 
 test('ползунок веса меняет балл города', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Города');
-  const cityId = await page.getByTestId('city-list-item').first().getAttribute('data-city-id');
-  const badge = page.locator(`[data-city-id="${cityId}"]`).getByTestId('score-badge');
-  const scoreBefore = await badge.innerText();
+  // Один город может сохранить балл после округления, поэтому сравниваем верхушку списка целиком.
+  const topBadges = page.getByTestId('city-list-item').getByTestId('score-badge');
+  const scoresBefore = (await topBadges.allInnerTexts()).slice(0, 5);
+  expect(scoresBefore).toHaveLength(5);
 
   await openSection(page, 'Настройки');
   const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
@@ -33,7 +34,9 @@ test('ползунок веса меняет балл города', async ({ pa
   await thumb.press('Home');
   await openSection(page, 'Города');
 
-  await expect(badge).not.toHaveText(scoreBefore);
+  await expect
+    .poll(async () => (await topBadges.allInnerTexts()).slice(0, 5))
+    .not.toEqual(scoresBefore);
 });
 
 test('клик по городу открывает карточку с разбором балла', async ({ page }) => {
