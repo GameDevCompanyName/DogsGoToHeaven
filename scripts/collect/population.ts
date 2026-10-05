@@ -23,8 +23,10 @@
  * Ответы Wikidata кэшируются в scripts/collect/.cache/population/ (по хэшу запроса),
  * повторный запуск в сеть не ходит.
  *
- * Запуск: npx tsx scripts/collect/population.ts [--limit N]
+ * Запуск: npx tsx scripts/collect/population.ts [--limit N] [--keep-existing]
  * С --limit результат печатается, файл не пишется.
+ * С --keep-existing значения из уже записанной выборки сохраняются как есть, в Wikidata
+ * идём только за городами без значения (дозаполнение после расширения списка городов).
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -311,8 +313,16 @@ async function main(): Promise<void> {
     .array(z.object({ id: z.string(), name: z.string(), lat: z.number(), lon: z.number() }))
     .parse(JSON.parse(readFileSync(join(DATA_DIR, 'cities.json'), 'utf8')));
   const cities: City[] = limit === undefined ? all : all.slice(0, limit);
+  const existing: Record<string, number> =
+    process.argv.includes('--keep-existing') && existsSync(OUTPUT_FILE)
+      ? z
+          .object({ values: z.record(z.number()) })
+          .parse(JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'))).values
+      : {};
+  const pending = cities.filter((city) => existing[city.id] === undefined);
+  console.log(`Городов: ${cities.length}, из них без значения в выборке: ${pending.length}`);
 
-  const { primary, byTitle } = await stage('сопоставление с Wikidata', () => resolveQids(cities));
+  const { primary, byTitle } = await stage('сопоставление с Wikidata', () => resolveQids(pending));
   const observations = await stage('загрузка P1082', () =>
     fetchObservations([...new Set([...primary.values(), ...byTitle.values()])]),
   );
@@ -321,6 +331,10 @@ async function main(): Promise<void> {
   const unresolved: string[] = [];
   await stage('выбор значений', async () => {
     for (const city of cities) {
+      if (existing[city.id] !== undefined) {
+        values[city.id] = existing[city.id];
+        continue;
+      }
       const tried = [primary.get(city.id), byTitle.get(city.id)].filter(
         (qid): qid is string => qid !== undefined,
       );
