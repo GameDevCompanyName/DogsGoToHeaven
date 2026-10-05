@@ -35,7 +35,7 @@
     class={cn(
       'gap-0 overflow-y-auto',
       isDesktop.current
-        ? 'data-[side=right]:w-[440px] data-[side=right]:sm:max-w-none'
+        ? 'data-[side=right]:w-(--city-card-width) data-[side=right]:sm:max-w-[calc(100vw-2rem)]'
         : 'max-h-[85dvh] rounded-t-xl',
     )}
     data-testid="city-card"
