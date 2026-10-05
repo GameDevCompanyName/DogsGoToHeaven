@@ -65,5 +65,10 @@ for (const factor of dataset.factors) {
   console.log(`${factor.id.padEnd(idWidth)}  ${percent(share)}  ${factor.activeSample ?? '—'}`);
 }
 
-const visible = dataset.cities.filter((city) => city.coverage >= MIN_CITY_COVERAGE).length;
+const hidden = dataset.cities.filter((city) => city.coverage < MIN_CITY_COVERAGE);
+const visible = total - hidden.length;
 console.log(`\nГородов: ${total}, проходят порог ${percent(MIN_CITY_COVERAGE).trim()}: ${visible}`);
+if (hidden.length > 0) {
+  const list = hidden.map((city) => `${city.id} (${percent(city.coverage).trim()})`).join(', ');
+  console.log(`Скрыты порогом: ${list}`);
+}

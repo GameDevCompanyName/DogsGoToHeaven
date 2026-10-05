@@ -141,6 +141,31 @@ const ISO2_TO_ISO3: Record<string, string> = {
   uz: 'UZB',
   vn: 'VNM',
   za: 'ZAF',
+  // Страны раунда 3: коды сверены с парами iso3/country_name источника (2026-10-01).
+  // Молдовы и Сейшел в источнике нет.
+  al: 'ALB',
+  ba: 'BIH',
+  bh: 'BHR',
+  cl: 'CHL',
+  co: 'COL',
+  cr: 'CRI',
+  do: 'DOM',
+  ec: 'ECU',
+  jo: 'JOR',
+  ke: 'KEN',
+  kh: 'KHM',
+  kw: 'KWT',
+  la: 'LAO',
+  lk: 'LKA',
+  mk: 'MKD',
+  mu: 'MUS',
+  np: 'NPL',
+  pa: 'PAN',
+  py: 'PRY',
+  qa: 'QAT',
+  tn: 'TUN',
+  tz: 'TZA',
+  uy: 'URY',
 };
 
 /**
@@ -180,6 +205,15 @@ const CITY_SLUG_ALIASES: Record<string, string> = {
   bucuresti: 'bucharest',
   quebec: 'quebec-city',
   irakleio: 'heraklion',
+  // Города раунда 3, сверено со списком городов источника по их странам (2026-10-01).
+  arhus: 'aarhus',
+  antwerpen: 'antwerp',
+  brugge: 'bruges',
+  napoli: 'naples', // «Napoli Greater City»
+  torino: 'turin',
+  sevilla: 'seville',
+  tanger: 'tangier',
+  ethekwini: 'durban', // eThekwini — городской округ Дурбана
 };
 
 function log(stage: string, ms: number, extra = ''): void {
