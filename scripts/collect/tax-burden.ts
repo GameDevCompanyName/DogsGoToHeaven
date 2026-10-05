@@ -227,6 +227,15 @@ const HIGHEST_OVERRIDES: Record<string, number | undefined> = {
   // резидент Нью-Йорка: 37% + 10.9% + 3.876% = 51.776% (совпадает с заголовным числом
   // ячейки).
   'United States': 51.776,
+  // Страны раунда 3 (2026-10-01).
+  // «35% (non-labor income) 39% (labor income)» — обе ставки — налог на доходы резидента,
+  // наибольшая из них — на трудовой доход, его и получает переехавший работник.
+  Colombia: 39,
+  // «12% (+ 24% for social security)» — 24% — социальные взносы, не налог на доходы.
+  Moldova: 12,
+  // «36% (Including 20% additional tax)» — итог уже включает общенациональный надналог
+  // на высокие доходы, это не местная составляющая и не социальный взнос.
+  Nepal: 36,
 };
 
 /**
@@ -303,6 +312,32 @@ const COUNTRY_LABELS: Record<string, string> = {
   uz: 'Uzbekistan',
   vn: 'Vietnam',
   za: 'South Africa',
+  // Страны раунда 3, названия сверены с кэшем викитекста 2026-10-01.
+  al: 'Albania',
+  ba: 'Bosnia', // статья: не «Bosnia and Herzegovina»
+  bh: 'Bahrain',
+  cl: 'Chile',
+  co: 'Colombia',
+  cr: 'Costa Rica',
+  do: 'Dominican Republic',
+  ec: 'Ecuador',
+  jo: 'Jordan',
+  ke: 'Kenya',
+  kh: 'Cambodia',
+  kw: 'Kuwait',
+  la: 'Laos',
+  lk: 'Sri Lanka',
+  md: 'Moldova',
+  mk: 'North Macedonia',
+  mu: 'Mauritius',
+  np: 'Nepal',
+  pa: 'Panama',
+  py: 'Paraguay',
+  qa: 'Qatar',
+  sc: 'Seychelles',
+  tn: 'Tunisia',
+  tz: 'Tanzania',
+  uy: 'Uruguay',
 };
 
 // --- Время этапов ---------------------------------------------------------------

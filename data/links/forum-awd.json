@@ -9,6 +9,10 @@
       "url": "https://forum.awd.ru/viewforum.php?f=1239",
       "title": "ОАЭ"
     },
+    "al": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1322",
+      "title": "Албания"
+    },
     "am": {
       "url": "https://forum.awd.ru/viewforum.php?f=1731",
       "title": "Армения"
@@ -29,6 +33,10 @@
       "url": "https://forum.awd.ru/viewforum.php?f=1472",
       "title": "Закавказье"
     },
+    "ba": {
+      "url": "https://forum.awd.ru/viewforum.php?f=160",
+      "title": "Сербия, Македония, Босния и Герцеговина, Косово"
+    },
     "be": {
       "url": "https://forum.awd.ru/viewforum.php?f=156",
       "title": "Бенилюкс"
@@ -36,6 +44,10 @@
     "bg": {
       "url": "https://forum.awd.ru/viewforum.php?f=1273",
       "title": "Болгария"
+    },
+    "bh": {
+      "url": "https://forum.awd.ru/viewforum.php?f=177",
+      "title": "Аравийский полуостров"
     },
     "br": {
       "url": "https://forum.awd.ru/viewforum.php?f=195",
@@ -53,9 +65,21 @@
       "url": "https://forum.awd.ru/viewforum.php?f=972",
       "title": "Швейцария"
     },
+    "cl": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1169",
+      "title": "Чили"
+    },
     "cn": {
       "url": "https://forum.awd.ru/viewforum.php?f=138",
       "title": "Китай"
+    },
+    "co": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1311",
+      "title": "Колумбия"
+    },
+    "cr": {
+      "url": "https://forum.awd.ru/viewforum.php?f=205",
+      "title": "Коста-Рика, Панама, Никарагуа"
     },
     "cy": {
       "url": "https://forum.awd.ru/viewforum.php?f=1297",
@@ -72,6 +96,14 @@
     "dk": {
       "url": "https://forum.awd.ru/viewforum.php?f=152",
       "title": "Швеция и Дания"
+    },
+    "do": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1249",
+      "title": "Доминикана"
+    },
+    "ec": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1176",
+      "title": "Эквадор"
     },
     "ee": {
       "url": "https://forum.awd.ru/viewforum.php?f=1525",
@@ -137,21 +169,45 @@
       "url": "https://forum.awd.ru/viewforum.php?f=159",
       "title": "Италия"
     },
+    "jo": {
+      "url": "https://forum.awd.ru/viewforum.php?f=172",
+      "title": "Иордания, Ливан, Сирия"
+    },
     "jp": {
       "url": "https://forum.awd.ru/viewforum.php?f=145",
       "title": "Япония"
+    },
+    "ke": {
+      "url": "https://forum.awd.ru/viewforum.php?f=166",
+      "title": "Кения, Танзания и Занзибар"
     },
     "kg": {
       "url": "https://forum.awd.ru/viewforum.php?f=185",
       "title": "Средняя Азия"
     },
+    "kh": {
+      "url": "https://forum.awd.ru/viewforum.php?f=135",
+      "title": "Камбоджа"
+    },
     "kr": {
       "url": "https://forum.awd.ru/viewforum.php?f=1106",
       "title": "Корея"
     },
+    "kw": {
+      "url": "https://forum.awd.ru/viewforum.php?f=177",
+      "title": "Аравийский полуостров"
+    },
     "kz": {
       "url": "https://forum.awd.ru/viewforum.php?f=185",
       "title": "Средняя Азия"
+    },
+    "la": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1155",
+      "title": "Лаос"
+    },
+    "lk": {
+      "url": "https://forum.awd.ru/viewforum.php?f=901",
+      "title": "Шри-Ланка"
     },
     "lt": {
       "url": "https://forum.awd.ru/viewforum.php?f=1699",
@@ -169,9 +225,17 @@
       "url": "https://forum.awd.ru/viewforum.php?f=164",
       "title": "Марокко"
     },
+    "md": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1265",
+      "title": "Молдова"
+    },
     "me": {
       "url": "https://forum.awd.ru/viewforum.php?f=1099",
       "title": "Черногория"
+    },
+    "mk": {
+      "url": "https://forum.awd.ru/viewforum.php?f=160",
+      "title": "Сербия, Македония, Босния и Герцеговина, Косово"
     },
     "mn": {
       "url": "https://forum.awd.ru/viewforum.php?f=1112",
@@ -180,6 +244,10 @@
     "mt": {
       "url": "https://forum.awd.ru/viewforum.php?f=1431",
       "title": "Мальта"
+    },
+    "mu": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1224",
+      "title": "Маврикий, Реюньон, Коморы"
     },
     "mx": {
       "url": "https://forum.awd.ru/viewforum.php?f=189",
@@ -197,6 +265,10 @@
       "url": "https://forum.awd.ru/viewforum.php?f=1084",
       "title": "Норвегия"
     },
+    "np": {
+      "url": "https://forum.awd.ru/viewforum.php?f=337",
+      "title": "Тибет, Непал, Бутан"
+    },
     "nz": {
       "url": "https://forum.awd.ru/viewforum.php?f=1189",
       "title": "Новая Зеландия"
@@ -204,6 +276,10 @@
     "om": {
       "url": "https://forum.awd.ru/viewforum.php?f=1569",
       "title": "Оман"
+    },
+    "pa": {
+      "url": "https://forum.awd.ru/viewforum.php?f=205",
+      "title": "Коста-Рика, Панама, Никарагуа"
     },
     "pe": {
       "url": "https://forum.awd.ru/viewforum.php?f=197",
@@ -221,6 +297,14 @@
       "url": "https://forum.awd.ru/viewforum.php?f=959",
       "title": "Португалия"
     },
+    "py": {
+      "url": "https://forum.awd.ru/viewforum.php?f=194",
+      "title": "Аргентина, Уругвай, Парагвай"
+    },
+    "qa": {
+      "url": "https://forum.awd.ru/viewforum.php?f=177",
+      "title": "Аравийский полуостров"
+    },
     "ro": {
       "url": "https://forum.awd.ru/viewforum.php?f=1285",
       "title": "Румыния"
@@ -232,6 +316,10 @@
     "sa": {
       "url": "https://forum.awd.ru/viewforum.php?f=177",
       "title": "Аравийский полуостров"
+    },
+    "sc": {
+      "url": "https://forum.awd.ru/viewforum.php?f=167",
+      "title": "Сейшелы"
     },
     "se": {
       "url": "https://forum.awd.ru/viewforum.php?f=152",
@@ -257,6 +345,10 @@
       "url": "https://forum.awd.ru/viewforum.php?f=185",
       "title": "Средняя Азия"
     },
+    "tn": {
+      "url": "https://forum.awd.ru/viewforum.php?f=1503",
+      "title": "Тунис"
+    },
     "tr": {
       "url": "https://forum.awd.ru/viewforum.php?f=186",
       "title": "Турция"
@@ -265,9 +357,17 @@
       "url": "https://forum.awd.ru/viewforum.php?f=1656",
       "title": "Тайвань"
     },
+    "tz": {
+      "url": "https://forum.awd.ru/viewforum.php?f=166",
+      "title": "Кения, Танзания и Занзибар"
+    },
     "us": {
       "url": "https://forum.awd.ru/viewforum.php?f=187",
       "title": "США"
+    },
+    "uy": {
+      "url": "https://forum.awd.ru/viewforum.php?f=194",
+      "title": "Аргентина, Уругвай, Парагвай"
     },
     "uz": {
       "url": "https://forum.awd.ru/viewforum.php?f=185",
