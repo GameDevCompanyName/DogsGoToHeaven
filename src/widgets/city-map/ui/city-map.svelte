@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { GeoJSONSource, Map as MapLibreMap, PointLike } from 'maplibre-gl';
+  import type {
+    GeoJSONSource,
+    Map as MapLibreMap,
+    PointLike,
+    StyleSpecification,
+  } from 'maplibre-gl';
 
   import { getRankingContext } from '@/entities/ranking';
 
@@ -12,6 +17,7 @@
     SELECTED_LAYER,
     SELECTED_LAYER_ID,
   } from '../config/style';
+  import { recolorStyle } from '../lib/recolor-style';
   import { toGeoJson } from '../lib/to-geojson';
 
   type MapStatus = 'loading' | 'ready' | 'failed';
@@ -44,13 +50,14 @@
       // Воркер MapLibre ищет рядом со своим модулем, а после сборки Vite его там нет:
       // собираем воркер отдельно и отдаём библиотеке его адрес.
       import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
+      loadStyle(),
     ])
-      .then(([{ Map, setWorkerUrl }, { default: workerUrl }]) => {
+      .then(([{ Map, setWorkerUrl }, { default: workerUrl }, style]) => {
         if (isDestroyed) return;
         setWorkerUrl(workerUrl);
         instance = new Map({
           container,
-          style: MAP_STYLE_URL,
+          style,
           center: INITIAL_VIEW.center,
           zoom: INITIAL_VIEW.zoom,
           attributionControl: { compact: true },
@@ -67,6 +74,17 @@
       resizeObserver.disconnect();
       instance?.remove();
     };
+  }
+
+  /**
+   * Стиль Positron серый, а перекрасить его MapLibre этой версии умеет только в setStyle.
+   * Поэтому стиль забираем сами и отдаём карте уже в палитре сайта.
+   */
+  async function loadStyle(): Promise<StyleSpecification> {
+    const response = await fetch(MAP_STYLE_URL);
+    if (!response.ok) throw new Error(`Стиль карты: HTTP ${response.status}`);
+    // Ответ сервера тайлов не проверяем схемой: это их стиль, MapLibre сам сообщит об ошибках.
+    return recolorStyle((await response.json()) as StyleSpecification);
   }
 
   function handleLoad(loaded: MapLibreMap) {

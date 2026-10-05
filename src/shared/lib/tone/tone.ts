@@ -6,37 +6,41 @@ export interface ToneClasses {
   chip: string;
   /** Метка с рамкой: относительный уровень среди городов выборки. */
   outline: string;
-  /** Цветной текст на белом фоне. */
+  /** Цветной текст на фоне страницы. */
   text: string;
   /** Полоска вклада. */
   bar: string;
 }
 
-// Пары фон/текст подобраны с контрастом не ниже 4.5:1: текст 800–900 на фоне 50–100 и на белом.
+/**
+ * Цвета — палитра slowshout16 из app.css. Светлые заливки — тон с прозрачностью поверх бумаги.
+ * Текст на заливке и на бумаге — тёмный сосед тона в палитре (бирюзовый, кора, ржавчина):
+ * сами тона для текста слишком светлые. Контраст всех пар не ниже 4.5:1.
+ */
 const TONE_CLASSES: Record<Tone, ToneClasses> = {
   good: {
-    chip: 'bg-green-100 text-green-900',
-    outline: 'border-green-700 bg-white text-green-800',
-    text: 'text-green-800',
-    bar: 'bg-green-600',
+    chip: 'bg-moss/15 text-teal',
+    outline: 'border-moss bg-background text-teal',
+    text: 'text-teal',
+    bar: 'bg-moss',
   },
   ok: {
-    chip: 'bg-amber-100 text-amber-900',
-    outline: 'border-amber-600 bg-white text-amber-900',
-    text: 'text-amber-900',
-    bar: 'bg-amber-500',
+    chip: 'bg-gold/20 text-bark',
+    outline: 'border-gold bg-background text-bark',
+    text: 'text-bark',
+    bar: 'bg-gold',
   },
   bad: {
-    chip: 'bg-red-100 text-red-900',
-    outline: 'border-red-700 bg-white text-red-800',
-    text: 'text-red-800',
-    bar: 'bg-red-600',
+    chip: 'bg-brick/15 text-rust',
+    outline: 'border-brick bg-background text-rust',
+    text: 'text-rust',
+    bar: 'bg-brick',
   },
   neutral: {
-    chip: 'bg-neutral-100 text-neutral-800',
-    outline: 'border-neutral-500 bg-white text-neutral-800',
-    text: 'text-neutral-700',
-    bar: 'bg-neutral-400',
+    chip: 'bg-cream text-plum',
+    outline: 'border-ash bg-background text-plum',
+    text: 'text-plum',
+    bar: 'bg-ash',
   },
 };
 
@@ -46,21 +50,34 @@ export function toneClasses(tone: Tone): ToneClasses {
 
 /** Те же тона в hex для MapLibre, который не понимает классы Tailwind. */
 export const TONE_HEX: Record<Tone, string> = {
-  good: '#16a34a',
-  ok: '#f59e0b',
-  bad: '#dc2626',
-  neutral: '#a3a3a3',
+  good: '#6a7d5f',
+  ok: '#cf982e',
+  bad: '#a75141',
+  neutral: '#8e9593',
 };
 
 /**
- * Фон бейджа балла по месту в выдаче 0–1 (1 — лучший): пять ступеней от насыщенного
- * зелёного до насыщенного красного, число тёмное. Без балла — серый.
+ * Фон бейджа балла по месту в выдаче 0–1 (1 — лучший): пять ступеней от густого
+ * зелёного до густого красного, число тёмное. Без балла — песочный.
  */
 export function rankStepClasses(percentile: number | null): string {
-  if (percentile === null) return 'bg-neutral-100 text-neutral-700';
-  if (percentile >= 0.8) return 'bg-green-300 text-green-950';
-  if (percentile >= 0.6) return 'bg-green-100 text-green-950';
-  if (percentile >= 0.4) return 'bg-amber-100 text-amber-950';
-  if (percentile >= 0.2) return 'bg-red-100 text-red-950';
-  return 'bg-red-300 text-red-950';
+  if (percentile === null) return 'bg-cream text-plum';
+  if (percentile >= 0.8) return 'bg-moss/45 text-ink';
+  if (percentile >= 0.6) return 'bg-moss/20 text-ink';
+  if (percentile >= 0.4) return 'bg-gold/25 text-ink';
+  if (percentile >= 0.2) return 'bg-brick/20 text-ink';
+  return 'bg-brick/45 text-ink';
 }
+
+/** Опорные цвета палитры в hex для карты: те же значения, что в app.css. */
+export const PALETTE_HEX = {
+  ink: '#23222f',
+  plum: '#52485f',
+  slate: '#4e5d79',
+  steel: '#638691',
+  moss: '#6a7d5f',
+  ash: '#8e9593',
+  sand: '#b9b595',
+  cream: '#eedebe',
+  paper: '#faefd9',
+} as const;

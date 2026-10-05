@@ -1,36 +1,62 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
-@import '@fontsource-variable/inter';
+@import '@fontsource/pt-mono';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* Тёмной темы нет. Без этой строки `dark:`-классы внутри компонентов shadcn
    срабатывали бы по системной теме поверх светлых токенов. */
 @custom-variant dark (&:is(.dark *));
 
-/* Семантические токены, на которые завязаны компоненты shadcn-svelte
-   (`bg-primary`, `border-input` и т. д.). Значения — палитра Tailwind. */
+/*
+ * Палитра slowshout16 (lospec.com/palette-list/slowshout16, автор Phenomenician):
+ * 16 цветов, имена свои, плюс бумага `#faefd9` для фона: кремовый из палитры (`cream`)
+ * на весь экран показался владельцу слишком жёлтым, он остался для вторичных поверхностей.
+ * Светлые заливки — цвета палитры с прозрачностью поверх бумаги (`bg-moss/20`). Пары текст/фон подобраны
+ * с контрастом не ниже 4.5:1, см. docs/superpowers/specs/2026-10-06-slowshout-palette-design.md.
+ */
 @theme inline {
-  --font-sans: 'Inter Variable', sans-serif;
+  /* У PT Mono одно начертание, жирный браузер синтезирует сам. */
+  --font-sans: 'PT Mono', ui-monospace, monospace;
 
-  --color-background: var(--color-white);
-  --color-foreground: var(--color-neutral-950);
-  --color-card: var(--color-white);
-  --color-card-foreground: var(--color-neutral-950);
-  --color-popover: var(--color-white);
-  --color-popover-foreground: var(--color-neutral-950);
-  --color-primary: var(--color-neutral-900);
-  --color-primary-foreground: var(--color-neutral-50);
-  --color-secondary: var(--color-neutral-100);
-  --color-secondary-foreground: var(--color-neutral-900);
-  --color-muted: var(--color-neutral-100);
-  --color-muted-foreground: var(--color-neutral-500);
-  --color-accent: var(--color-neutral-100);
-  --color-accent-foreground: var(--color-neutral-900);
-  --color-destructive: var(--color-red-600);
-  --color-border: var(--color-neutral-200);
-  --color-input: var(--color-neutral-200);
-  --color-ring: var(--color-neutral-400);
+  --color-ink: #23222f;
+  --color-maroon: #37242c;
+  --color-rust: #754242;
+  --color-brick: #a75141;
+  --color-plum: #52485f;
+  --color-bark: #544a36;
+  --color-amber: #b97022;
+  --color-gold: #cf982e;
+  --color-slate: #4e5d79;
+  --color-teal: #485a5c;
+  --color-moss: #6a7d5f;
+  --color-rose: #c18080;
+  --color-steel: #638691;
+  --color-ash: #8e9593;
+  --color-sand: #b9b595;
+  --color-cream: #eedebe;
+  --color-paper: #faefd9;
+
+  /* Семантические токены, на которые завязаны компоненты shadcn-svelte
+     (`bg-primary`, `border-input` и т. д.). */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-paper);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-paper);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-slate);
+  --color-primary-foreground: var(--color-paper);
+  --color-secondary: var(--color-cream);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-cream);
+  --color-muted-foreground: var(--color-plum);
+  --color-accent: var(--color-cream);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-rust);
+  --color-border: var(--color-sand);
+  --color-input: var(--color-sand);
+  --color-ring: var(--color-steel);
 }
 
 @layer base {
