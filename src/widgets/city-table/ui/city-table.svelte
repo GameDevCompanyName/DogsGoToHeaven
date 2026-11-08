@@ -82,7 +82,6 @@
 
 <Theme
   palette="phosphor"
-  font="'IBM Plex Mono', ui-monospace, monospace"
   colors={{
     background: '#252a28',
     surface: '#303833',

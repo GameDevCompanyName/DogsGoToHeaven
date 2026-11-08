@@ -1,5 +1,3 @@
-import { palettes } from 'svelte-ascii-ui';
-
 /** Оценка значения для цвета: хорошо, терпимо, плохо, без оценки. Цвет всегда идёт вместе с текстом. */
 export type Tone = 'good' | 'ok' | 'bad' | 'neutral';
 
@@ -33,11 +31,3 @@ const TONE_CLASSES: Record<Tone, ToneClasses> = {
 export function toneClasses(tone: Tone): ToneClasses {
   return TONE_CLASSES[tone];
 }
-
-/** Разрешённые цвета темы для вложенных Theme с индикатором качества. */
-export const TONE_HEX: Record<Tone, string> = {
-  good: palettes.phosphor.accent,
-  ok: palettes.phosphor.warning,
-  bad: palettes.phosphor.danger,
-  neutral: palettes.phosphor.muted,
-};

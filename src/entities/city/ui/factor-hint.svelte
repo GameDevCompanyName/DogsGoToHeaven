@@ -17,8 +17,13 @@
   );
 </script>
 
-<Popover label="Что значит «{factor.name}»" title={factor.name} data-testid="factor-hint" size="s">
-  {#snippet trigger()}<span aria-hidden="true">?</span>{/snippet}
+<Popover
+  label="Что значит «{factor.name}»"
+  title={factor.name}
+  data-testid="factor-hint"
+  size="s"
+  triggerVariant="compact"
+>
   <div class="flex flex-col gap-2" data-testid="factor-hint-content">
     <p class="font-semibold">{factor.name}</p>
     <p class="leading-relaxed">{factor.presentation.hint}</p>

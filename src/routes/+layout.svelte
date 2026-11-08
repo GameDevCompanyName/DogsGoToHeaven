@@ -11,10 +11,6 @@
   let { children }: Props = $props();
 </script>
 
-<Theme
-  palette="phosphor"
-  font="'IBM Plex Mono', ui-monospace, monospace"
-  class="min-h-dvh bg-background"
->
+<Theme palette="phosphor" class="min-h-dvh bg-background">
   {@render children()}
 </Theme>
