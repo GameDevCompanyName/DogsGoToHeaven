@@ -42,7 +42,7 @@
       {#each links as link (link.sourceUrl)}
         <li class="flex flex-col gap-0.5">
           <Link href={link.url} target="_blank" rel="external noopener noreferrer">
-            {link.title}
+            <span class="text-sm">{link.title}</span>
           </Link>
           <span class="text-sm text-foreground/70">
             {link.sourceName}

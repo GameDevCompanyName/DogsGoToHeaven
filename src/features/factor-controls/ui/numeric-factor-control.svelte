@@ -100,7 +100,7 @@
   <div class="flex items-center gap-2">
     <div class="min-w-0 flex-1">
       <Checkbox
-        size="s"
+        size="m"
         id={checkboxId}
         label={factor.name}
         bind:checked={() => isEnabled, handleEnabledChange}

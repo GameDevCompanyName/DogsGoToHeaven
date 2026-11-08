@@ -39,43 +39,49 @@
   data-testid="city-card"
 >
   {#if view}
-    <div class="mb-6 flex flex-col gap-3">
-      <div class="flex items-start gap-3">
-        <div class="flex min-w-0 flex-1 flex-col gap-1">
-          <p class="text-base text-foreground/70">
-            {view.city.countryName} · {view.ranked.rank}-е место
-          </p>
+    <!-- Увеличиваем только текст содержимого, не геометрию контролов UIKit. -->
+    <div
+      class="text-[1.25rem] leading-relaxed font-normal [--city-status-size:1.015625rem] [--text-base:1.25rem] [--text-lg:1.40625rem] [--text-sm:1.09375rem] [--text-xl:1.5625rem] [--text-xs:0.9375rem]"
+      data-testid="city-reading"
+    >
+      <div class="mb-6 flex flex-col gap-3">
+        <div class="flex items-start gap-3">
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <p class="text-base text-foreground/70">
+              {view.city.countryName} · {view.ranked.rank}-е место
+            </p>
+          </div>
+          <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
         </div>
-        <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
-      </div>
-      {#if ranking.budget !== null}
-        {#if view.leftover !== null && costs}
-          <LeftoverLine budget={ranking.budget} leftover={view.leftover} {costs} />
-        {:else}
-          <p class="text-sm text-foreground/70" data-testid="leftover-line">
-            Сколько останется, не посчитать: нет данных о расходах или аренде
-          </p>
+        {#if ranking.budget !== null}
+          {#if view.leftover !== null && costs}
+            <LeftoverLine budget={ranking.budget} leftover={view.leftover} {costs} />
+          {:else}
+            <p class="text-sm text-foreground/70" data-testid="leftover-line">
+              Сколько останется, не посчитать: нет данных о расходах или аренде
+            </p>
+          {/if}
         {/if}
-      {/if}
-      {#if chips}
-        <SummaryLine
-          strengths={chips.strengths}
-          weaknesses={chips.weaknesses}
-          percentile={view.percentile}
-        />
-      {/if}
-      <div class="flex flex-wrap items-center gap-2">
-        <CompareToggle cityId={view.city.id} cityName={view.city.name} />
-        <ShareButton isCompact align="start" />
+        {#if chips}
+          <SummaryLine
+            strengths={chips.strengths}
+            weaknesses={chips.weaknesses}
+            percentile={view.percentile}
+          />
+        {/if}
+        <div class="flex flex-wrap items-center gap-2">
+          <CompareToggle cityId={view.city.id} cityName={view.city.name} />
+          <ShareButton isCompact align="start" />
+        </div>
       </div>
-    </div>
-    <div class="flex flex-col gap-8 pb-8">
-      <FactorBreakdown {view} />
-      <ReferenceBlock city={view.city} />
-      {#each NOTE_BLOCKS as block (block.factorId)}
-        <FactorNote city={view.city} {...block} />
-      {/each}
-      <PeopleLinks city={view.city} />
+      <div class="flex flex-col gap-8 pb-8">
+        <FactorBreakdown {view} />
+        <ReferenceBlock city={view.city} />
+        {#each NOTE_BLOCKS as block (block.factorId)}
+          <FactorNote city={view.city} {...block} />
+        {/each}
+        <PeopleLinks city={view.city} />
+      </div>
     </div>
   {/if}
 </Overlay>

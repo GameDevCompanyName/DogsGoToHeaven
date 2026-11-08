@@ -14,7 +14,7 @@
 <div class="flex items-center gap-2">
   <Checkbox
     {id}
-    size="s"
+    size="m"
     label="Сначала по карману"
     data-testid="affordable-first"
     bind:checked={() => ranking.isAffordableFirst, handleCheckedChange}

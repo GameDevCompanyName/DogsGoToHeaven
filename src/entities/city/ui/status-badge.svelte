@@ -3,6 +3,7 @@
   import { Badge } from 'svelte-ascii-ui';
 
   import { type Tone, toneClasses } from '@/shared/lib/tone';
+  import { cn } from '@/shared/lib/utils';
 
   interface Props {
     tone: Tone;
@@ -13,4 +14,8 @@
 </script>
 
 <!-- Badge success использует брендовый accent. Цвет своего содержимого отделён от бренда. -->
-<Badge size="m"><span class={toneClasses(tone).text}>{@render children()}</span></Badge>
+<Badge size="m"
+  ><span class={cn('text-[length:var(--city-status-size,inherit)]', toneClasses(tone).text)}
+    >{@render children()}</span
+  ></Badge
+>

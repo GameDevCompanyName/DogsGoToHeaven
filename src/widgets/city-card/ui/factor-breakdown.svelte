@@ -111,13 +111,13 @@
                 <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
                   {#each group.rows as row (row.factor.id)}
                     <li class="flex flex-col gap-1.5">
-                      <div class="flex items-center gap-3">
-                        <span class="flex min-w-0 flex-1 items-center gap-2">
+                      <div class="flex min-w-0 flex-col items-start gap-1">
+                        <span class="flex min-w-0 items-center gap-2">
                           <span class="font-medium">{row.factor.name}</span>
                           <FactorHint factor={row.factor} />
                         </span>
                         {#if row.value}
-                          <span class="shrink-0 pt-0.5 text-right tabular-nums">
+                          <span class="max-w-full pt-0.5 tabular-nums">
                             {row.value.primary}
                           </span>
                         {/if}
@@ -160,7 +160,7 @@
                           {/if}
                         </div>
                         <span
-                          class="w-24 shrink-0 text-right text-sm text-foreground/70 tabular-nums"
+                          class="w-32 shrink-0 text-right text-sm whitespace-nowrap text-foreground/70 tabular-nums"
                         >
                           {row.normalized === null ? 'не учтён' : `${row.share}% балла`}
                         </span>
