@@ -1,0 +1,74 @@
+[
+  {
+    "width": 1000,
+    "browser": "153.0.8010.12",
+    "metrics": {
+      "#base": {
+        "font": "16px",
+        "weight": "300",
+        "lineHeight": "25.6px",
+        "family": "Monocraft, monospace"
+      },
+      "article p": {
+        "font": "14px",
+        "weight": "300",
+        "lineHeight": "25.2px",
+        "family": "Monocraft, monospace"
+      },
+      "a": {
+        "font": "13px",
+        "weight": "300",
+        "lineHeight": "20.8px",
+        "family": "Monocraft, monospace"
+      },
+      "a[data-size=l]": {
+        "font": "15px",
+        "weight": "300",
+        "lineHeight": "24px",
+        "family": "Monocraft, monospace"
+      },
+      "[data-tone=success]": {
+        "font": "13px",
+        "weight": "300",
+        "lineHeight": "20.8px",
+        "family": "Monocraft, monospace"
+      }
+    }
+  },
+  {
+    "width": 390,
+    "browser": "153.0.8010.12",
+    "metrics": {
+      "#base": {
+        "font": "16px",
+        "weight": "300",
+        "lineHeight": "25.6px",
+        "family": "Monocraft, monospace"
+      },
+      "article p": {
+        "font": "14px",
+        "weight": "300",
+        "lineHeight": "25.2px",
+        "family": "Monocraft, monospace"
+      },
+      "a": {
+        "font": "13px",
+        "weight": "300",
+        "lineHeight": "20.8px",
+        "family": "Monocraft, monospace"
+      },
+      "a[data-size=l]": {
+        "font": "15px",
+        "weight": "300",
+        "lineHeight": "24px",
+        "family": "Monocraft, monospace"
+      },
+      "[data-tone=success]": {
+        "font": "13px",
+        "weight": "300",
+        "lineHeight": "20.8px",
+        "family": "Monocraft, monospace"
+      }
+    }
+  }
+]

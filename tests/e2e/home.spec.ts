@@ -39,6 +39,49 @@ test('ползунок веса меняет балл города', async ({ pa
     .not.toEqual(scoresBefore);
 });
 
+test('диапазон порога сохраняется в ссылке и снимается крайними положениями', async ({ page }) => {
+  await page.goto('/');
+  await openSection(page, 'Настройки');
+  const lower = page.getByRole('slider', { name: 'Стоимость жизни: нижняя граница' });
+  const upper = page.getByRole('slider', { name: 'Стоимость жизни: верхняя граница' });
+  const exactUpper = page.getByRole('spinbutton', { name: 'Стоимость жизни: до', exact: true });
+  const exactLower = page.getByRole('spinbutton', { name: 'Стоимость жизни: от', exact: true });
+
+  await exactUpper.fill('1000');
+  await exactUpper.press('Tab');
+  await expect(upper).toHaveValue('1000');
+  await lower.focus();
+  await lower.press('ArrowRight');
+  const selectedLower = await lower.inputValue();
+  expect(Number(selectedLower)).toBeGreaterThan(0);
+  await expect(exactLower).toHaveValue(selectedLower);
+  await expect
+    .poll(() => new URLSearchParams(new URL(page.url()).hash.slice(1)).get('f'))
+    .toContain(`cost-of-living:${selectedLower}-1000`);
+  const savedUrl = page.url();
+  await page.reload();
+  await openSection(page, 'Настройки');
+  await expect(exactUpper).toHaveValue('1000');
+  await expect(exactLower).toHaveValue(selectedLower);
+
+  await lower.focus();
+  await lower.press('Home');
+  await upper.focus();
+  await upper.press('End');
+  await expect(exactLower).toHaveValue('');
+  await expect(exactUpper).toHaveValue('');
+  await expect(page).not.toHaveURL(savedUrl);
+  await expect(page).not.toHaveURL(/cost-of-living/);
+
+  // Бегунок не округляет соседнюю границу, заданную точным вводом.
+  await exactLower.fill('1.234');
+  await exactLower.press('Tab');
+  await upper.focus();
+  await upper.press('Home');
+  await expect(exactLower).toHaveValue('1.234');
+  await expect(exactUpper).toHaveValue('1.234');
+});
+
 test('клик по городу открывает карточку с разбором балла', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Города');

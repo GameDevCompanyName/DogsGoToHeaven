@@ -116,7 +116,7 @@
         </div>
         <nav class="hidden gap-1 md:flex" aria-label="Разделы">
           {#each MOBILE_SECTIONS.filter((item) => item.id !== 'map') as item (item.id)}
-            <div class={panelTab === item.id ? 'bg-primary/20 font-semibold' : ''}>
+            <div class={panelTab === item.id ? 'font-semibold' : ''}>
               <Button
                 size="s"
                 aria-pressed={panelTab === item.id}
@@ -161,7 +161,7 @@
       {#each MOBILE_SECTIONS as item (item.id)}
         <div
           class={section === item.id
-            ? 'flex border-t-4 border-primary bg-primary/20 font-semibold'
+            ? 'flex border-t-4 border-primary font-semibold'
             : 'flex border-t-4 border-transparent'}
         >
           <Button

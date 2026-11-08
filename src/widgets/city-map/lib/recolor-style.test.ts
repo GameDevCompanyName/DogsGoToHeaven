@@ -28,13 +28,13 @@ describe('recolorStyle', () => {
   const layers = recolorStyle(STYLE).layers;
 
   it('paints the theme background and leaves non-colour properties alone', () => {
-    expect(layers[0]?.paint).toEqual({ 'background-color': '#29322f' });
-    expect(layers[2]?.paint).toEqual({ 'line-color': '#3a4640', 'line-width': 2 });
+    expect(layers[0]?.paint).toEqual({ 'background-color': '#fff3cf' });
+    expect(layers[2]?.paint).toEqual({ 'line-color': '#e1aea4', 'line-width': 2 });
   });
 
   it('tints water and labels with independent cartographic palette colors', () => {
-    expect(layers[1]?.paint).toEqual({ 'fill-color': '#222b2b' });
-    expect(layers[3]?.paint).toEqual({ 'text-color': '#aab5ac', 'text-halo-color': '#29322f' });
+    expect(layers[1]?.paint).toEqual({ 'fill-color': '#e7cad9' });
+    expect(layers[3]?.paint).toEqual({ 'text-color': '#4c354f', 'text-halo-color': '#fff3cf' });
   });
 
   it('does not mutate the source style', () => {

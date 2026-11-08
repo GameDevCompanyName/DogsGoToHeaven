@@ -14,7 +14,7 @@
   <p class="text-sm text-foreground/70">
     {#if provenance.url}
       <Link href={provenance.url} target="_blank" rel="external noopener noreferrer">
-        {provenance.name}
+        <span class="text-sm">{provenance.name}</span>
       </Link>
     {:else}
       {provenance.name}

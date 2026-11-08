@@ -1,0 +1,260 @@
+{
+  "browser": "153.0.8010.12",
+  "os": "win32",
+  "samples": [
+    {
+      "cssZoom": 1,
+      "metrics": [
+        {
+          "width": 26,
+          "height": 26,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 26,
+          "height": 26,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 30,
+          "height": 30,
+          "border": "9px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    },
+    {
+      "cssZoom": 1.1,
+      "metrics": [
+        {
+          "width": 28.59375,
+          "height": 28.59375,
+          "border": "5.45455px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 28.59375,
+          "height": 28.59375,
+          "border": "5.45455px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 33,
+          "height": 33,
+          "border": "8.18182px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    },
+    {
+      "cssZoom": 1.25,
+      "metrics": [
+        {
+          "width": 32.5,
+          "height": 32.5,
+          "border": "5.6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 32.5,
+          "height": 32.5,
+          "border": "5.6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 37.5,
+          "height": 37.5,
+          "border": "8.8px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    },
+    {
+      "cssZoom": 1.5,
+      "metrics": [
+        {
+          "width": 39,
+          "height": 39,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 39,
+          "height": 39,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 45,
+          "height": 45,
+          "border": "8.66667px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    },
+    {
+      "cssZoom": 1.75,
+      "metrics": [
+        {
+          "width": 45.5,
+          "height": 45.5,
+          "border": "5.71429px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 45.5,
+          "height": 45.5,
+          "border": "5.71429px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 52.5,
+          "height": 52.5,
+          "border": "8.57143px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    },
+    {
+      "cssZoom": 2,
+      "metrics": [
+        {
+          "width": 52,
+          "height": 52,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 52,
+          "height": 52,
+          "border": "6px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        },
+        {
+          "width": 60,
+          "height": 60,
+          "border": "9px",
+          "borderImageWidth": "9px",
+          "borderImageSlice": "12",
+          "borderImageRepeat": "space"
+        }
+      ]
+    }
+  ],
+  "scaleMetrics": [
+    [
+      {
+        "part": "start svelte-19uqq8",
+        "x": 34,
+        "y": 341.03125,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "end svelte-19uqq8",
+        "x": 377.203125,
+        "y": 341.03125,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "dashes svelte-19uqq8",
+        "x": 50,
+        "y": 339.03125,
+        "width": 320,
+        "height": 24,
+        "font": "16px / 20px Consolas, monospace"
+      }
+    ],
+    [
+      {
+        "part": "start svelte-59tzuq",
+        "x": 34,
+        "y": 426.625,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "end svelte-59tzuq",
+        "x": 377.203125,
+        "y": 426.625,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "dashes svelte-59tzuq",
+        "x": 50,
+        "y": 424.625,
+        "width": 320,
+        "height": 24,
+        "font": "16px / 20px Consolas, monospace"
+      }
+    ],
+    [
+      {
+        "part": "start svelte-19uqq8",
+        "x": 34,
+        "y": 513.71875,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "end svelte-19uqq8",
+        "x": 377.203125,
+        "y": 513.71875,
+        "width": 8.796875,
+        "height": 20,
+        "font": "16px / 20px Consolas, monospace"
+      },
+      {
+        "part": "dashes svelte-19uqq8",
+        "x": 50,
+        "y": 510.21875,
+        "width": 320,
+        "height": 27,
+        "font": "16px / 20px Consolas, monospace"
+      }
+    ]
+  ]
+}

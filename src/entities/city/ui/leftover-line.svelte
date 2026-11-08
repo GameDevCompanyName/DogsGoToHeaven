@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Badge } from 'svelte-ascii-ui';
-
   import { assessLeftover, formatUsd } from '@/shared/lib/budget';
 
   import { formatLeftoverAmount, roundTo } from '../lib/format-value';
+  import StatusBadge from './status-badge.svelte';
 
   interface Props {
     /** Доход в месяц, USD. */
@@ -32,27 +31,9 @@
   <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
     {#if isAffordable}
       <span class="font-medium whitespace-nowrap">Останется {amount}</span>
-      <Badge
-        size="m"
-        tone={assessment.tone === 'good'
-          ? 'success'
-          : assessment.tone === 'bad'
-            ? 'danger'
-            : assessment.tone === 'ok'
-              ? 'warning'
-              : 'default'}>{assessment.label}</Badge
-      >
+      <StatusBadge tone={assessment.tone}>{assessment.label}</StatusBadge>
     {:else}
-      <Badge
-        size="m"
-        tone={assessment.tone === 'good'
-          ? 'success'
-          : assessment.tone === 'bad'
-            ? 'danger'
-            : assessment.tone === 'ok'
-              ? 'warning'
-              : 'default'}>{assessment.label}</Badge
-      >
+      <StatusBadge tone={assessment.tone}>{assessment.label}</StatusBadge>
       <span class="whitespace-nowrap text-foreground/70">не хватает {amount}</span>
     {/if}
   </span>
