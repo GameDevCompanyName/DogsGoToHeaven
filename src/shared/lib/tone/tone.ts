@@ -34,13 +34,10 @@ export function toneClasses(tone: Tone): ToneClasses {
   return TONE_CLASSES[tone];
 }
 
-/** Те же тона в hex для MapLibre, который не понимает классы Tailwind. */
+/** Разрешённые цвета темы для вложенных Theme с индикатором качества. */
 export const TONE_HEX: Record<Tone, string> = {
   good: palettes.phosphor.accent,
   ok: palettes.phosphor.warning,
   bad: palettes.phosphor.danger,
   neutral: palettes.phosphor.muted,
 };
-
-/** MapLibre needs resolved colors rather than inherited CSS variables. */
-export const PALETTE_HEX = palettes.phosphor;

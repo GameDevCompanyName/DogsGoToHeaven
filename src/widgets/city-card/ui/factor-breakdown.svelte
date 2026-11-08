@@ -17,7 +17,7 @@
 </script>
 
 <script lang="ts">
-  import { Progress, Theme } from 'svelte-ascii-ui';
+  import { Panel, Progress, Theme } from 'svelte-ascii-ui';
 
   import {
     FactorHint,
@@ -95,66 +95,74 @@
   {#if rows.length === 0}
     <p class="text-foreground/70">Ни один фактор не учитывается.</p>
   {:else}
-    <div class="flex flex-col gap-6" data-testid="score-breakdown">
+    <div class="flex flex-col gap-8" data-testid="score-breakdown">
       {#each groups as group (group.id)}
         {#if group.rows.length > 0 || group.empty}
-          <section class="flex flex-col gap-3" aria-labelledby="breakdown-{group.id}">
-            <h3 id="breakdown-{group.id}" class="text-base font-semibold">{group.title}</h3>
-            {#if group.rows.length === 0}
-              <p class="text-sm text-foreground/70">{group.empty}</p>
-            {:else}
-              <!-- Два столбца с той же точки, где карточка становится вдвое шире (размер Drawer xl). -->
-              <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
-                {#each group.rows as row (row.factor.id)}
-                  <li class="flex flex-col gap-1.5">
-                    <div class="flex items-center gap-3">
-                      <span class="flex min-w-0 flex-1 items-center gap-2">
-                        <span class="font-medium">{row.factor.name}</span>
-                        <FactorHint factor={row.factor} />
-                      </span>
-                      {#if row.value}
-                        <span class="shrink-0 pt-0.5 text-right tabular-nums">
-                          {row.value.primary}
+          <Panel size="s" aria-labelledby="breakdown-{group.id}">
+            {#snippet header()}
+              <h3 id="breakdown-{group.id}" class="text-xl font-semibold">{group.title}</h3>
+            {/snippet}
+            <div class="text-base">
+              {#if group.rows.length === 0}
+                <p class="text-sm text-foreground/70">{group.empty}</p>
+              {:else}
+                <!-- Два столбца с той же точки, где карточка становится вдвое шире (размер Drawer xl). -->
+                <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
+                  {#each group.rows as row (row.factor.id)}
+                    <li class="flex flex-col gap-1.5">
+                      <div class="flex items-center gap-3">
+                        <span class="flex min-w-0 flex-1 items-center gap-2">
+                          <span class="font-medium">{row.factor.name}</span>
+                          <FactorHint factor={row.factor} />
                         </span>
-                      {/if}
-                    </div>
-                    {#if row.interpretation}
-                      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <LevelChip interpretation={row.interpretation} />
-                        {#if row.value?.secondary}
-                          <span class="text-sm text-foreground/70">{row.value.secondary}</span>
+                        {#if row.value}
+                          <span class="shrink-0 pt-0.5 text-right tabular-nums">
+                            {row.value.primary}
+                          </span>
                         {/if}
                       </div>
-                      {#if row.caption}
-                        <p class="text-sm text-foreground/70">{row.caption}</p>
+                      {#if row.interpretation}
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <LevelChip interpretation={row.interpretation} />
+                          {#if row.value?.secondary}
+                            <span class="text-sm text-foreground/70">{row.value.secondary}</span>
+                          {/if}
+                        </div>
+                        {#if row.caption}
+                          <p class="text-sm text-foreground/70">{row.caption}</p>
+                        {/if}
                       {/if}
-                    {/if}
-                    <div class="flex items-center gap-2">
-                      <div class="min-w-0 flex-1">
-                        <Theme
-                          palette="phosphor"
-                          colors={{
-                            accent:
-                              TONE_HEX[
-                                row.group === 'up' ? 'good' : row.group === 'down' ? 'bad' : 'ok'
-                              ],
-                          }}
+                      <div class="flex items-center gap-2">
+                        <div class="min-w-0 flex-1">
+                          <Theme
+                            palette="phosphor"
+                            colors={{
+                              accent:
+                                TONE_HEX[
+                                  row.group === 'up' ? 'good' : row.group === 'down' ? 'bad' : 'ok'
+                                ],
+                            }}
+                          >
+                            <Progress
+                              value={row.normalized ?? 0}
+                              label={row.factor.name}
+                              size="s"
+                            />
+                          </Theme>
+                        </div>
+                        <span
+                          class="w-24 shrink-0 text-right text-sm text-foreground/70 tabular-nums"
                         >
-                          <Progress value={row.normalized ?? 0} label={row.factor.name} size="s" />
-                        </Theme>
+                          {row.normalized === null ? 'не учтён' : `${row.share}% балла`}
+                        </span>
                       </div>
-                      <span
-                        class="w-24 shrink-0 text-right text-sm text-foreground/70 tabular-nums"
-                      >
-                        {row.normalized === null ? 'не учтён' : `${row.share}% балла`}
-                      </span>
-                    </div>
-                    <SourceLine provenance={row.provenance} />
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          </section>
+                      <SourceLine provenance={row.provenance} />
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            </div>
+          </Panel>
         {/if}
       {/each}
     </div>

@@ -105,11 +105,11 @@
   >
     <aside
       class={cn(
-        'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r',
+        'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r md:border-dashed md:border-foreground/25',
         section === 'map' && 'hidden md:flex',
       )}
     >
-      <header class="flex flex-col gap-3 border-b px-4 py-3">
+      <header class="flex flex-col gap-3 border-b border-dashed border-foreground/25 px-4 py-3">
         <div class="flex items-center justify-between gap-3">
           <h1 class="text-base font-semibold">Все псы попадают в рай</h1>
           <ShareButton isCompact />
@@ -155,7 +155,7 @@
     </main>
 
     <nav
-      class="absolute inset-x-0 bottom-0 z-20 grid h-14 grid-cols-[0.8fr_0.9fr_1fr_1.3fr] border-t bg-background md:hidden"
+      class="absolute inset-x-0 bottom-0 z-20 grid h-14 grid-cols-[0.8fr_0.9fr_1fr_1.3fr] border-t border-dashed border-foreground/25 bg-background md:hidden"
       aria-label="Разделы"
     >
       {#each MOBILE_SECTIONS as item (item.id)}

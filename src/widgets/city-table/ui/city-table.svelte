@@ -1,9 +1,19 @@
 <script lang="ts">
+  import { Theme } from 'svelte-ascii-ui';
+
   import { FactorHint, formatValue, interpretValue, ScoreBadge } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { CityId, FactorId, NumericFactor } from '@/shared/lib/ranking';
-  import { toneClasses } from '@/shared/lib/tone';
+  import type { Tone } from '@/shared/lib/tone';
   import { cn } from '@/shared/lib/utils';
+
+  /** В плотной таблице цвет — слабая заливка, значения читаются нейтральным текстом. */
+  const CELL_TONES: Record<Tone, string> = {
+    good: 'bg-primary/5',
+    ok: 'bg-warning/5',
+    bad: 'bg-destructive/5',
+    neutral: '',
+  };
 
   type AriaSort = 'ascending' | 'descending' | 'none';
 
@@ -70,121 +80,146 @@
   }
 </script>
 
-<div class="h-full overflow-auto" data-testid="city-table">
-  {#if ranking.tableCities.length > 0}
-    <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
-      <caption class="sr-only">
-        Города {sortedName ? `по фактору «${sortedName}»` : 'по баллу'}. Клик по строке открывает
-        карточку города.
-      </caption>
-      <thead>
-        <tr class="text-left align-bottom">
-          <th scope="col" class="sticky top-0 z-10 border-b bg-background px-2 py-2 font-medium">
-            <span aria-hidden="true">№</span>
-            <span class="sr-only">Место</span>
-          </th>
-          <!-- Угол липнет и сверху, и слева: выше остальных заголовков при прокрутке. -->
-          <th
-            scope="col"
-            class="sticky top-0 left-0 z-30 border-r border-b bg-background px-3 py-2 font-medium"
-          >
-            Город
-          </th>
-          <!-- На телефоне страна — строкой под городом: ширина экрана нужна значениям. -->
-          <th
-            scope="col"
-            class="sticky top-0 z-10 hidden border-b bg-background px-3 py-2 font-medium md:table-cell"
-          >
-            Страна
-          </th>
-          <th scope="col" class="sticky top-0 z-10 border-b bg-background px-3 py-2 font-medium">
-            Балл
-          </th>
-          {#each factors as factor (factor.id)}
-            {@const ariaSort = ariaSortOf(factor.id)}
+<Theme
+  palette="phosphor"
+  font="'IBM Plex Mono', ui-monospace, monospace"
+  colors={{
+    background: '#252a28',
+    surface: '#303833',
+    text: '#c6cec5',
+    muted: '#a0aaa1',
+    accent: '#a9be9d',
+    warning: '#c7b88b',
+    danger: '#cda49a',
+  }}
+  class="h-full"
+>
+  <div class="h-full overflow-auto bg-background text-foreground" data-testid="city-table">
+    {#if ranking.tableCities.length > 0}
+      <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
+        <caption class="sr-only">
+          Города {sortedName ? `по фактору «${sortedName}»` : 'по баллу'}. Клик по строке открывает
+          карточку города.
+        </caption>
+        <thead>
+          <tr class="text-left align-bottom">
             <th
               scope="col"
-              aria-sort={ariaSort}
-              class="sticky top-0 z-10 border-b bg-background px-2 py-1 font-medium"
+              class="sticky top-0 z-10 border-b border-dashed border-foreground/15 bg-background px-2 py-2 font-medium"
             >
-              <span class="flex max-w-44 min-w-28 items-end gap-0.5">
-                <button
-                  type="button"
-                  class="flex flex-1 items-end gap-1 px-1 py-1 text-left leading-tight hover:bg-muted"
-                  data-testid="sort-{factor.id}"
-                  onclick={() => handleSort(factor.id)}
-                >
-                  {factor.name}
-                  {#if ariaSort === 'ascending'}
-                    <span aria-hidden="true">↑</span>
-                  {:else if ariaSort === 'descending'}
-                    <span aria-hidden="true">↓</span>
-                  {:else}
-                    <span aria-hidden="true">↕</span>
-                  {/if}
-                </button>
-                <FactorHint {factor} />
-              </span>
+              <span aria-hidden="true">№</span>
+              <span class="sr-only">Место</span>
             </th>
-          {/each}
-        </tr>
-      </thead>
-      <tbody>
-        {#each ranking.tableCities as view (view.city.id)}
-          <!-- Строка кликается мышью для удобства; с клавиатуры карточку открывает кнопка с названием. -->
-          <tr
-            class="group cursor-pointer"
-            data-testid="table-row"
-            data-city-id={view.city.id}
-            onclick={(event) => handleRowClick(event, view.city.id)}
-          >
-            <td class="border-b px-2 py-2 text-foreground/70 tabular-nums group-hover:bg-muted">
-              {view.ranked.rank}
-            </td>
+            <!-- Угол липнет и сверху, и слева: выше остальных заголовков при прокрутке. -->
             <th
-              scope="row"
-              class="sticky left-0 z-10 border-r border-b bg-background p-0 text-left font-medium group-hover:bg-muted"
+              scope="col"
+              class="sticky top-0 left-0 z-30 border-r border-b border-dashed border-foreground/15 bg-background px-3 py-2 font-medium"
             >
-              <button
-                type="button"
-                class="flex w-full max-w-36 flex-col px-3 py-2 text-left md:max-w-none md:whitespace-nowrap"
-                onclick={() => handleSelect(view.city.id)}
-              >
-                {view.city.name}
-                <span class="text-xs font-normal text-foreground/70 md:hidden">
-                  {view.city.countryName}
-                </span>
-              </button>
+              Город
             </th>
-            <td
-              class="hidden border-b px-3 py-2 whitespace-nowrap text-foreground/70 group-hover:bg-muted md:table-cell"
+            <!-- На телефоне страна — строкой под городом: ширина экрана нужна значениям. -->
+            <th
+              scope="col"
+              class="sticky top-0 z-10 hidden border-b border-dashed border-foreground/15 bg-background px-3 py-2 font-medium md:table-cell"
             >
-              {view.city.countryName}
-            </td>
-            <td class="border-b px-3 py-1 group-hover:bg-muted">
-              <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
-            </td>
-            {#each cellsByCity.get(view.city.id) ?? [] as cell (cell.factorId)}
-              <td
-                class={cn(
-                  'border-b px-3 py-2 whitespace-nowrap tabular-nums',
-                  cell.tone ? toneClasses(cell.tone).chip : 'text-muted-foreground',
-                )}
-                title={cell.levelLabel ?? undefined}
-                data-factor-id={cell.factorId}
-                data-value={cell.value ?? ''}
+              Страна
+            </th>
+            <th
+              scope="col"
+              class="sticky top-0 z-10 border-b border-dashed border-foreground/15 bg-background px-3 py-2 font-medium"
+            >
+              Балл
+            </th>
+            {#each factors as factor (factor.id)}
+              {@const ariaSort = ariaSortOf(factor.id)}
+              <th
+                scope="col"
+                aria-sort={ariaSort}
+                class="sticky top-0 z-10 border-b border-dashed border-foreground/15 bg-background px-2 py-1 font-medium"
               >
-                {cell.text}
-                {#if cell.levelLabel}
-                  <span class="sr-only">, {cell.levelLabel}</span>
-                {/if}
-              </td>
+                <span class="flex max-w-44 min-w-28 items-center gap-3">
+                  <button
+                    type="button"
+                    class="flex flex-1 items-end gap-1 px-1 py-1 text-left leading-tight hover:bg-muted"
+                    data-testid="sort-{factor.id}"
+                    onclick={() => handleSort(factor.id)}
+                  >
+                    {factor.name}
+                    {#if ariaSort === 'ascending'}
+                      <span aria-hidden="true">↑</span>
+                    {:else if ariaSort === 'descending'}
+                      <span aria-hidden="true">↓</span>
+                    {:else}
+                      <span aria-hidden="true">↕</span>
+                    {/if}
+                  </button>
+                  <FactorHint {factor} />
+                </span>
+              </th>
             {/each}
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  {:else}
-    <p class="p-4 text-foreground/70">Ни один город не подходит под настройки.</p>
-  {/if}
-</div>
+        </thead>
+        <tbody>
+          {#each ranking.tableCities as view (view.city.id)}
+            <!-- Строка кликается мышью для удобства; с клавиатуры карточку открывает кнопка с названием. -->
+            <tr
+              class="group cursor-pointer"
+              data-testid="table-row"
+              data-city-id={view.city.id}
+              onclick={(event) => handleRowClick(event, view.city.id)}
+            >
+              <td
+                class="border-b border-dashed border-foreground/15 px-2 py-2 text-foreground/70 tabular-nums group-hover:bg-muted"
+              >
+                {view.ranked.rank}
+              </td>
+              <th
+                scope="row"
+                class="sticky left-0 z-10 border-r border-b border-dashed border-foreground/15 bg-background p-0 text-left font-medium group-hover:bg-muted"
+              >
+                <button
+                  type="button"
+                  class="flex w-full max-w-36 flex-col px-3 py-2 text-left md:max-w-none md:whitespace-nowrap"
+                  onclick={() => handleSelect(view.city.id)}
+                >
+                  {view.city.name}
+                  <span class="text-xs font-normal text-foreground/70 md:hidden">
+                    {view.city.countryName}
+                  </span>
+                </button>
+              </th>
+              <td
+                class="hidden border-b border-dashed border-foreground/15 px-3 py-2 whitespace-nowrap text-foreground/70 group-hover:bg-muted md:table-cell"
+              >
+                {view.city.countryName}
+              </td>
+              <td
+                class="border-b border-dashed border-foreground/15 px-3 py-1 group-hover:bg-muted"
+              >
+                <ScoreBadge score={view.ranked.score} percentile={view.percentile} />
+              </td>
+              {#each cellsByCity.get(view.city.id) ?? [] as cell (cell.factorId)}
+                <td
+                  class={cn(
+                    'border-b border-dashed border-foreground/15 px-3 py-2 whitespace-nowrap tabular-nums',
+                    cell.tone ? CELL_TONES[cell.tone] : 'text-muted-foreground',
+                  )}
+                  title={cell.levelLabel ?? undefined}
+                  data-factor-id={cell.factorId}
+                  data-value={cell.value ?? ''}
+                >
+                  {cell.text}
+                  {#if cell.levelLabel}
+                    <span class="sr-only">, {cell.levelLabel}</span>
+                  {/if}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      <p class="p-4 text-foreground/70">Ни один город не подходит под настройки.</p>
+    {/if}
+  </div>
+</Theme>

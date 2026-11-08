@@ -1,11 +1,11 @@
 import type { StyleSpecification } from 'maplibre-gl';
 
-import { PALETTE_HEX } from '@/shared/lib/tone';
+import { MAP_PALETTE } from '../config/palette';
 
 type StyleLayer = StyleSpecification['layers'][number];
 
 /**
- * Перекрашивает стиль Positron в палитру сайта: бумага вместо белого, стальная вода,
+ * Перекрашивает стиль Positron в независимую светлую палитру: бумага вместо белого, стальная вода,
  * мох для парков, песок для дорог и застройки. Слои узнаются по id и типу свойства,
  * незнакомые получают песочный оттенок, чтобы ничто не осталось серым.
  */
@@ -28,11 +28,11 @@ function recolorLayer(layer: StyleLayer): StyleLayer {
 function colorFor(id: string, key: string): string | undefined {
   switch (key) {
     case 'text-halo-color':
-      return PALETTE_HEX.background;
+      return MAP_PALETTE.background;
     case 'text-color':
       return textColor(id);
     case 'fill-outline-color':
-      return PALETTE_HEX.surface;
+      return MAP_PALETTE.surface;
     case 'background-color':
     case 'fill-color':
       return fillColor(id);
@@ -45,30 +45,30 @@ function colorFor(id: string, key: string): string | undefined {
 
 /** Названия населённых пунктов — чернила, воды — сланец, остальные подписи — слива. */
 function textColor(id: string): string {
-  if (id.startsWith('water')) return PALETTE_HEX.muted;
-  if (/^label_(city|town|village)/.test(id)) return PALETTE_HEX.text;
-  return PALETTE_HEX.muted;
+  if (id.startsWith('water')) return MAP_PALETTE.muted;
+  if (/^label_(city|town|village)/.test(id)) return MAP_PALETTE.text;
+  return MAP_PALETTE.muted;
 }
 
 function fillColor(id: string): string {
-  if (/background|pier|glacier|ice_shelf/.test(id)) return PALETTE_HEX.background;
-  if (id.startsWith('water')) return tint(PALETTE_HEX.muted, 0.6);
-  if (id === 'park') return tint(PALETTE_HEX.accent, 0.25);
-  if (id.includes('wood')) return tint(PALETTE_HEX.accent, 0.35);
-  return tint(PALETTE_HEX.surface, 0.35);
+  if (/background|pier|glacier|ice_shelf/.test(id)) return MAP_PALETTE.background;
+  if (id.startsWith('water')) return tint(MAP_PALETTE.muted, 0.6);
+  if (id === 'park') return tint(MAP_PALETTE.accent, 0.25);
+  if (id.includes('wood')) return tint(MAP_PALETTE.accent, 0.35);
+  return tint(MAP_PALETTE.surface, 0.35);
 }
 
 function lineColor(id: string): string {
-  if (id.startsWith('water')) return tint(PALETTE_HEX.muted, 0.6);
-  if (id.startsWith('boundary')) return PALETTE_HEX.muted;
-  if (id.includes('dashline') || id.includes('inner')) return PALETTE_HEX.background;
-  if (id.includes('casing') || id.startsWith('railway')) return PALETTE_HEX.surface;
-  return tint(PALETTE_HEX.surface, 0.55);
+  if (id.startsWith('water')) return tint(MAP_PALETTE.muted, 0.6);
+  if (id.startsWith('boundary')) return MAP_PALETTE.muted;
+  if (id.includes('dashline') || id.includes('inner')) return MAP_PALETTE.background;
+  if (id.includes('casing') || id.startsWith('railway')) return MAP_PALETTE.surface;
+  return tint(MAP_PALETTE.surface, 0.55);
 }
 
 /** Цвет с долей `share` поверх бумаги: аналог полупрозрачной заливки для MapLibre, который не знает прозрачности поверх подложки. */
 function tint(hex: string, share: number): string {
-  const paper = channels(PALETTE_HEX.background);
+  const paper = channels(MAP_PALETTE.background);
   const mixed = channels(hex).map((channel, index) =>
     Math.round(channel * share + (paper[index] ?? 0) * (1 - share)),
   );

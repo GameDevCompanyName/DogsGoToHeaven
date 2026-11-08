@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Input } from 'svelte-ascii-ui';
+  import { Button, Input, Panel } from 'svelte-ascii-ui';
 
   import { CityListItem, LeftoverLine, profileChips } from '@/entities/city';
   import { describeFilter, getRankingContext } from '@/entities/ranking';
@@ -78,7 +78,7 @@
 {/snippet}
 
 <div class="flex h-full flex-col">
-  <div class="border-b px-4 py-3">
+  <div class="border-b border-dashed border-foreground/25 px-4 py-3">
     <Input
       size="s"
       type="search"
@@ -89,7 +89,7 @@
     />
   </div>
   {#if ranking.budget !== null}
-    <div class="border-b px-4 py-2">
+    <div class="border-b border-dashed border-foreground/25 px-4 py-2">
       <AffordableFirstToggle />
     </div>
   {/if}
@@ -104,7 +104,7 @@
     </p>
     {#if visibleCities.length > 0}
       <ol
-        class="divide-y"
+        class="divide-y divide-dashed divide-foreground/25"
         aria-label={isAffordableOrder ? 'Города: сначала по карману' : 'Города по баллу'}
       >
         {#each visibleCities as view (view.city.id)}
@@ -145,27 +145,36 @@
             Фильтры отсекли все города.
             {#if strictestFilter}Самый строгий: {strictestFilter}.{/if}
           </p>
-          <Button size="s" onclick={handleResetFilters}>Сбросить фильтры</Button>
         {:else}
           Ни один город не подходит под настройки.
         {/if}
       </div>
     {/if}
-    {#if ranking.hiddenByFilter > 0 && ranking.rankedCities.length > 0}
-      <div class="border-t px-4 pt-3">
-        <p
-          class="inline-flex flex-wrap items-center gap-x-1.5 border px-3 py-1 text-sm"
-          data-testid="hidden-by-filter"
-        >
-          Скрыто фильтрами: {ranking.hiddenByFilter} ·
-          <Button size="s" onclick={handleResetFilters}>Сбросить фильтры</Button>
-        </p>
-      </div>
-    {/if}
-    {#if ranking.hiddenByCoverage > 0}
-      <div class="p-4 text-sm text-foreground/70">
-        {@render hiddenNote(ranking.hiddenByCoverage, 'мало данных', ['скрыт', 'скрыты', 'скрыты'])}
-      </div>
-    {/if}
   </div>
+  {#if ranking.hiddenByFilter > 0 || ranking.hiddenByCoverage > 0}
+    <footer class="max-h-[40%] shrink-0 overflow-y-auto p-3" aria-label="Скрытые города">
+      <Panel size="s">
+        <div class="flex flex-col gap-2 text-sm">
+          {#if ranking.hiddenByFilter > 0}
+            <div
+              class="flex flex-wrap items-center justify-between gap-3"
+              data-testid="hidden-by-filter"
+            >
+              <span>Скрыто фильтрами: {ranking.hiddenByFilter}</span>
+              <Button size="s" onclick={handleResetFilters}>Сбросить фильтры</Button>
+            </div>
+          {/if}
+          {#if ranking.hiddenByCoverage > 0}
+            <div class="text-muted-foreground">
+              {@render hiddenNote(ranking.hiddenByCoverage, 'мало данных', [
+                'скрыт',
+                'скрыты',
+                'скрыты',
+              ])}
+            </div>
+          {/if}
+        </div>
+      </Panel>
+    </footer>
+  {/if}
 </div>

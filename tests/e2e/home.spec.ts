@@ -133,6 +133,7 @@ test('сброс фильтров возвращает отсечённые го
   await openSection(page, 'Города');
   const hidden = page.getByTestId('hidden-by-filter');
   await expect(hidden).toContainText('Скрыто фильтрами');
+  await expect(hidden).toBeInViewport();
 
   await hidden.getByRole('button', { name: 'Сбросить фильтры' }).click();
 
