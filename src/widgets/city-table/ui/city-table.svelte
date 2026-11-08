@@ -7,11 +7,11 @@
   import type { Tone } from '@/shared/lib/tone';
   import { cn } from '@/shared/lib/utils';
 
-  /** В плотной таблице цвет — слабая заливка, значения читаются нейтральным текстом. */
+  /** В плотной таблице цвет — различимая приглушённая заливка, значения читаются нейтральным текстом. */
   const CELL_TONES: Record<Tone, string> = {
-    good: 'bg-primary/5',
-    ok: 'bg-warning/5',
-    bad: 'bg-destructive/5',
+    good: 'bg-primary/30',
+    ok: 'bg-warning/30',
+    bad: 'bg-destructive/30',
     neutral: '',
   };
 
@@ -88,9 +88,9 @@
     surface: '#303833',
     text: '#c6cec5',
     muted: '#a0aaa1',
-    accent: '#a9be9d',
-    warning: '#c7b88b',
-    danger: '#cda49a',
+    accent: '#89ba9b',
+    warning: '#d4b56a',
+    danger: '#d09289',
   }}
   class="h-full"
 >
