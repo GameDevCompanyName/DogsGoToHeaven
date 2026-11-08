@@ -29,7 +29,7 @@ test('ползунок веса меняет балл города', async ({ pa
   expect(scoresBefore).toHaveLength(5);
 
   await openSection(page, 'Настройки');
-  const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
+  const thumb = page.getByRole('slider', { name: 'Вес: Стоимость жизни' });
   await thumb.focus();
   await thumb.press('Home');
   await openSection(page, 'Города');
@@ -133,6 +133,7 @@ test('сброс фильтров возвращает отсечённые го
   await openSection(page, 'Города');
   const hidden = page.getByTestId('hidden-by-filter');
   await expect(hidden).toContainText('Скрыто фильтрами');
+  await expect(hidden).toBeInViewport();
 
   await hidden.getByRole('button', { name: 'Сбросить фильтры' }).click();
 
@@ -143,7 +144,7 @@ test('сброс фильтров возвращает отсечённые го
 test('ссылка, вставленная в открытую вкладку, заменяет правки', async ({ page }) => {
   await page.goto('/');
   await openSection(page, 'Настройки');
-  const thumb = page.getByTestId('weight-cost-of-living').getByRole('slider');
+  const thumb = page.getByRole('slider', { name: 'Вес: Стоимость жизни' });
   await thumb.focus();
   await thumb.press('Home');
   await expect(page.getByTestId('persona-status')).toBeVisible();
@@ -218,4 +219,26 @@ test('таблица сортируется по колонке и пишет с
   await expect(page).toHaveURL(/sort=rent:desc/);
   const descending = await rents();
   expect(descending).toEqual([...descending].sort((a, b) => b - a));
+});
+
+test('ручное копирование из шапки остаётся в пределах мобильного экрана', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: () => Promise.reject(new Error('Clipboard unavailable')) },
+    });
+  });
+  await page.goto('/');
+  await openSection(page, 'Города');
+  await page.getByTestId('share-button').click();
+  const panel = page.getByTestId('share-manual');
+  const input = panel.getByRole('textbox');
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue(/https?:/);
+  const box = await panel.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await input.press('Escape');
+  await expect(panel).toBeHidden();
 });

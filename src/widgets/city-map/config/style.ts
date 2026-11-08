@@ -1,6 +1,6 @@
 import type { AddLayerObject } from 'maplibre-gl';
 
-import { PALETTE_HEX, TONE_HEX } from '@/shared/lib/tone';
+import { MAP_PALETTE, MAP_TONES } from './palette';
 
 // Типы спецификации стиля maplibre-gl наружу не отдаёт, берём их из типа слоя.
 type CircleLayer = Extract<AddLayerObject, { type: 'circle' }>;
@@ -21,7 +21,7 @@ export const SELECTED_LAYER_ID = 'cities-selected';
 
 /**
  * Красный → янтарный → зелёный по месту в выдаче 0–1 (`colorValue`), серые — отсечённые и без балла.
- * Палитра общая с метками уровней и бейджем балла.
+ * Смысл цветов общий с интерфейсом, оттенки подобраны для тёмной подложки.
  */
 const SCORE_COLOR: CirclePaint['circle-color'] = [
   'case',
@@ -31,13 +31,13 @@ const SCORE_COLOR: CirclePaint['circle-color'] = [
     ['linear'],
     ['get', 'colorValue'],
     0,
-    TONE_HEX.bad,
+    MAP_TONES.bad,
     0.5,
-    TONE_HEX.ok,
+    MAP_TONES.ok,
     1,
-    TONE_HEX.good,
+    MAP_TONES.good,
   ],
-  TONE_HEX.neutral,
+  MAP_TONES.neutral,
 ];
 
 const RADIUS: CirclePaint['circle-radius'] = ['interpolate', ['linear'], ['zoom'], 2, 5, 8, 10];
@@ -50,7 +50,7 @@ export const CITY_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': RADIUS,
-    'circle-stroke-color': PALETTE_HEX.paper,
+    'circle-stroke-color': MAP_PALETTE.background,
     'circle-stroke-width': 1,
   },
 };
@@ -63,7 +63,7 @@ export const SELECTED_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 8, 8, 13],
-    'circle-stroke-color': PALETTE_HEX.ink,
+    'circle-stroke-color': MAP_PALETTE.selection,
     'circle-stroke-width': 3,
   },
 };

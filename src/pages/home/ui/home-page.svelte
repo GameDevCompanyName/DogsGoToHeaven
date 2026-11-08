@@ -22,13 +22,13 @@
 
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
+  import { Button } from 'svelte-ascii-ui';
 
   import { createRankingState, setRankingContext } from '@/entities/ranking';
   import { ShareButton } from '@/features/share-link';
   import { loadRawData } from '@/shared/api';
   import { isOnboarded, markOnboarded } from '@/shared/lib/onboarding';
   import { cn } from '@/shared/lib/utils';
-  import * as Tabs from '@/shared/ui/tabs';
   import { CityCard } from '@/widgets/city-card';
   import { CityMap } from '@/widgets/city-map';
   import { CityTable } from '@/widgets/city-table';
@@ -95,47 +95,53 @@
 <svelte:window onhashchange={handleHashChange} />
 
 {#if !isRedirecting}
-  <div class="relative h-dvh overflow-hidden md:grid md:grid-cols-[400px_1fr]">
+  <div
+    class={cn(
+      'relative h-dvh overflow-hidden md:grid',
+      panelTab === 'cities'
+        ? 'md:grid-cols-[400px_minmax(0,1fr)]'
+        : 'md:grid-cols-[440px_minmax(0,1fr)] lg:grid-cols-[480px_minmax(0,1fr)]',
+    )}
+  >
     <aside
       class={cn(
-        'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r',
+        'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r md:border-dashed md:border-foreground/25',
         section === 'map' && 'hidden md:flex',
       )}
     >
-      <Tabs.Root bind:value={() => panelTab, handlePanelTabChange} class="min-h-0 flex-1 gap-0">
-        <header class="flex flex-col gap-3 border-b px-4 py-3">
-          <div class="flex items-center justify-between gap-3">
-            <h1 class="text-base font-semibold">Все псы попадают в рай</h1>
-            <ShareButton />
-          </div>
-          <Tabs.List class="hidden w-full md:inline-flex">
-            <Tabs.Trigger value="cities">Города</Tabs.Trigger>
-            <Tabs.Trigger value="table">Таблица</Tabs.Trigger>
-            <Tabs.Trigger value="settings">Настройки</Tabs.Trigger>
-          </Tabs.List>
-        </header>
-        <Tabs.Content value="cities" class="min-h-0 flex-1">
-          <ResultsList oncompareopen={() => (isCompareOpen = true)} />
-        </Tabs.Content>
-        <!-- Вкладки смонтированы все сразу, поэтому таблица — только пока открыта: тысячи ячеек
-             иначе перерисовывались бы на каждый шаг ползунка. На десктопе она справа, вместо карты. -->
-        <Tabs.Content value="table" class="min-h-0 flex-1 md:hidden">
-          {#if section === 'table' && !isDesktop.current}
-            <CityTable />
-          {/if}
-        </Tabs.Content>
-        {#if isWideTable}
-          <!-- На десктопе при таблице слева настройки: двигаешь вес — видишь таблицу. Активна
-               вкладка «Таблица», поэтому настройки тут не панель вкладок, а обычный блок. -->
-          <section aria-label="Настройки" class="min-h-0 flex-1 text-sm">
-            <SettingsPanel />
-          </section>
-        {:else}
-          <Tabs.Content value="settings" class="min-h-0 flex-1">
-            <SettingsPanel />
-          </Tabs.Content>
-        {/if}
-      </Tabs.Root>
+      <header class="flex flex-col gap-3 border-b border-dashed border-foreground/25 px-4 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-base font-semibold">Все псы попадают в рай</h1>
+          <ShareButton isCompact />
+        </div>
+        <nav class="hidden gap-1 md:flex" aria-label="Разделы">
+          {#each MOBILE_SECTIONS.filter((item) => item.id !== 'map') as item (item.id)}
+            <div class={panelTab === item.id ? 'bg-primary/20 font-semibold' : ''}>
+              <Button
+                size="s"
+                aria-pressed={panelTab === item.id}
+                variant={panelTab === item.id ? 'primary' : 'default'}
+                onclick={() => handlePanelTabChange(item.id)}
+                ><span aria-hidden="true">{panelTab === item.id ? '● ' : '○ '}</span
+                >{item.label}</Button
+              >
+            </div>
+          {/each}
+        </nav>
+      </header>
+      <section class="min-h-0 flex-1" aria-label="Города" hidden={panelTab !== 'cities'}>
+        <ResultsList oncompareopen={() => (isCompareOpen = true)} />
+      </section>
+      <section
+        class="min-h-0 flex-1"
+        aria-label="Настройки"
+        hidden={!isWideTable && panelTab !== 'settings'}
+      >
+        <SettingsPanel />
+      </section>
+      {#if section === 'table' && !isDesktop.current}
+        <section class="min-h-0 flex-1" aria-label="Таблица"><CityTable /></section>
+      {/if}
     </aside>
 
     <main class="absolute inset-x-0 top-0 bottom-14 md:relative md:h-dvh">
@@ -149,21 +155,25 @@
     </main>
 
     <nav
-      class="absolute inset-x-0 bottom-0 z-20 grid h-14 grid-cols-4 border-t bg-background md:hidden"
+      class="absolute inset-x-0 bottom-0 z-20 grid h-14 grid-cols-[0.8fr_0.9fr_1fr_1.3fr] border-t border-dashed border-foreground/25 bg-background md:hidden"
       aria-label="Разделы"
     >
       {#each MOBILE_SECTIONS as item (item.id)}
-        <button
-          type="button"
-          aria-pressed={section === item.id}
-          class={cn(
-            'border-t-2 border-transparent text-sm font-medium text-foreground/70 transition-colors',
-            section === item.id && 'border-foreground text-foreground',
-          )}
-          onclick={() => (section = item.id)}
+        <div
+          class={section === item.id
+            ? 'flex border-t-4 border-primary bg-primary/20 font-semibold'
+            : 'flex border-t-4 border-transparent'}
         >
-          {item.label}
-        </button>
+          <Button
+            size="s"
+            fullWidth
+            aria-pressed={section === item.id}
+            variant={section === item.id ? 'primary' : 'default'}
+            onclick={() => (section = item.id)}
+          >
+            <span class="text-[11px] whitespace-nowrap min-[360px]:text-sm">{item.label}</span>
+          </Button>
+        </div>
       {/each}
     </nav>
   </div>

@@ -12,7 +12,7 @@
 </script>
 
 <script lang="ts">
-  import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
+  import { Link } from 'svelte-ascii-ui';
 
   import { linksFor } from '@/shared/lib/links';
   import type { DatasetCity } from '@/shared/lib/ranking';
@@ -41,15 +41,9 @@
     <ul class="flex flex-col gap-3">
       {#each links as link (link.sourceUrl)}
         <li class="flex flex-col gap-0.5">
-          <a
-            href={link.url}
-            target="_blank"
-            rel="external noopener noreferrer"
-            class="inline-flex w-fit items-start gap-1 font-medium underline underline-offset-2"
-          >
+          <Link href={link.url} target="_blank" rel="external noopener noreferrer">
             {link.title}
-            <ExternalLinkIcon class="mt-1 size-3.5 shrink-0" aria-hidden="true" />
-          </a>
+          </Link>
           <span class="text-sm text-foreground/70">
             {link.sourceName}
             · {link.level === 'city' ? 'о городе' : `о стране: ${city.countryName}`}

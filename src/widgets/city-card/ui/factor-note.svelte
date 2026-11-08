@@ -7,6 +7,8 @@
 </script>
 
 <script lang="ts">
+  import { Article } from 'svelte-ascii-ui';
+
   import { formatValue } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import { hasNote, loadNote } from '@/shared/api';
@@ -71,14 +73,16 @@
           <p>Проверено {formatDate(note.checkedAt)}</p>
           <p>Справка по открытым источникам, не юридическая консультация.</p>
         </div>
-        {#each note.sections as section (section.title)}
-          <div class="flex flex-col gap-2">
-            <h3 class="font-medium">{section.title}</h3>
-            {#each toParagraphs(section.body) as paragraph, index (index)}
-              <p class="leading-relaxed">{paragraph}</p>
-            {/each}
-          </div>
-        {/each}
+        <Article>
+          {#each note.sections as section (section.title)}
+            <div class="flex flex-col gap-2">
+              <h3 class="font-medium">{section.title}</h3>
+              {#each toParagraphs(section.body) as paragraph, index (index)}
+                <p class="leading-relaxed">{paragraph}</p>
+              {/each}
+            </div>
+          {/each}
+        </Article>
       {/if}
     {:catch}
       <p class="text-sm text-foreground/70">Не удалось загрузить справку.</p>

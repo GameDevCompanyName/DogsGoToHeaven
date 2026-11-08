@@ -114,10 +114,11 @@
     return [0, -Math.round(loaded.getContainer().clientHeight / 4)];
   }
 
-  /** Ширина карточки города задана в app.css, чтобы карта и карточка не разошлись. */
+  /** Ширина соответствует публичным размерам Drawer в карточке города. */
   function cardWidth(): number {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue('--city-card-width');
-    return Number.parseFloat(raw) || 440;
+    // Public Drawer sizes: l = 50vw, xl = 67vw. No internal kit CSS is overridden.
+    const ratio = window.matchMedia('(min-width: 1280px)').matches ? 0.67 : 0.5;
+    return window.innerWidth * ratio;
   }
 
   $effect(() => {

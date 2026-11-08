@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ScaleIcon from '@lucide/svelte/icons/scale';
+  import { Button } from 'svelte-ascii-ui';
 
   import { getRankingContext, MAX_COMPARE } from '@/entities/ranking';
 
@@ -21,19 +21,12 @@
 
 {#if ranking.compared.length > 0}
   <div
-    class="flex flex-wrap items-center gap-x-1.5 gap-y-1 border-b bg-muted px-4 py-2 text-sm"
+    class="flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-2 text-sm"
     data-testid="compare-bar"
   >
-    <ScaleIcon class="size-4 shrink-0" aria-hidden="true" />
     <span class="min-w-0">Сравнить: <span class="font-medium">{names}</span></span>
-    ·
-    <button type="button" class="font-medium underline underline-offset-4" onclick={onopen}>
-      Открыть
-    </button>
-    ·
-    <button type="button" class="font-medium underline underline-offset-4" onclick={handleClear}>
-      Очистить
-    </button>
+    <Button size="s" onclick={onopen}>Открыть</Button>
+    <Button size="s" onclick={handleClear}>Очистить</Button>
     {#if ranking.isCompareFull}
       <span class="w-full text-foreground/70">Больше {MAX_COMPARE} городов не сравнить.</span>
     {/if}

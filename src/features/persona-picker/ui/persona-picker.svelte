@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Button } from 'svelte-ascii-ui';
+
   import { PersonaCard } from '@/entities/preset';
   import { getRankingContext } from '@/entities/ranking';
   import { pluralize } from '@/shared/lib/plural';
@@ -38,7 +40,7 @@
 <section aria-labelledby="personas-heading" class="flex flex-col gap-2">
   <h2
     id="personas-heading"
-    class="text-sm font-semibold tracking-wide text-foreground/70 uppercase"
+    class="text-sm font-semibold tracking-wide text-[var(--muted)] uppercase"
   >
     Кто вы
   </h2>
@@ -54,16 +56,10 @@
     {/each}
   </ul>
   {#if changedCount > 0}
-    <p class="text-sm text-foreground/70" data-testid="persona-status">
+    <p class="text-sm text-[var(--muted)]" data-testid="persona-status">
       Свой вариант · изменено {changedCount}
       {pluralize(changedCount, ['фактор', 'фактора', 'факторов'])} ·
-      <button
-        type="button"
-        class="font-medium text-foreground underline underline-offset-4"
-        onclick={handleReset}
-      >
-        Сбросить
-      </button>
+      <Button size="s" onclick={handleReset}>Сбросить</Button>
     </p>
   {/if}
 </section>

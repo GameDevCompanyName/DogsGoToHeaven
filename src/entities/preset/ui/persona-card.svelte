@@ -1,8 +1,7 @@
 <script lang="ts">
-  import CheckIcon from '@lucide/svelte/icons/check';
+  import { Badge, Button, Link } from 'svelte-ascii-ui';
 
   import type { Preset } from '@/shared/lib/ranking';
-  import { cn } from '@/shared/lib/utils';
 
   interface Props {
     preset: Preset;
@@ -14,61 +13,46 @@
 
   let { preset, isActive = false, href, onselect }: Props = $props();
 
-  const cardClass = $derived(
-    cn(
-      'flex h-full w-full flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors hover:bg-muted',
-      isActive && 'border-foreground bg-muted ring-1 ring-foreground',
-    ),
-  );
-
   function handleClick() {
     onselect?.(preset.id);
   }
 </script>
 
 {#snippet content()}
-  <span class="flex items-start gap-1.5 leading-snug font-semibold">
-    {#if isActive}
-      <CheckIcon class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-    {/if}
-    {preset.name}
-  </span>
-  <span class="text-sm leading-snug text-foreground/70">{preset.description}</span>
-  <span class="mt-auto flex flex-wrap gap-1 pt-1">
-    {#each preset.highlights as highlight (highlight)}
-      <span
-        class={cn(
-          'rounded-full px-2 py-0.5 text-xs text-secondary-foreground',
-          isActive ? 'bg-background' : 'bg-secondary',
-        )}
-      >
-        {highlight}
-      </span>
-    {/each}
+  <span class="flex h-full w-full flex-col gap-4 py-2 text-left">
+    <span class="text-base font-semibold">{preset.name}</span>
+    <span class="text-sm leading-relaxed text-foreground">{preset.description}</span>
+    <span class="flex flex-wrap gap-2 text-base">
+      {#each preset.highlights as highlight (highlight)}
+        <Badge size="m" label={highlight} />
+      {/each}
+    </span>
+    <span class="text-sm font-semibold">{isActive ? '[x] Выбрано' : 'Выбрать →'}</span>
   </span>
 {/snippet}
 
 {#if href}
-  <!-- eslint-disable svelte/no-navigation-without-resolve -- href собирает вызывающий код через resolve() -->
-  <a
+  <Link
     {href}
+    button
+    size="s"
+    class="h-full w-full"
     data-testid="persona-card"
     data-preset-id={preset.id}
-    class={cardClass}
     onclick={handleClick}
   >
     {@render content()}
-  </a>
-  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+  </Link>
 {:else}
-  <button
-    type="button"
+  <Button
+    size="s"
+    fullWidth
+    variant={isActive ? 'primary' : 'default'}
     aria-pressed={isActive}
     data-testid="persona-card"
     data-preset-id={preset.id}
-    class={cardClass}
     onclick={handleClick}
   >
     {@render content()}
-  </button>
+  </Button>
 {/if}
