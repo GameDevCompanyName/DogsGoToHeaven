@@ -17,7 +17,7 @@
 </script>
 
 <script lang="ts">
-  import { Panel, Progress, Theme } from 'svelte-ascii-ui';
+  import { Panel } from 'svelte-ascii-ui';
 
   import {
     FactorHint,
@@ -29,7 +29,8 @@
   } from '@/entities/city';
   import { getRankingContext, type RankedCityView } from '@/entities/ranking';
   import type { Factor } from '@/shared/lib/ranking';
-  import { TONE_HEX } from '@/shared/lib/tone';
+  import { toneClasses } from '@/shared/lib/tone';
+  import { cn } from '@/shared/lib/utils';
 
   import SourceLine from './source-line.svelte';
 
@@ -110,13 +111,13 @@
                 <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
                   {#each group.rows as row (row.factor.id)}
                     <li class="flex flex-col gap-1.5">
-                      <div class="flex items-center gap-3">
-                        <span class="flex min-w-0 flex-1 items-center gap-2">
+                      <div class="flex min-w-0 flex-col items-start gap-1">
+                        <span class="flex min-w-0 items-center gap-2">
                           <span class="font-medium">{row.factor.name}</span>
                           <FactorHint factor={row.factor} />
                         </span>
                         {#if row.value}
-                          <span class="shrink-0 pt-0.5 text-right tabular-nums">
+                          <span class="max-w-full pt-0.5 tabular-nums">
                             {row.value.primary}
                           </span>
                         {/if}
@@ -134,24 +135,32 @@
                       {/if}
                       <div class="flex items-center gap-2">
                         <div class="min-w-0 flex-1">
-                          <Theme
-                            palette="phosphor"
-                            colors={{
-                              accent:
-                                TONE_HEX[
-                                  row.group === 'up' ? 'good' : row.group === 'down' ? 'bad' : 'ok'
-                                ],
-                            }}
-                          >
-                            <Progress
-                              value={row.normalized ?? 0}
-                              label={row.factor.name}
-                              size="s"
-                            />
-                          </Theme>
+                          <!-- Качество — измерение, не выполнение задачи: семантика meter из гайда 0.2.0. -->
+                          {#if row.normalized !== null}
+                            <meter
+                              class={cn(
+                                'h-3 w-full appearance-none bg-muted [&::-moz-meter-bar]:bg-current [&::-webkit-meter-bar]:h-3 [&::-webkit-meter-bar]:rounded-none [&::-webkit-meter-bar]:border-0 [&::-webkit-meter-bar]:bg-muted [&::-webkit-meter-bar]:bg-none [&::-webkit-meter-even-less-good-value]:bg-current [&::-webkit-meter-even-less-good-value]:bg-none [&::-webkit-meter-optimum-value]:bg-current [&::-webkit-meter-optimum-value]:bg-none [&::-webkit-meter-suboptimum-value]:bg-current [&::-webkit-meter-suboptimum-value]:bg-none',
+                                toneClasses(
+                                  row.group === 'up' ? 'good' : row.group === 'down' ? 'bad' : 'ok',
+                                ).text,
+                              )}
+                              min={0}
+                              max={1}
+                              low={0.33}
+                              high={0.66}
+                              optimum={1}
+                              value={row.normalized}
+                              aria-label="{row.factor.name}: нормализованная оценка"
+                              aria-valuetext={`${Math.round(row.normalized * 100)} из 100`}
+                            >
+                              {Math.round(row.normalized * 100)} из 100
+                            </meter>
+                          {:else}
+                            <span class="text-sm text-muted-foreground">Нет данных</span>
+                          {/if}
                         </div>
                         <span
-                          class="w-24 shrink-0 text-right text-sm text-foreground/70 tabular-nums"
+                          class="w-32 shrink-0 text-right text-sm whitespace-nowrap text-foreground/70 tabular-nums"
                         >
                           {row.normalized === null ? 'не учтён' : `${row.share}% балла`}
                         </span>

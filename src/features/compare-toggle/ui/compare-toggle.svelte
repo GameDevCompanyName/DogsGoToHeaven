@@ -33,7 +33,7 @@
   <IconButton
     size="s"
     label={'Сравнить: ' + cityName}
-    glyph={isPressed ? '✓' : '+'}
+    icon={isPressed ? 'minus' : 'plus'}
     variant={isPressed ? 'primary' : 'default'}
     aria-pressed={isPressed}
     aria-disabled={isDisabled}

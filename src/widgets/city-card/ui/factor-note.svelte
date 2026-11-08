@@ -74,14 +74,16 @@
           <p>Справка по открытым источникам, не юридическая консультация.</p>
         </div>
         <Article>
-          {#each note.sections as section (section.title)}
-            <div class="flex flex-col gap-2">
-              <h3 class="font-medium">{section.title}</h3>
-              {#each toParagraphs(section.body) as paragraph, index (index)}
-                <p class="leading-relaxed">{paragraph}</p>
-              {/each}
-            </div>
-          {/each}
+          <div class="max-w-[70ch] text-sm leading-relaxed">
+            {#each note.sections as section (section.title)}
+              <div class="flex flex-col gap-2">
+                <h3 class="font-medium">{section.title}</h3>
+                {#each toParagraphs(section.body) as paragraph, index (index)}
+                  <p class="leading-relaxed">{paragraph}</p>
+                {/each}
+              </div>
+            {/each}
+          </div>
         </Article>
       {/if}
     {:catch}

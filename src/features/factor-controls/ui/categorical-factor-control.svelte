@@ -35,7 +35,7 @@
     <div class="flex items-center gap-2">
       <Checkbox
         {id}
-        size="s"
+        size="m"
         label={category.name}
         bind:checked={
           () => allowed.includes(category.code),

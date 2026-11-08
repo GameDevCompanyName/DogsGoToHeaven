@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Checkbox, NumberInput, Slider } from 'svelte-ascii-ui';
+  import { Button, Checkbox, NumberInput, Range, Slider } from 'svelte-ascii-ui';
 
   import { FactorHint } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
@@ -23,11 +23,20 @@
   const unit = $derived(ranking.dataset.provenance[factor.id]?.unit);
   let low = $derived(range ? range[0] : numericFilter?.min);
   let high = $derived(range ? range[1] : numericFilter?.max);
+  // Вся выборка, а не отфильтрованная выдача: шкала не сжимается при отсечении городов.
+  const domain = $derived.by(() => {
+    const values = ranking.dataset.cities.flatMap((city) => {
+      const value = city.values[factor.id];
+      return typeof value === 'number' && Number.isFinite(value) ? [value] : [];
+    });
+    if (factor.scoring.type === 'range') values.push(...factor.scoring.defaultRange);
+    const min = Math.floor(Math.min(0, ...values));
+    return { min, max: Math.max(min + 1, Math.ceil(Math.max(0, ...values))) };
+  });
+  // Точный ввод и старые URL могут выходить за пределы текущей выборки.
+  const sliderMin = $derived(Math.min(domain.min, low ?? domain.min, high ?? domain.min));
+  const sliderMax = $derived(Math.max(domain.max, low ?? domain.max, high ?? domain.max));
   const checkboxId = $derived(`factor-${factor.id}`);
-  /** Доля среди включённых весов; при пропусках данных вклад в балл города отличается. */
-  const sharePercent = $derived(
-    isEnabled ? Math.round(ranking.weightShare(factor.id) * 100) : null,
-  );
 
   function parseBound(raw: string): number | undefined {
     if (raw.trim() === '') return undefined;
@@ -41,6 +50,28 @@
 
   function handleWeightChange(value: number) {
     ranking.setWeight(factor.id, value);
+  }
+
+  function updateBounds(nextLow: number | undefined, nextHigh: number | undefined) {
+    if (nextLow !== undefined && nextHigh !== undefined && nextLow > nextHigh) {
+      [nextLow, nextHigh] = [nextHigh, nextLow];
+    }
+    if (range) ranking.setRange(factor.id, [nextLow ?? range[0], nextHigh ?? range[1]]);
+    else ranking.setNumericFilter(factor.id, { min: nextLow, max: nextHigh });
+    low = nextLow;
+    high = nextHigh;
+  }
+
+  function handleSliderChange(bound: 'low' | 'high', value: number) {
+    // Range остаётся непрерывным; округление убирает дробный шум от движения мышью.
+    const rounded = Math.round(value * 100) / 100;
+    const bounded =
+      bound === 'low'
+        ? Math.min(high ?? sliderMax, Math.max(sliderMin, rounded))
+        : Math.max(low ?? sliderMin, Math.min(sliderMax, rounded));
+    const next =
+      !range && (bound === 'low' ? value <= sliderMin : value >= sliderMax) ? undefined : bounded;
+    updateBounds(bound === 'low' ? next : low, bound === 'high' ? next : high);
   }
 
   function handleBoundChange(
@@ -58,10 +89,10 @@
       [low, high] = next;
       return;
     }
-    ranking.setNumericFilter(factor.id, {
-      min: bound === 'low' ? value : numericFilter?.min,
-      max: bound === 'high' ? value : numericFilter?.max,
-    });
+    updateBounds(
+      bound === 'low' ? value : numericFilter?.min,
+      bound === 'high' ? value : numericFilter?.max,
+    );
   }
 </script>
 
@@ -69,7 +100,7 @@
   <div class="flex items-center gap-2">
     <div class="min-w-0 flex-1">
       <Checkbox
-        size="s"
+        size="m"
         id={checkboxId}
         label={factor.name}
         bind:checked={() => isEnabled, handleEnabledChange}
@@ -77,11 +108,8 @@
     </div>
     <FactorHint {factor} />
   </div>
-  <div class="grid gap-1 text-sm tabular-nums" data-testid="weight-share-{factor.id}">
+  <div class="text-sm tabular-nums">
     <span>Важность: {weight} из 10 <ChangedMarker factorId={factor.id} /></span>
-    <span class="text-muted-foreground"
-      >Доля весов: {sharePercent === null ? '—' : `${sharePercent} %`}</span
-    >
   </div>
   <Slider
     size="s"
@@ -94,7 +122,27 @@
     bind:value={() => weight, handleWeightChange}
   />
   <div class="grid min-w-0 gap-2 text-sm">
-    <span class="w-12 shrink-0">{range ? 'цель' : 'порог'}</span>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <span>{range ? 'Целевой диапазон' : 'Порог'}{unit ? ` · ${unit}` : ''}</span>
+      {#if !range && numericFilter}
+        <Button size="s" onclick={() => updateBounds(undefined, undefined)}>Без ограничений</Button>
+      {/if}
+    </div>
+    <Range
+      size="s"
+      min={sliderMin}
+      max={sliderMax}
+      step="any"
+      label="{factor.name}: {range ? 'целевой диапазон' : 'порог'}"
+      lowerLabel="{factor.name}: нижняя граница"
+      upperLabel="{factor.name}: верхняя граница"
+      bind:lower={() => low ?? sliderMin, (value) => handleSliderChange('low', value)}
+      bind:upper={() => high ?? sliderMax, (value) => handleSliderChange('high', value)}
+    />
+    <div class="flex justify-between gap-3 text-muted-foreground tabular-nums">
+      <span>От: {low ?? 'не задано'}</span>
+      <span class="text-right">До: {high ?? 'не задано'}</span>
+    </div>
     <NumberInput
       size="s"
       step="any"
@@ -117,8 +165,5 @@
       incrementLabel="{factor.name}: увеличить верхнюю границу"
       onchange={(event) => handleBoundChange('high', event)}
     />
-    {#if unit}
-      <span class="shrink-0">{unit}</span>
-    {/if}
   </div>
 </div>

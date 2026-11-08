@@ -1,11 +1,10 @@
 @import 'tailwindcss';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/500.css';
+@import 'svelte-ascii-ui/fonts.css';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* Application layout uses the public semantic colors supplied by Theme. */
 @theme inline {
-  --font-sans: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: 'Monocraft', ui-monospace, monospace;
   --color-background: var(--bg);
   --color-foreground: var(--text);
   --color-primary: var(--accent);
@@ -18,6 +17,10 @@
   --color-accent-foreground: var(--bg);
   --color-destructive: var(--danger);
   --color-warning: var(--warning);
+  --color-success: var(--status-good);
+  --color-success-fill: var(--status-good-fill);
+  --color-warning-fill: var(--status-warning-fill);
+  --color-danger-fill: var(--status-danger-fill);
   --color-border: var(--muted);
   --color-input: var(--muted);
   --color-ring: var(--text);

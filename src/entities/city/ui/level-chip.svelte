@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Badge } from 'svelte-ascii-ui';
-
   import type { Interpretation } from '../lib/interpret';
+  import StatusBadge from './status-badge.svelte';
 
   interface Props {
     interpretation: Interpretation;
@@ -11,14 +10,5 @@
 </script>
 
 <span data-testid="level-chip" data-kind={interpretation.kind} data-tone={interpretation.tone}>
-  <Badge
-    size="m"
-    tone={interpretation.tone === 'good'
-      ? 'success'
-      : interpretation.tone === 'bad'
-        ? 'danger'
-        : interpretation.tone === 'ok'
-          ? 'warning'
-          : 'default'}>{interpretation.label}</Badge
-  >
+  <StatusBadge tone={interpretation.tone}>{interpretation.label}</StatusBadge>
 </span>
