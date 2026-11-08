@@ -4,11 +4,7 @@ import { MAP_PALETTE } from '../config/palette';
 
 type StyleLayer = StyleSpecification['layers'][number];
 
-/**
- * Перекрашивает стиль Positron в независимую светлую палитру: бумага вместо белого, стальная вода,
- * мох для парков, песок для дорог и застройки. Слои узнаются по id и типу свойства,
- * незнакомые получают песочный оттенок, чтобы ничто не осталось серым.
- */
+/** Перекрашивает Positron в спокойную тёмную подложку, независимо от темы контролов. */
 export function recolorStyle(style: StyleSpecification): StyleSpecification {
   return { ...style, layers: style.layers.map(recolorLayer) };
 }
@@ -43,7 +39,7 @@ function colorFor(id: string, key: string): string | undefined {
   }
 }
 
-/** Названия населённых пунктов — чернила, воды — сланец, остальные подписи — слива. */
+/** Города читаются ярче второстепенных географических подписей. */
 function textColor(id: string): string {
   if (id.startsWith('water')) return MAP_PALETTE.muted;
   if (/^label_(city|town|village)/.test(id)) return MAP_PALETTE.text;
@@ -52,25 +48,25 @@ function textColor(id: string): string {
 
 function fillColor(id: string): string {
   if (/background|pier|glacier|ice_shelf/.test(id)) return MAP_PALETTE.background;
-  if (id.startsWith('water')) return tint(MAP_PALETTE.muted, 0.6);
+  if (id.startsWith('water')) return MAP_PALETTE.water;
   if (id === 'park') return tint(MAP_PALETTE.accent, 0.25);
   if (id.includes('wood')) return tint(MAP_PALETTE.accent, 0.35);
   return tint(MAP_PALETTE.surface, 0.35);
 }
 
 function lineColor(id: string): string {
-  if (id.startsWith('water')) return tint(MAP_PALETTE.muted, 0.6);
-  if (id.startsWith('boundary')) return MAP_PALETTE.muted;
+  if (id.startsWith('water')) return MAP_PALETTE.water;
+  if (id.startsWith('boundary')) return MAP_PALETTE.boundary;
   if (id.includes('dashline') || id.includes('inner')) return MAP_PALETTE.background;
   if (id.includes('casing') || id.startsWith('railway')) return MAP_PALETTE.surface;
   return tint(MAP_PALETTE.surface, 0.55);
 }
 
-/** Цвет с долей `share` поверх бумаги: аналог полупрозрачной заливки для MapLibre, который не знает прозрачности поверх подложки. */
+/** Цвет с долей `share` поверх подложки: аналог полупрозрачной заливки для MapLibre, который не знает прозрачности поверх подложки. */
 function tint(hex: string, share: number): string {
-  const paper = channels(MAP_PALETTE.background);
+  const background = channels(MAP_PALETTE.background);
   const mixed = channels(hex).map((channel, index) =>
-    Math.round(channel * share + (paper[index] ?? 0) * (1 - share)),
+    Math.round(channel * share + (background[index] ?? 0) * (1 - share)),
   );
   return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
 }
