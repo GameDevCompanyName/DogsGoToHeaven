@@ -20,7 +20,11 @@ test('первый заход ведёт на лендинг, выбор пер�
   const family = cards.filter({ hasText: 'Семья с детьми' });
   await expect(family).toHaveCount(1);
 
-  await family.click();
+  // Нижняя часть карточки тоже ссылка: не требуется попадать в заголовок.
+  await family
+    .locator('span')
+    .filter({ hasText: /^Выбрать →$/ })
+    .click();
 
   await expect(page).toHaveURL(/\/#p=family$/);
   const sections = page.getByRole('navigation', { name: 'Разделы' });

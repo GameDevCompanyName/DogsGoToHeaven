@@ -37,8 +37,8 @@
   data-city-id={city.id}
   aria-current={isSelected ? 'true' : undefined}
   class={cn(
-    'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted',
-    isSelected && 'bg-muted',
+    'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5',
+    isSelected && 'bg-foreground/10',
   )}
   onclick={handleClick}
 >
@@ -63,7 +63,7 @@
           <span
             data-testid="city-chip"
             data-tone={chip.tone}
-            class="whitespace-nowrap {toneClasses(chip.tone).text}"
+            class="min-w-0 {toneClasses(chip.tone).text}"
           >
             {#if index > 0}<span class="mr-1.5 text-foreground/50" aria-hidden="true">·</span
               >{/if}{chip.label}

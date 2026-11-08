@@ -14,11 +14,8 @@
 </script>
 
 {#if isChanged}
-  <span
-    class="mr-1 size-2 shrink-0 rounded-full bg-primary"
-    title="Отличается от персоны"
-    data-testid="changed-marker"
-  >
+  <span class="mr-1 shrink-0" title="Отличается от персоны" data-testid="changed-marker">
+    <span aria-hidden="true">*</span>
     <span class="sr-only">изменено</span>
   </span>
 {/if}

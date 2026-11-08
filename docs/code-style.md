@@ -17,7 +17,7 @@ Sep 27, 2026 · @Игорь
 
 - Все слои лежат в `src/`, импортируются через алиасы `@/app`, `@/pages`, `@/widgets` и так далее. Алиас `$app` занят SvelteKit, для слоя `app` его не используем.
 - `src/routes` — тонкий: `+page.svelte` только импортирует и рендерит страницу из слоя `pages`. Логики в роутах нет.
-- Компоненты shadcn-svelte живут в `shared/ui`. Правим их только когда без этого нельзя.
+- UI-компоненты импортируем из публичного API `svelte-ascii-ui`. Для миграции, разработки и обновлений UI читаем `node_modules/svelte-ascii-ui/docs/agents/using.md` установленной версии. Внутренние стили библиотеки не переопределяем; ограничения фиксируем по её feedback workflow.
 
 ### Движок ранжирования
 
@@ -53,7 +53,7 @@ Sep 27, 2026 · @Игорь
 
 ```svelte
 <script lang="ts">
-  import { Button } from '@/shared/ui/button';
+  import { Button } from 'svelte-ascii-ui';
   import type { City } from '@/entities/city';
 
   interface Props {
@@ -108,7 +108,7 @@ export class RankingState {
 ## Стили
 
 - Tailwind, классы сортирует `prettier-plugin-tailwindcss`.
-- Условные классы — через хелпер `cn` из shadcn-svelte.
+- Условные классы — через `cn` из `shared/lib/utils`. Tailwind задаёт компоновку приложения; геометрией и рамками контролов управляет ASCII UI.
 - `<style>` в компонентах — только когда на Tailwind не выразить.
 - Мобильная вёрстка обязательна: сначала телефон, потом десктоп.
 

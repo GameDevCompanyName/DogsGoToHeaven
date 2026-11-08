@@ -1,22 +1,18 @@
 <script lang="ts">
-  import CheckIcon from '@lucide/svelte/icons/check';
-  import LinkIcon from '@lucide/svelte/icons/link';
   import { onDestroy } from 'svelte';
+  import { Button, Input, Panel } from 'svelte-ascii-ui';
 
   import { getRankingContext } from '@/entities/ranking';
   import { cn } from '@/shared/lib/utils';
-  import { Button } from '@/shared/ui/button';
-  import { Input } from '@/shared/ui/input';
 
   interface Props {
-    /**
-     * Кнопка-иконка для карточки города: подпись видна только после нажатия. Стоит в начале
-     * ряда, поэтому поле для ручного копирования выравнивается по её левому краю.
-     */
+    /** Скрыть подпись до результата копирования. */
     isCompact?: boolean;
+    /** Положение панели ручного копирования относительно кнопки. */
+    align?: 'start' | 'end';
   }
 
-  let { isCompact = false }: Props = $props();
+  let { isCompact = false, align = 'end' }: Props = $props();
 
   /** Сколько держится подтверждение после копирования. */
   const FEEDBACK_MS = 2000;
@@ -70,36 +66,32 @@
 </script>
 
 <div class="relative">
-  <Button
-    variant="outline"
-    size={isIconOnly ? 'icon-sm' : 'sm'}
-    title="Скопировать ссылку"
-    data-testid="share-button"
-    onclick={handleClick}
-  >
-    {#if status === 'copied'}
-      <CheckIcon aria-hidden="true" />
-    {:else}
-      <LinkIcon aria-hidden="true" />
-    {/if}
-    <span aria-live="polite" class={cn(isIconOnly && 'sr-only')}>{label}</span>
+  <Button size="s" title="Скопировать ссылку" data-testid="share-button" onclick={handleClick}>
+    {#snippet icon()}<span>{status === 'copied' ? '✓' : '↗'}</span>{/snippet}
+    <span class={cn(isIconOnly && 'sr-only')}>{label}</span>
   </Button>
+  <span class="sr-only" role="status">{status === 'idle' ? '' : label}</span>
   {#if manualUrl !== null}
-    <label
+    <div
       class={cn(
-        'absolute top-full z-30 mt-2 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1.5 rounded-md border bg-background p-3 text-sm text-foreground/70 shadow-md',
-        isCompact ? 'left-0' : 'right-0',
+        'absolute top-full z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-background',
+        align === 'start' ? 'left-0' : 'right-0',
       )}
       data-testid="share-manual"
     >
-      Скопируйте ссылку вручную
-      <Input
-        readonly
-        value={manualUrl}
-        {@attach selectAll}
-        onblur={handleManualClose}
-        onkeydown={handleManualKeydown}
-      />
-    </label>
+      <Panel size="s">
+        <label class="flex flex-col gap-3 text-sm">
+          Скопируйте ссылку вручную
+          <Input
+            size="s"
+            readonly
+            value={manualUrl}
+            {@attach selectAll}
+            onblur={handleManualClose}
+            onkeydown={handleManualKeydown}
+          />
+        </label>
+      </Panel>
+    </div>
   {/if}
 </div>
