@@ -37,10 +37,6 @@
   const sliderMin = $derived(Math.min(domain.min, low ?? domain.min, high ?? domain.min));
   const sliderMax = $derived(Math.max(domain.max, low ?? domain.max, high ?? domain.max));
   const checkboxId = $derived(`factor-${factor.id}`);
-  /** Доля среди включённых весов; при пропусках данных вклад в балл города отличается. */
-  const sharePercent = $derived(
-    isEnabled ? Math.round(ranking.weightShare(factor.id) * 100) : null,
-  );
 
   function parseBound(raw: string): number | undefined {
     if (raw.trim() === '') return undefined;
@@ -112,11 +108,8 @@
     </div>
     <FactorHint {factor} />
   </div>
-  <div class="grid gap-1 text-sm tabular-nums" data-testid="weight-share-{factor.id}">
+  <div class="text-sm tabular-nums">
     <span>Важность: {weight} из 10 <ChangedMarker factorId={factor.id} /></span>
-    <span class="text-muted-foreground"
-      >Доля весов: {sharePercent === null ? '—' : `${sharePercent} %`}</span
-    >
   </div>
   <Slider
     size="s"

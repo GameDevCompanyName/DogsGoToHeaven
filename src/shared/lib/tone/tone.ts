@@ -8,18 +8,18 @@ export interface ToneClasses {
   text: string;
 }
 
-/** Semantic status colors from the installed Phosphor palette; always accompanied by text. */
+/** Status colors are independent of the brand accent and always accompanied by text. */
 const TONE_CLASSES: Record<Tone, ToneClasses> = {
   good: {
-    chip: 'bg-primary/15 text-primary',
-    text: 'text-primary',
+    chip: 'bg-success-fill text-success',
+    text: 'text-success',
   },
   ok: {
-    chip: 'bg-warning/20 text-warning',
+    chip: 'bg-warning-fill text-warning',
     text: 'text-warning',
   },
   bad: {
-    chip: 'bg-destructive/15 text-destructive',
+    chip: 'bg-danger-fill text-destructive',
     text: 'text-destructive',
   },
   neutral: {

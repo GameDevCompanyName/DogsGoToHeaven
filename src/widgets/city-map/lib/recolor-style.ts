@@ -4,7 +4,7 @@ import { MAP_PALETTE } from '../config/palette';
 
 type StyleLayer = StyleSpecification['layers'][number];
 
-/** Перекрашивает Positron в спокойную тёмную подложку, независимо от темы контролов. */
+/** Перекрашивает Positron в спокойную светлую подложку, независимо от темы контролов. */
 export function recolorStyle(style: StyleSpecification): StyleSpecification {
   return { ...style, layers: style.layers.map(recolorLayer) };
 }

@@ -32,8 +32,8 @@
     <PersonaPicker />
     <BudgetInput />
     <p class="text-sm leading-relaxed text-muted-foreground">
-      Галочка включает фактор в рейтинг. Важность — от 0 до 10. Доля весов показывает его вес среди
-      включённых факторов, а не оценку города. При нехватке данных веса перераспределяются.
+      Галочка включает фактор в рейтинг. Важность — от 0 до 10: чем больше число, тем сильнее фактор
+      влияет на результат. Это не проценты и не оценка города.
     </p>
     {#each sections as { group, factors, toggleableIds } (group.id)}
       {@const enabledCount = countEnabled(toggleableIds)}

@@ -17,6 +17,10 @@
   --color-accent-foreground: var(--bg);
   --color-destructive: var(--danger);
   --color-warning: var(--warning);
+  --color-success: var(--status-good);
+  --color-success-fill: var(--status-good-fill);
+  --color-warning-fill: var(--status-warning-fill);
+  --color-danger-fill: var(--status-danger-fill);
   --color-border: var(--muted);
   --color-input: var(--muted);
   --color-ring: var(--text);

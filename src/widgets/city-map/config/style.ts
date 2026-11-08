@@ -21,7 +21,7 @@ export const SELECTED_LAYER_ID = 'cities-selected';
 
 /**
  * Красный → янтарный → зелёный по месту в выдаче 0–1 (`colorValue`), серые — отсечённые и без балла.
- * Смысл цветов общий с интерфейсом, оттенки подобраны для тёмной подложки.
+ * Смысл цветов общий с интерфейсом; тёмный контур отделяет маркеры от светлой подложки.
  */
 const SCORE_COLOR: CirclePaint['circle-color'] = [
   'case',
@@ -50,8 +50,8 @@ export const CITY_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': RADIUS,
-    'circle-stroke-color': MAP_PALETTE.background,
-    'circle-stroke-width': 1,
+    'circle-stroke-color': MAP_PALETTE.markerOutline,
+    'circle-stroke-width': 1.5,
   },
 };
 

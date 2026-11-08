@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Badge } from 'svelte-ascii-ui';
-
   import { cn } from '@/shared/lib/utils';
 
   import { formatScore } from '../lib/format-value';
+  import StatusBadge from './status-badge.svelte';
 
   interface Props {
     /** Балл 0–1, null — нет данных. */
@@ -20,19 +19,18 @@
 </script>
 
 <span data-testid="score-badge" class={cn('shrink-0 tabular-nums', className)}>
-  <Badge
-    size="m"
+  <StatusBadge
     tone={percentile === null
-      ? 'default'
+      ? 'neutral'
       : percentile >= 0.66
-        ? 'success'
+        ? 'good'
         : percentile <= 0.33
-          ? 'danger'
-          : 'warning'}
+          ? 'bad'
+          : 'ok'}
   >
     <span aria-hidden="true" class="text-xl font-semibold">{label}</span><span
       aria-hidden="true"
       class="text-xs">/100</span
     ><span class="sr-only">{spokenLabel}</span>
-  </Badge>
+  </StatusBadge>
 </span>

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { Theme } from 'svelte-ascii-ui';
-
   import { FactorHint, formatValue, interpretValue, ScoreBadge } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { CityId, FactorId, NumericFactor } from '@/shared/lib/ranking';
@@ -9,9 +7,9 @@
 
   /** В плотной таблице цвет — различимая приглушённая заливка, значения читаются нейтральным текстом. */
   const CELL_TONES: Record<Tone, string> = {
-    good: 'bg-primary/30',
-    ok: 'bg-warning/30',
-    bad: 'bg-destructive/30',
+    good: 'bg-success-fill',
+    ok: 'bg-warning-fill',
+    bad: 'bg-danger-fill',
     neutral: '',
   };
 
@@ -80,19 +78,7 @@
   }
 </script>
 
-<Theme
-  palette="phosphor"
-  colors={{
-    background: '#252a28',
-    surface: '#303833',
-    text: '#c6cec5',
-    muted: '#a0aaa1',
-    accent: '#89ba9b',
-    warning: '#d4b56a',
-    danger: '#d09289',
-  }}
-  class="h-full"
->
+<div class="h-full">
   <div class="h-full overflow-auto bg-background text-foreground" data-testid="city-table">
     {#if ranking.tableCities.length > 0}
       <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
@@ -221,4 +207,4 @@
       <p class="p-4 text-foreground/70">Ни один город не подходит под настройки.</p>
     {/if}
   </div>
-</Theme>
+</div>
