@@ -5,7 +5,7 @@ export const APP_COLORS = {
   surface: '#edcdbd',
   text: '#281e30',
   muted: '#685268',
-  accent: '#684971',
+  accent: '#8b20c2',
   danger: '#a73237',
   warning: '#805500',
 };
