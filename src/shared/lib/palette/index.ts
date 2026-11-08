@@ -1,6 +1,7 @@
 /** Calm Sunset by Paulina Riva (Lospec), adapted for readable application surfaces. */
 export const APP_COLORS = {
-  background: '#f9e2c5',
+  // sRGB: 2/3 white + 1/3 #f9e2c5, rounded to the nearest channel value.
+  background: '#fdf5ec',
   surface: '#edcdbd',
   text: '#281e30',
   muted: '#685268',
