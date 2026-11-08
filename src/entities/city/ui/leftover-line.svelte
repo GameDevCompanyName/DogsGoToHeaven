@@ -33,7 +33,7 @@
     {#if isAffordable}
       <span class="font-medium whitespace-nowrap">Останется {amount}</span>
       <Badge
-        size="s"
+        size="m"
         tone={assessment.tone === 'good'
           ? 'success'
           : assessment.tone === 'bad'
@@ -44,7 +44,7 @@
       >
     {:else}
       <Badge
-        size="s"
+        size="m"
         tone={assessment.tone === 'good'
           ? 'success'
           : assessment.tone === 'bad'

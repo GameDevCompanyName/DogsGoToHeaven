@@ -27,14 +27,14 @@ const STYLE: StyleSpecification = {
 describe('recolorStyle', () => {
   const layers = recolorStyle(STYLE).layers;
 
-  it('paints the background paper and leaves non-colour properties alone', () => {
-    expect(layers[0]?.paint).toEqual({ 'background-color': '#eee9dc' });
-    expect(layers[2]?.paint).toEqual({ 'line-color': '#e4dece', 'line-width': 2 });
+  it('paints the theme background and leaves non-colour properties alone', () => {
+    expect(layers[0]?.paint).toEqual({ 'background-color': '#181c19' });
+    expect(layers[2]?.paint).toEqual({ 'line-color': '#202621', 'line-width': 2 });
   });
 
-  it('tints water with steel over paper and writes labels in ink with a paper halo', () => {
-    expect(layers[1]?.paint).toEqual({ 'fill-color': '#979a8c' });
-    expect(layers[3]?.paint).toEqual({ 'text-color': '#2e332c', 'text-halo-color': '#eee9dc' });
+  it('tints water and labels with Phosphor palette colors', () => {
+    expect(layers[1]?.paint).toEqual({ 'fill-color': '#6e7669' });
+    expect(layers[3]?.paint).toEqual({ 'text-color': '#e2e6d9', 'text-halo-color': '#181c19' });
   });
 
   it('does not mutate the source style', () => {

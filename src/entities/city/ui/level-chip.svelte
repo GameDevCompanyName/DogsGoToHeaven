@@ -12,7 +12,7 @@
 
 <span data-testid="level-chip" data-kind={interpretation.kind} data-tone={interpretation.tone}>
   <Badge
-    size="s"
+    size="m"
     tone={interpretation.tone === 'good'
       ? 'success'
       : interpretation.tone === 'bad'

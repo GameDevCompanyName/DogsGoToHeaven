@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Separator } from 'svelte-ascii-ui';
+  import { Button, Panel } from 'svelte-ascii-ui';
 
   import { getRankingContext } from '@/entities/ranking';
   import { BudgetInput } from '@/features/budget-mode';
@@ -31,6 +31,10 @@
   <div class="flex flex-col gap-6 p-4 pb-8">
     <PersonaPicker />
     <BudgetInput />
+    <p class="text-sm leading-relaxed text-muted-foreground">
+      Галочка включает фактор в рейтинг. Важность — от 0 до 10. Доля весов показывает его вес среди
+      включённых факторов, а не оценку города. При нехватке данных веса перераспределяются.
+    </p>
     {#each sections as { group, factors, toggleableIds } (group.id)}
       {@const enabledCount = countEnabled(toggleableIds)}
       <section aria-labelledby="group-{group.id}">
@@ -67,17 +71,18 @@
             </div>
           {/if}
         </div>
-        <div>
+        <div class="mt-4 flex flex-col gap-4">
           {#each factors as factor (factor.id)}
-            {#if ranking.hasData(factor.id)}
-              <FactorControl {factor} />
-            {:else}
-              <div class="flex items-center gap-2 py-3 text-[var(--muted)]" aria-disabled="true">
-                <span class="min-w-0 flex-1 leading-snug font-medium">{factor.name}</span>
-                <span class="shrink-0 text-sm">данных пока нет</span>
-              </div>
-            {/if}
-            <Separator />
+            <Panel size="s">
+              {#if ranking.hasData(factor.id)}
+                <FactorControl {factor} />
+              {:else}
+                <div class="flex items-center gap-2 py-3 text-[var(--muted)]" aria-disabled="true">
+                  <span class="min-w-0 flex-1 leading-snug font-medium">{factor.name}</span>
+                  <span class="shrink-0 text-sm">данных пока нет</span>
+                </div>
+              {/if}
+            </Panel>
           {/each}
         </div>
       </section>

@@ -10,7 +10,7 @@ export interface ToneClasses {
   text: string;
 }
 
-/** Semantic status colors from the installed Paper palette; always accompanied by text. */
+/** Semantic status colors from the installed Phosphor palette; always accompanied by text. */
 const TONE_CLASSES: Record<Tone, ToneClasses> = {
   good: {
     chip: 'bg-primary/15 text-primary',
@@ -36,11 +36,11 @@ export function toneClasses(tone: Tone): ToneClasses {
 
 /** Те же тона в hex для MapLibre, который не понимает классы Tailwind. */
 export const TONE_HEX: Record<Tone, string> = {
-  good: palettes.paper.accent,
-  ok: palettes.paper.warning,
-  bad: palettes.paper.danger,
-  neutral: palettes.paper.muted,
+  good: palettes.phosphor.accent,
+  ok: palettes.phosphor.warning,
+  bad: palettes.phosphor.danger,
+  neutral: palettes.phosphor.muted,
 };
 
 /** MapLibre needs resolved colors rather than inherited CSS variables. */
-export const PALETTE_HEX = palettes.paper;
+export const PALETTE_HEX = palettes.phosphor;

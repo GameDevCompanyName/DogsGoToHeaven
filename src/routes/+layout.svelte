@@ -12,7 +12,7 @@
 </script>
 
 <Theme
-  palette="paper"
+  palette="phosphor"
   font="'IBM Plex Mono', ui-monospace, monospace"
   class="min-h-dvh bg-background"
 >

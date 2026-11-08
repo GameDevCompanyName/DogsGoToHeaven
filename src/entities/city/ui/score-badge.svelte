@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge } from 'svelte-ascii-ui';
-
+  import { toneClasses } from '@/shared/lib/tone';
   import { cn } from '@/shared/lib/utils';
 
   import { formatScore } from '../lib/format-value';
@@ -19,17 +18,23 @@
   const spokenLabel = $derived(score === null ? 'Балла нет' : `Балл ${label} из 100`);
 </script>
 
-<span data-testid="score-badge" class={cn('shrink-0 tabular-nums', className)}>
-  <Badge
-    size="s"
-    tone={percentile === null
-      ? 'default'
-      : percentile >= 0.66
-        ? 'success'
-        : percentile <= 0.33
-          ? 'danger'
-          : 'warning'}
-  >
-    <span aria-hidden="true">{label}</span><span class="sr-only">{spokenLabel}</span>
-  </Badge>
+<span
+  data-testid="score-badge"
+  class={cn(
+    'inline-flex shrink-0 items-baseline gap-1 px-2 py-1 font-semibold tabular-nums',
+    toneClasses(
+      percentile === null
+        ? 'neutral'
+        : percentile >= 0.66
+          ? 'good'
+          : percentile <= 0.33
+            ? 'bad'
+            : 'ok',
+    ).chip,
+    className,
+  )}
+>
+  <span aria-hidden="true" class="text-2xl">{label}</span><span aria-hidden="true" class="text-xs"
+    >/100</span
+  ><span class="sr-only">{spokenLabel}</span>
 </span>

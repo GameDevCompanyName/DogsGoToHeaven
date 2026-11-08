@@ -24,7 +24,7 @@
   let low = $derived(range ? range[0] : numericFilter?.min);
   let high = $derived(range ? range[1] : numericFilter?.max);
   const checkboxId = $derived(`factor-${factor.id}`);
-  /** Доля в итоговом балле, целые проценты; у выключенного фактора её нет. */
+  /** Доля среди включённых весов; при пропусках данных вклад в балл города отличается. */
   const sharePercent = $derived(
     isEnabled ? Math.round(ranking.weightShare(factor.id) * 100) : null,
   );
@@ -67,7 +67,6 @@
 
 <div class="flex flex-col gap-3 py-3">
   <div class="flex items-center gap-2">
-    <ChangedMarker factorId={factor.id} />
     <div class="min-w-0 flex-1">
       <Checkbox
         size="s"
@@ -77,13 +76,12 @@
       />
     </div>
     <FactorHint {factor} />
-    <span
-      class="shrink-0 text-base whitespace-nowrap text-[var(--muted)] tabular-nums"
-      data-testid="weight-share-{factor.id}"
-      title="Вес и доля в итоговом балле"
+  </div>
+  <div class="grid gap-1 text-sm tabular-nums" data-testid="weight-share-{factor.id}">
+    <span>Важность: {weight} из 10 <ChangedMarker factorId={factor.id} /></span>
+    <span class="text-muted-foreground"
+      >Доля весов: {sharePercent === null ? '—' : `${sharePercent} %`}</span
     >
-      {weight}{#if sharePercent !== null}&nbsp;·&nbsp;{sharePercent}&nbsp;%{/if}
-    </span>
   </div>
   <Slider
     size="s"

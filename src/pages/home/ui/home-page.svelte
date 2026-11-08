@@ -95,7 +95,14 @@
 <svelte:window onhashchange={handleHashChange} />
 
 {#if !isRedirecting}
-  <div class="relative h-dvh overflow-hidden md:grid md:grid-cols-[400px_minmax(0,1fr)]">
+  <div
+    class={cn(
+      'relative h-dvh overflow-hidden md:grid',
+      panelTab === 'cities'
+        ? 'md:grid-cols-[400px_minmax(0,1fr)]'
+        : 'md:grid-cols-[440px_minmax(0,1fr)] lg:grid-cols-[480px_minmax(0,1fr)]',
+    )}
+  >
     <aside
       class={cn(
         'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r',
@@ -109,12 +116,16 @@
         </div>
         <nav class="hidden gap-1 md:flex" aria-label="Разделы">
           {#each MOBILE_SECTIONS.filter((item) => item.id !== 'map') as item (item.id)}
-            <Button
-              size="s"
-              aria-pressed={panelTab === item.id}
-              variant={panelTab === item.id ? 'primary' : 'default'}
-              onclick={() => handlePanelTabChange(item.id)}>{item.label}</Button
-            >
+            <div class={panelTab === item.id ? 'bg-primary/20 font-semibold' : ''}>
+              <Button
+                size="s"
+                aria-pressed={panelTab === item.id}
+                variant={panelTab === item.id ? 'primary' : 'default'}
+                onclick={() => handlePanelTabChange(item.id)}
+                ><span aria-hidden="true">{panelTab === item.id ? '● ' : '○ '}</span
+                >{item.label}</Button
+              >
+            </div>
           {/each}
         </nav>
       </header>
@@ -148,14 +159,21 @@
       aria-label="Разделы"
     >
       {#each MOBILE_SECTIONS as item (item.id)}
-        <Button
-          size="s"
-          aria-pressed={section === item.id}
-          variant={section === item.id ? 'primary' : 'default'}
-          onclick={() => (section = item.id)}
+        <div
+          class={section === item.id
+            ? 'flex border-t-4 border-primary bg-primary/20 font-semibold'
+            : 'flex border-t-4 border-transparent'}
         >
-          {item.label}
-        </Button>
+          <Button
+            size="s"
+            fullWidth
+            aria-pressed={section === item.id}
+            variant={section === item.id ? 'primary' : 'default'}
+            onclick={() => (section = item.id)}
+          >
+            <span class="text-[11px] whitespace-nowrap min-[360px]:text-sm">{item.label}</span>
+          </Button>
+        </div>
       {/each}
     </nav>
   </div>

@@ -63,7 +63,7 @@
           <span
             data-testid="city-chip"
             data-tone={chip.tone}
-            class="whitespace-nowrap {toneClasses(chip.tone).text}"
+            class="min-w-0 {toneClasses(chip.tone).text}"
           >
             {#if index > 0}<span class="mr-1.5 text-foreground/50" aria-hidden="true">·</span
               >{/if}{chip.label}

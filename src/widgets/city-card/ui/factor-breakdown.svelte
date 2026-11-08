@@ -107,8 +107,8 @@
               <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
                 {#each group.rows as row (row.factor.id)}
                   <li class="flex flex-col gap-1.5">
-                    <div class="flex items-start gap-2">
-                      <span class="flex min-w-0 flex-1 items-center gap-0.5">
+                    <div class="flex items-center gap-3">
+                      <span class="flex min-w-0 flex-1 items-center gap-2">
                         <span class="font-medium">{row.factor.name}</span>
                         <FactorHint factor={row.factor} />
                       </span>
@@ -132,7 +132,7 @@
                     <div class="flex items-center gap-2">
                       <div class="min-w-0 flex-1">
                         <Theme
-                          palette="paper"
+                          palette="phosphor"
                           colors={{
                             accent:
                               TONE_HEX[

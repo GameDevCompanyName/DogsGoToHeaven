@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Link, Panel } from 'svelte-ascii-ui';
+  import { Badge, Button, Link } from 'svelte-ascii-ui';
 
   import type { Preset } from '@/shared/lib/ranking';
 
@@ -18,29 +18,41 @@
   }
 </script>
 
-<Panel size="s">
-  <div class="flex flex-col gap-3">
-    {#if href}
-      <Link {href} data-testid="persona-card" data-preset-id={preset.id} onclick={handleClick}
-        >{preset.name}</Link
-      >
-    {:else}
-      <Button
-        size="s"
-        variant={isActive ? 'primary' : 'default'}
-        aria-pressed={isActive}
-        data-testid="persona-card"
-        data-preset-id={preset.id}
-        onclick={handleClick}
-      >
-        {#if isActive}<span aria-hidden="true">[x] </span>{/if}{preset.name}
-      </Button>
-    {/if}
-    <p class="text-sm leading-relaxed text-foreground/70">{preset.description}</p>
-    <div class="flex flex-wrap gap-2">
+{#snippet content()}
+  <span class="flex h-full w-full flex-col gap-4 py-2 text-left">
+    <span class="text-base font-semibold">{preset.name}</span>
+    <span class="text-sm leading-relaxed text-foreground">{preset.description}</span>
+    <span class="flex flex-wrap gap-2 text-base">
       {#each preset.highlights as highlight (highlight)}
-        <Badge size="s" label={highlight} />
+        <Badge size="m" label={highlight} />
       {/each}
-    </div>
-  </div>
-</Panel>
+    </span>
+    <span class="text-sm font-semibold">{isActive ? '[x] Выбрано' : 'Выбрать →'}</span>
+  </span>
+{/snippet}
+
+{#if href}
+  <Link
+    {href}
+    button
+    size="s"
+    class="h-full w-full"
+    data-testid="persona-card"
+    data-preset-id={preset.id}
+    onclick={handleClick}
+  >
+    {@render content()}
+  </Link>
+{:else}
+  <Button
+    size="s"
+    fullWidth
+    variant={isActive ? 'primary' : 'default'}
+    aria-pressed={isActive}
+    data-testid="persona-card"
+    data-preset-id={preset.id}
+    onclick={handleClick}
+  >
+    {@render content()}
+  </Button>
+{/if}
