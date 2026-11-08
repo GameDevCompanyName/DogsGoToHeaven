@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { Checkbox } from 'svelte-ascii-ui';
+
   import { FactorHint } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { CategoricalFactor } from '@/shared/lib/ranking';
-  import { Checkbox } from '@/shared/ui/checkbox';
-  import { Label } from '@/shared/ui/label';
 
   import ChangedMarker from './changed-marker.svelte';
 
@@ -35,15 +35,16 @@
     <div class="flex items-center gap-2">
       <Checkbox
         {id}
+        size="s"
+        label={category.name}
         bind:checked={
           () => allowed.includes(category.code),
           (isChecked) => handleCategoryChange(category.code, isChecked)
         }
       />
-      <Label for={id} class="text-base font-normal">{category.name}</Label>
     </div>
   {/each}
-  <p class="text-sm text-foreground/70">
+  <p class="text-sm text-[var(--muted)]">
     {allowed.length === 0 ? 'Ничего не отмечено — города не отсекаются' : 'Только отмеченные'}
   </p>
 </fieldset>

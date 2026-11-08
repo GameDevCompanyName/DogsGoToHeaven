@@ -1,6 +1,4 @@
 <script lang="ts" module>
-  import type { Tone } from '@/shared/lib/tone';
-
   type GroupId = 'up' | 'down' | 'rest';
 
   /** Группы разбора по нормализованной оценке фактора: те же пороги, что у сильных и слабых сторон. */
@@ -16,15 +14,11 @@
     if (normalized <= 0.33) return 'down';
     return 'rest';
   }
-
-  function barTone(group: GroupId): Tone {
-    if (group === 'up') return 'good';
-    if (group === 'down') return 'bad';
-    return 'ok';
-  }
 </script>
 
 <script lang="ts">
+  import { Progress, Theme } from 'svelte-ascii-ui';
+
   import {
     FactorHint,
     formatCelsius,
@@ -35,7 +29,7 @@
   } from '@/entities/city';
   import { getRankingContext, type RankedCityView } from '@/entities/ranking';
   import type { Factor } from '@/shared/lib/ranking';
-  import { toneClasses } from '@/shared/lib/tone';
+  import { TONE_HEX } from '@/shared/lib/tone';
 
   import SourceLine from './source-line.svelte';
 
@@ -109,7 +103,7 @@
             {#if group.rows.length === 0}
               <p class="text-sm text-foreground/70">{group.empty}</p>
             {:else}
-              <!-- Два столбца с той же точки, где карточка становится вдвое шире (см. --city-card-width). -->
+              <!-- Два столбца с той же точки, где карточка становится вдвое шире (размер Drawer xl). -->
               <ul class="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-x-8">
                 {#each group.rows as row (row.factor.id)}
                   <li class="flex flex-col gap-1.5">
@@ -136,11 +130,18 @@
                       {/if}
                     {/if}
                     <div class="flex items-center gap-2">
-                      <div class="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div
-                          class="h-full rounded-full {toneClasses(barTone(row.group)).bar}"
-                          style:width="{Math.round((row.normalized ?? 0) * 100)}%"
-                        ></div>
+                      <div class="min-w-0 flex-1">
+                        <Theme
+                          palette="paper"
+                          colors={{
+                            accent:
+                              TONE_HEX[
+                                row.group === 'up' ? 'good' : row.group === 'down' ? 'bad' : 'ok'
+                              ],
+                          }}
+                        >
+                          <Progress value={row.normalized ?? 0} label={row.factor.name} size="s" />
+                        </Theme>
                       </div>
                       <span
                         class="w-24 shrink-0 text-right text-sm text-foreground/70 tabular-nums"

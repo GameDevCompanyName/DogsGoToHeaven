@@ -42,7 +42,7 @@ test('кнопка «Поделиться» в карточке копирует
   const share = page.getByTestId('city-card').getByTestId('share-button');
   await share.click();
 
-  await expect(share).toHaveText('Скопировано');
+  await expect(share).toHaveAccessibleName('Скопировано');
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toContain(`c=${cityId}`);
 });
@@ -65,9 +65,15 @@ test('сравнение из карточки и списка показыва�
 
 test('доход показывает остаток у города и сортирует сначала по карману', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Настройки' }).click();
+  await page
+    .getByRole('navigation', { name: 'Разделы' })
+    .getByRole('button', { name: 'Настройки' })
+    .click();
   await page.getByTestId('budget-input').fill('2000');
-  await page.getByRole('tab', { name: 'Города' }).click();
+  await page
+    .getByRole('navigation', { name: 'Разделы' })
+    .getByRole('button', { name: 'Города' })
+    .click();
 
   await expect(page.getByTestId('leftover-line').first()).toBeVisible();
 
@@ -80,7 +86,10 @@ test('доход показывает остаток у города и сорт
 
 test('таблица встаёт вместо карты, сортируется и открывает карточку', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Таблица' }).click();
+  await page
+    .getByRole('navigation', { name: 'Разделы' })
+    .getByRole('button', { name: 'Таблица' })
+    .click();
   const table = page.getByTestId('city-table');
   await expect(table).toBeVisible();
   // Слева при таблице — настройки: вес двигается, таблица справа видна.

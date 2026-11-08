@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Link } from 'svelte-ascii-ui';
+
   import type { FactorProvenance } from '@/shared/lib/ranking';
 
   interface Props {
@@ -11,14 +13,9 @@
 {#if provenance}
   <p class="text-sm text-foreground/70">
     {#if provenance.url}
-      <a
-        href={provenance.url}
-        target="_blank"
-        rel="external noopener noreferrer"
-        class="underline underline-offset-2 hover:text-foreground"
-      >
+      <Link href={provenance.url} target="_blank" rel="external noopener noreferrer">
         {provenance.name}
-      </a>
+      </Link>
     {:else}
       {provenance.name}
     {/if}

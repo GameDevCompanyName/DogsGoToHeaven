@@ -28,11 +28,11 @@ function recolorLayer(layer: StyleLayer): StyleLayer {
 function colorFor(id: string, key: string): string | undefined {
   switch (key) {
     case 'text-halo-color':
-      return PALETTE_HEX.paper;
+      return PALETTE_HEX.background;
     case 'text-color':
       return textColor(id);
     case 'fill-outline-color':
-      return PALETTE_HEX.sand;
+      return PALETTE_HEX.surface;
     case 'background-color':
     case 'fill-color':
       return fillColor(id);
@@ -45,30 +45,30 @@ function colorFor(id: string, key: string): string | undefined {
 
 /** Названия населённых пунктов — чернила, воды — сланец, остальные подписи — слива. */
 function textColor(id: string): string {
-  if (id.startsWith('water')) return PALETTE_HEX.slate;
-  if (/^label_(city|town|village)/.test(id)) return PALETTE_HEX.ink;
-  return PALETTE_HEX.plum;
+  if (id.startsWith('water')) return PALETTE_HEX.muted;
+  if (/^label_(city|town|village)/.test(id)) return PALETTE_HEX.text;
+  return PALETTE_HEX.muted;
 }
 
 function fillColor(id: string): string {
-  if (/background|pier|glacier|ice_shelf/.test(id)) return PALETTE_HEX.paper;
-  if (id.startsWith('water')) return tint(PALETTE_HEX.steel, 0.6);
-  if (id === 'park') return tint(PALETTE_HEX.moss, 0.25);
-  if (id.includes('wood')) return tint(PALETTE_HEX.moss, 0.35);
-  return tint(PALETTE_HEX.sand, 0.35);
+  if (/background|pier|glacier|ice_shelf/.test(id)) return PALETTE_HEX.background;
+  if (id.startsWith('water')) return tint(PALETTE_HEX.muted, 0.6);
+  if (id === 'park') return tint(PALETTE_HEX.accent, 0.25);
+  if (id.includes('wood')) return tint(PALETTE_HEX.accent, 0.35);
+  return tint(PALETTE_HEX.surface, 0.35);
 }
 
 function lineColor(id: string): string {
-  if (id.startsWith('water')) return tint(PALETTE_HEX.steel, 0.6);
-  if (id.startsWith('boundary')) return PALETTE_HEX.ash;
-  if (id.includes('dashline') || id.includes('inner')) return PALETTE_HEX.paper;
-  if (id.includes('casing') || id.startsWith('railway')) return PALETTE_HEX.sand;
-  return tint(PALETTE_HEX.sand, 0.55);
+  if (id.startsWith('water')) return tint(PALETTE_HEX.muted, 0.6);
+  if (id.startsWith('boundary')) return PALETTE_HEX.muted;
+  if (id.includes('dashline') || id.includes('inner')) return PALETTE_HEX.background;
+  if (id.includes('casing') || id.startsWith('railway')) return PALETTE_HEX.surface;
+  return tint(PALETTE_HEX.surface, 0.55);
 }
 
-/** Цвет с долей `share` поверх бумаги: аналог `bg-moss/25` для MapLibre, который не знает прозрачности поверх подложки. */
+/** Цвет с долей `share` поверх бумаги: аналог полупрозрачной заливки для MapLibre, который не знает прозрачности поверх подложки. */
 function tint(hex: string, share: number): string {
-  const paper = channels(PALETTE_HEX.paper);
+  const paper = channels(PALETTE_HEX.background);
   const mixed = channels(hex).map((channel, index) =>
     Math.round(channel * share + (paper[index] ?? 0) * (1 - share)),
   );

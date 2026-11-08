@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { Button, Separator } from 'svelte-ascii-ui';
+
   import { getRankingContext } from '@/entities/ranking';
   import { BudgetInput } from '@/features/budget-mode';
   import { FactorControl } from '@/features/factor-controls';
   import { PersonaPicker } from '@/features/persona-picker';
-  import { ScrollArea } from '@/shared/ui/scroll-area';
 
   const ranking = getRankingContext();
 
@@ -26,17 +27,17 @@
   }
 </script>
 
-<ScrollArea class="h-full">
+<div class="h-full overflow-y-auto">
   <div class="flex flex-col gap-6 p-4 pb-8">
     <PersonaPicker />
     <BudgetInput />
     {#each sections as { group, factors, toggleableIds } (group.id)}
       {@const enabledCount = countEnabled(toggleableIds)}
       <section aria-labelledby="group-{group.id}">
-        <div class="flex items-baseline justify-between gap-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
           <h2
             id="group-{group.id}"
-            class="text-sm font-semibold tracking-wide text-foreground/70 uppercase"
+            class="text-sm font-semibold tracking-wide text-[var(--muted)] uppercase"
           >
             {group.name}
             {#if toggleableIds.length > 0}
@@ -47,40 +48,39 @@
           </h2>
           {#if toggleableIds.length > 0}
             <div class="flex shrink-0 gap-3 text-sm">
-              <button
-                type="button"
-                class="underline underline-offset-4 disabled:text-foreground/50 disabled:no-underline"
+              <Button
+                size="s"
                 aria-label="Учитывать все факторы группы «{group.name}»"
                 disabled={enabledCount === toggleableIds.length}
                 onclick={() => ranking.setGroupEnabled(group.id, true)}
               >
                 все
-              </button>
-              <button
-                type="button"
-                class="underline underline-offset-4 disabled:text-foreground/50 disabled:no-underline"
+              </Button>
+              <Button
+                size="s"
                 aria-label="Не учитывать ни один фактор группы «{group.name}»"
                 disabled={enabledCount === 0}
                 onclick={() => ranking.setGroupEnabled(group.id, false)}
               >
                 ни один
-              </button>
+              </Button>
             </div>
           {/if}
         </div>
-        <div class="divide-y">
+        <div>
           {#each factors as factor (factor.id)}
             {#if ranking.hasData(factor.id)}
               <FactorControl {factor} />
             {:else}
-              <div class="flex items-center gap-2 py-3 text-foreground/70" aria-disabled="true">
+              <div class="flex items-center gap-2 py-3 text-[var(--muted)]" aria-disabled="true">
                 <span class="min-w-0 flex-1 leading-snug font-medium">{factor.name}</span>
                 <span class="shrink-0 text-sm">данных пока нет</span>
               </div>
             {/if}
+            <Separator />
           {/each}
         </div>
       </section>
     {/each}
   </div>
-</ScrollArea>
+</div>

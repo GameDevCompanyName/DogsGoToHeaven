@@ -11,6 +11,8 @@
 </script>
 
 <script lang="ts">
+  import { Button, Input } from 'svelte-ascii-ui';
+
   import { CityListItem, LeftoverLine, profileChips } from '@/entities/city';
   import { describeFilter, getRankingContext } from '@/entities/ranking';
   import { AffordableFirstToggle } from '@/features/budget-mode';
@@ -18,9 +20,6 @@
   import { orderByAffordability } from '@/shared/lib/budget';
   import { type PluralForms, pluralize } from '@/shared/lib/plural';
   import type { CityId } from '@/shared/lib/ranking';
-  import { Button } from '@/shared/ui/button';
-  import { Input } from '@/shared/ui/input';
-  import { ScrollArea } from '@/shared/ui/scroll-area';
 
   interface Props {
     /** Открыть экран сравнения из плашки над списком. */
@@ -81,6 +80,7 @@
 <div class="flex h-full flex-col">
   <div class="border-b px-4 py-3">
     <Input
+      size="s"
       type="search"
       placeholder="Город или страна"
       aria-label="Поиск по городу или стране"
@@ -94,7 +94,7 @@
     </div>
   {/if}
   <CompareBar onopen={oncompareopen} />
-  <ScrollArea class="min-h-0 flex-1">
+  <div class="min-h-0 flex-1 overflow-y-auto">
     <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
     <p class="sr-only" aria-live="polite">
       {#if needle !== ''}
@@ -145,7 +145,7 @@
             Фильтры отсекли все города.
             {#if strictestFilter}Самый строгий: {strictestFilter}.{/if}
           </p>
-          <Button variant="outline" size="sm" onclick={handleResetFilters}>Сбросить фильтры</Button>
+          <Button size="s" onclick={handleResetFilters}>Сбросить фильтры</Button>
         {:else}
           Ни один город не подходит под настройки.
         {/if}
@@ -154,17 +154,11 @@
     {#if ranking.hiddenByFilter > 0 && ranking.rankedCities.length > 0}
       <div class="border-t px-4 pt-3">
         <p
-          class="inline-flex flex-wrap items-center gap-x-1.5 rounded-full border px-3 py-1 text-sm"
+          class="inline-flex flex-wrap items-center gap-x-1.5 border px-3 py-1 text-sm"
           data-testid="hidden-by-filter"
         >
           Скрыто фильтрами: {ranking.hiddenByFilter} ·
-          <button
-            type="button"
-            class="font-medium underline underline-offset-4"
-            onclick={handleResetFilters}
-          >
-            Сбросить фильтры
-          </button>
+          <Button size="s" onclick={handleResetFilters}>Сбросить фильтры</Button>
         </p>
       </div>
     {/if}
@@ -173,5 +167,5 @@
         {@render hiddenNote(ranking.hiddenByCoverage, 'мало данных', ['скрыт', 'скрыты', 'скрыты'])}
       </div>
     {/if}
-  </ScrollArea>
+  </div>
 </div>

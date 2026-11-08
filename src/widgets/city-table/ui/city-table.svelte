@@ -1,8 +1,4 @@
 <script lang="ts">
-  import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
-  import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
-  import ArrowUpDownIcon from '@lucide/svelte/icons/arrow-up-down';
-
   import { FactorHint, formatValue, interpretValue, ScoreBadge } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { CityId, FactorId, NumericFactor } from '@/shared/lib/ranking';
@@ -114,20 +110,17 @@
               <span class="flex max-w-44 min-w-28 items-end gap-0.5">
                 <button
                   type="button"
-                  class="flex flex-1 items-end gap-1 rounded px-1 py-1 text-left leading-tight hover:bg-muted"
+                  class="flex flex-1 items-end gap-1 px-1 py-1 text-left leading-tight hover:bg-muted"
                   data-testid="sort-{factor.id}"
                   onclick={() => handleSort(factor.id)}
                 >
                   {factor.name}
                   {#if ariaSort === 'ascending'}
-                    <ArrowUpIcon class="size-4 shrink-0" aria-hidden="true" />
+                    <span aria-hidden="true">↑</span>
                   {:else if ariaSort === 'descending'}
-                    <ArrowDownIcon class="size-4 shrink-0" aria-hidden="true" />
+                    <span aria-hidden="true">↓</span>
                   {:else}
-                    <ArrowUpDownIcon
-                      class="size-4 shrink-0 text-foreground/40"
-                      aria-hidden="true"
-                    />
+                    <span aria-hidden="true">↕</span>
                   {/if}
                 </button>
                 <FactorHint {factor} />

@@ -50,7 +50,7 @@ export const CITY_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': RADIUS,
-    'circle-stroke-color': PALETTE_HEX.paper,
+    'circle-stroke-color': PALETTE_HEX.background,
     'circle-stroke-width': 1,
   },
 };
@@ -63,7 +63,7 @@ export const SELECTED_LAYER: CircleLayer = {
   paint: {
     'circle-color': SCORE_COLOR,
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 8, 8, 13],
-    'circle-stroke-color': PALETTE_HEX.ink,
+    'circle-stroke-color': PALETTE_HEX.text,
     'circle-stroke-width': 3,
   },
 };

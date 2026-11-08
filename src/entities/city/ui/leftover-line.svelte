@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { Badge } from 'svelte-ascii-ui';
+
   import { assessLeftover, formatUsd } from '@/shared/lib/budget';
-  import { toneClasses } from '@/shared/lib/tone';
-  import { cn } from '@/shared/lib/utils';
 
   import { formatLeftoverAmount, roundTo } from '../lib/format-value';
 
@@ -25,9 +25,6 @@
       ? `${formatUsd(budget)} − ${formatUsd(roundTo(costs.living, 10))} расходы − ${formatUsd(roundTo(costs.rent, 10))} аренда`
       : null,
   );
-  const chipClass = $derived(
-    cn('rounded-full px-2 py-0.5 text-sm font-medium', toneClasses(assessment.tone).chip),
-  );
 </script>
 
 <!-- Только строчные элементы: строка живёт и внутри кнопки списка. -->
@@ -35,9 +32,27 @@
   <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
     {#if isAffordable}
       <span class="font-medium whitespace-nowrap">Останется {amount}</span>
-      <span class={chipClass}>{assessment.label}</span>
+      <Badge
+        size="s"
+        tone={assessment.tone === 'good'
+          ? 'success'
+          : assessment.tone === 'bad'
+            ? 'danger'
+            : assessment.tone === 'ok'
+              ? 'warning'
+              : 'default'}>{assessment.label}</Badge
+      >
     {:else}
-      <span class={chipClass}>{assessment.label}</span>
+      <Badge
+        size="s"
+        tone={assessment.tone === 'good'
+          ? 'success'
+          : assessment.tone === 'bad'
+            ? 'danger'
+            : assessment.tone === 'ok'
+              ? 'warning'
+              : 'default'}>{assessment.label}</Badge
+      >
       <span class="whitespace-nowrap text-foreground/70">не хватает {amount}</span>
     {/if}
   </span>

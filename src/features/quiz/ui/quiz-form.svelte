@@ -1,8 +1,5 @@
 <script lang="ts">
-  import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
-  import CheckIcon from '@lucide/svelte/icons/check';
-
-  import { cn } from '@/shared/lib/utils';
+  import { Button, Link, Progress } from 'svelte-ascii-ui';
 
   import { QUIZ_QUESTIONS, type QuizAnswers } from '../config/questions';
 
@@ -23,7 +20,6 @@
   let answers = $state<Partial<QuizAnswers>>({});
 
   const question = $derived(QUIZ_QUESTIONS[step]);
-  const progress = $derived(((step + 1) / total) * 100);
   /** Вперёд пускает только ответ, поэтому все вопросы до текущего отвечены. */
   const answered = $derived(step);
 
@@ -59,20 +55,7 @@
     <p class="text-sm text-foreground/70" data-testid="quiz-progress">
       Вопрос {step + 1} из {total}
     </p>
-    <div
-      class="h-2 overflow-hidden rounded-full bg-muted"
-      role="progressbar"
-      aria-label="Пройдено вопросов"
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-valuenow={answered}
-      aria-valuetext="Вопрос {step + 1} из {total}"
-    >
-      <div
-        class="h-full rounded-full bg-foreground transition-[width]"
-        style:width="{progress}%"
-      ></div>
-    </div>
+    <Progress value={answered / total} label="Пройдено вопросов" size="s" />
   </div>
 
   {#if question}
@@ -89,44 +72,27 @@
         <div class="flex flex-col gap-3">
           {#each question.options as option (option.id)}
             {@const isChosen = answers[question.id] === option.id}
-            <button
-              type="button"
+            <Button
+              fullWidth
               aria-pressed={isChosen}
               data-testid="quiz-option"
-              class={cn(
-                'flex min-h-14 w-full items-center gap-2 rounded-lg border px-4 py-3 text-left text-base font-medium transition-colors hover:bg-muted',
-                isChosen && 'border-foreground bg-muted ring-1 ring-foreground',
-              )}
+              variant={isChosen ? 'primary' : 'default'}
               onclick={() => handleAnswer(option.id)}
             >
-              {#if isChosen}
-                <CheckIcon class="size-5 shrink-0" aria-hidden="true" />
-              {/if}
+              {#if isChosen}<span aria-hidden="true">[x] </span>{/if}
               {option.label}
-            </button>
+            </Button>
           {/each}
         </div>
       </section>
     {/key}
   {/if}
 
-  {#snippet backLabel()}
-    <ArrowLeftIcon class="size-4" aria-hidden="true" />
-    Назад
-  {/snippet}
-  {#if step === 0}
-    <!-- eslint-disable svelte/no-navigation-without-resolve -- exitHref собирает вызывающий код через resolve() -->
-    <a href={exitHref} class="inline-flex w-fit items-center gap-1.5 py-2 font-medium">
-      {@render backLabel()}
-    </a>
-    <!-- eslint-enable svelte/no-navigation-without-resolve -->
-  {:else}
-    <button
-      type="button"
-      class="inline-flex w-fit items-center gap-1.5 py-2 font-medium"
-      onclick={handleBack}
-    >
-      {@render backLabel()}
-    </button>
-  {/if}
+  <div class="w-fit">
+    {#if step === 0}
+      <Link href={exitHref}>← Назад</Link>
+    {:else}
+      <Button size="s" onclick={handleBack}>← Назад</Button>
+    {/if}
+  </div>
 </div>

@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { Link } from 'svelte-ascii-ui';
+
   import { PersonaCard } from '@/entities/preset';
   import { loadRawData } from '@/shared/api';
   import { markOnboarded } from '@/shared/lib/onboarding';
   import { pluralize } from '@/shared/lib/plural';
-  import { Button } from '@/shared/ui/button';
   import { resolve } from '$app/paths';
 
   const raw = loadRawData();
@@ -34,9 +35,9 @@
         Выберите, что ближе, — веса факторов подстроятся. Потом их можно поменять.
       </p>
     </div>
-    <Button href={quiz} variant="outline" class="w-fit" data-testid="start-quiz">
+    <Link href={quiz} button class="w-fit" data-testid="start-quiz">
       Не знаю, кто я — пройти опрос
-    </Button>
+    </Link>
     <ul class="grid gap-3 md:grid-cols-2">
       {#each raw.presets as preset (preset.id)}
         <li>
@@ -46,12 +47,7 @@
     </ul>
   </section>
 
-  <a
-    href={home}
-    class="w-fit font-medium underline underline-offset-4"
-    data-testid="skip-onboarding"
-    onclick={handleEnter}
-  >
+  <Link href={home} class="w-fit" data-testid="skip-onboarding" onclick={handleEnter}>
     Открыть карту без выбора
-  </a>
+  </Link>
 </main>

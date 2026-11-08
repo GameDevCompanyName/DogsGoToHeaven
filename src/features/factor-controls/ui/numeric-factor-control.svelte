@@ -1,11 +1,9 @@
 <script lang="ts">
+  import { Checkbox, NumberInput, Slider } from 'svelte-ascii-ui';
+
   import { FactorHint } from '@/entities/city';
   import { getRankingContext } from '@/entities/ranking';
   import type { NumericFactor } from '@/shared/lib/ranking';
-  import { Checkbox } from '@/shared/ui/checkbox';
-  import { Input } from '@/shared/ui/input';
-  import { Label } from '@/shared/ui/label';
-  import { Slider } from '@/shared/ui/slider';
 
   import ChangedMarker from './changed-marker.svelte';
 
@@ -23,8 +21,8 @@
   const filter = $derived(ranking.settings.filters[factor.id]);
   const numericFilter = $derived(filter && !('allowed' in filter) ? filter : undefined);
   const unit = $derived(ranking.dataset.provenance[factor.id]?.unit);
-  const low = $derived(range ? range[0] : numericFilter?.min);
-  const high = $derived(range ? range[1] : numericFilter?.max);
+  let low = $derived(range ? range[0] : numericFilter?.min);
+  let high = $derived(range ? range[1] : numericFilter?.max);
   const checkboxId = $derived(`factor-${factor.id}`);
   /** Доля в итоговом балле, целые проценты; у выключенного фактора её нет. */
   const sharePercent = $derived(
@@ -56,7 +54,8 @@
         bound === 'low' ? [value ?? range[0], range[1]] : [range[0], value ?? range[1]];
       const next: [number, number] = [Math.min(...edited), Math.max(...edited)];
       ranking.setRange(factor.id, next);
-      event.currentTarget.value = String(bound === 'low' ? next[0] : next[1]);
+      // Обновляем публичную привязку: кнопки NumberInput шагают от неё, а не от DOM.
+      [low, high] = next;
       return;
     }
     ranking.setNumericFilter(factor.id, {
@@ -68,14 +67,18 @@
 
 <div class="flex flex-col gap-3 py-3">
   <div class="flex items-center gap-2">
-    <Checkbox id={checkboxId} bind:checked={() => isEnabled, handleEnabledChange} />
-    <span class="flex min-w-0 flex-1 items-center gap-0.5">
-      <ChangedMarker factorId={factor.id} />
-      <Label for={checkboxId} class="text-base leading-snug">{factor.name}</Label>
-      <FactorHint {factor} />
-    </span>
+    <ChangedMarker factorId={factor.id} />
+    <div class="min-w-0 flex-1">
+      <Checkbox
+        size="s"
+        id={checkboxId}
+        label={factor.name}
+        bind:checked={() => isEnabled, handleEnabledChange}
+      />
+    </div>
+    <FactorHint {factor} />
     <span
-      class="shrink-0 text-base whitespace-nowrap text-foreground/70 tabular-nums"
+      class="shrink-0 text-base whitespace-nowrap text-[var(--muted)] tabular-nums"
       data-testid="weight-share-{factor.id}"
       title="Вес и доля в итоговом балле"
     >
@@ -83,7 +86,7 @@
     </span>
   </div>
   <Slider
-    type="single"
+    size="s"
     min={0}
     max={10}
     step={1}
@@ -92,24 +95,28 @@
     data-testid="weight-{factor.id}"
     bind:value={() => weight, handleWeightChange}
   />
-  <div class="flex items-center gap-2 text-sm text-foreground/70">
+  <div class="grid min-w-0 gap-2 text-sm">
     <span class="w-12 shrink-0">{range ? 'цель' : 'порог'}</span>
-    <Input
-      type="number"
+    <NumberInput
+      size="s"
+      step="any"
       inputmode="decimal"
       placeholder="от"
-      class="h-8"
       aria-label="{factor.name}: от"
-      value={low ?? ''}
+      bind:value={low}
+      decrementLabel="{factor.name}: уменьшить нижнюю границу"
+      incrementLabel="{factor.name}: увеличить нижнюю границу"
       onchange={(event) => handleBoundChange('low', event)}
     />
-    <Input
-      type="number"
+    <NumberInput
+      size="s"
+      step="any"
       inputmode="decimal"
       placeholder="до"
-      class="h-8"
       aria-label="{factor.name}: до"
-      value={high ?? ''}
+      bind:value={high}
+      decrementLabel="{factor.name}: уменьшить верхнюю границу"
+      incrementLabel="{factor.name}: увеличить верхнюю границу"
       onchange={(event) => handleBoundChange('high', event)}
     />
     {#if unit}
