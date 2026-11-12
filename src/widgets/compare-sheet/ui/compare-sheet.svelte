@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Dialog } from 'svelte-ascii-ui';
+  import { Button, Drawer } from 'svelte-ascii-ui';
 
   import {
     FactorHint,
@@ -65,8 +65,8 @@
   }
 </script>
 
-<Dialog
-  class="m-auto"
+<Drawer
+  side="bottom"
   bind:open={() => isVisible, handleOpenChange}
   title="Сравнение городов"
   size="xl"
@@ -165,4 +165,4 @@
       </tbody>
     </table>
   </div>
-</Dialog>
+</Drawer>

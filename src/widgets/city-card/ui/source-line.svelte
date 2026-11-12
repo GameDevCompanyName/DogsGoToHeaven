@@ -13,8 +13,8 @@
 {#if provenance}
   <p class="text-sm text-foreground/70">
     {#if provenance.url}
-      <Link href={provenance.url} target="_blank" rel="external noopener noreferrer">
-        <span class="text-sm">{provenance.name}</span>
+      <Link size="inherit" href={provenance.url} target="_blank" rel="external noopener noreferrer">
+        {provenance.name}
       </Link>
     {:else}
       {provenance.name}

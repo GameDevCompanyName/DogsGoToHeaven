@@ -31,7 +31,12 @@
       <p class="text-sm text-foreground/70">
         Шкала:
         {#if scale.source}
-          <Link href={scale.source} target="_blank" rel="external noopener noreferrer">
+          <Link
+            size="inherit"
+            href={scale.source}
+            target="_blank"
+            rel="external noopener noreferrer"
+          >
             {scale.sourceName}
           </Link>
         {:else}
