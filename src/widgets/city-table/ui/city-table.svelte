@@ -79,7 +79,10 @@
 </script>
 
 <div class="h-full">
-  <div class="h-full overflow-auto bg-background text-foreground" data-testid="city-table">
+  <div
+    class="aui-scrollbar h-full overflow-auto bg-background text-foreground"
+    data-testid="city-table"
+  >
     {#if ranking.tableCities.length > 0}
       <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
         <caption class="sr-only">

@@ -73,13 +73,15 @@
           <p>Проверено {formatDate(note.checkedAt)}</p>
           <p>Справка по открытым источникам, не юридическая консультация.</p>
         </div>
-        <Article>
-          <div class="max-w-[70ch] text-sm leading-relaxed">
+        <Article
+          class="[--article-font-size:var(--text-sm)] [--article-font-weight:400] [--article-line-height:1.625]"
+        >
+          <div class="max-w-[70ch]">
             {#each note.sections as section (section.title)}
               <div class="flex flex-col gap-2">
                 <h3 class="font-medium">{section.title}</h3>
                 {#each toParagraphs(section.body) as paragraph, index (index)}
-                  <p class="leading-relaxed">{paragraph}</p>
+                  <p>{paragraph}</p>
                 {/each}
               </div>
             {/each}

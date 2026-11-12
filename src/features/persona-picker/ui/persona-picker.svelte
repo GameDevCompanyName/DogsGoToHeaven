@@ -46,7 +46,7 @@
   </h2>
   <!-- На телефоне ряд листается вбок, на десктопе карточки идут сеткой в две колонки. -->
   <ul
-    class="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0"
+    class="aui-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0"
   >
     {#each ranking.presets as preset (preset.id)}
       {@const isActive = preset.id === ranking.presetId}

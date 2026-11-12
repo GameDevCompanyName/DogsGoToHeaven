@@ -1,5 +1,7 @@
 # ASCII UI migration: unresolved public capabilities
 
+Current integration (0.3.0): the city uses a right Drawer on desktop and a Dialog with bottom placement on narrow phones. Comparison uses a bottom Drawer. The measurements and fallback decisions below describe the earlier migration.
+
 Package: `svelte-ascii-ui@0.1.0`. Consumer: city details and three-city comparison.
 Evidence: installed public declarations and component styles; browser measurements,
 screenshots and keyboard/mobile checks have not been performed. No issue published;
