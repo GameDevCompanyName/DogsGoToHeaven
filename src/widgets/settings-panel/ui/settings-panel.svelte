@@ -27,7 +27,7 @@
   }
 </script>
 
-<div class="h-full overflow-y-auto">
+<div class="aui-scrollbar h-full overflow-y-auto">
   <div class="flex flex-col gap-6 p-4 pb-8">
     <PersonaPicker />
     <BudgetInput />
