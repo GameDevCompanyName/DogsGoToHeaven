@@ -31,7 +31,7 @@
 </script>
 
 <Overlay
-  class={isDesktop.current ? undefined : 'm-auto'}
+  {...isDesktop.current ? {} : { mobilePlacement: 'bottom' as const, class: 'm-auto' }}
   bind:open={() => view !== null, handleOpenChange}
   title={view?.city.name ?? 'Город'}
   size={isDesktop.current ? (isWide.current ? 'xl' : 'l') : 's'}

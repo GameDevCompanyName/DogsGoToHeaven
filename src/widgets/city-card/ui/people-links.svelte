@@ -40,9 +40,9 @@
     <h2 id="people-links-title" class="text-lg font-semibold">Почитать людей</h2>
     <ul class="flex flex-col gap-3">
       {#each links as link (link.sourceUrl)}
-        <li class="flex flex-col gap-0.5">
-          <Link href={link.url} target="_blank" rel="external noopener noreferrer">
-            <span class="text-sm">{link.title}</span>
+        <li class="flex flex-col gap-0.5 text-sm">
+          <Link size="inherit" href={link.url} target="_blank" rel="external noopener noreferrer">
+            {link.title}
           </Link>
           <span class="text-sm text-foreground/70">
             {link.sourceName}

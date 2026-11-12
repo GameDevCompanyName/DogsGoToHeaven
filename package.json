@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "maplibre-gl": "^6.11.2",
-    "svelte-ascii-ui": "0.2.0",
+    "svelte-ascii-ui": "0.3.0",
     "zod": "^3.25.76"
   }
 }

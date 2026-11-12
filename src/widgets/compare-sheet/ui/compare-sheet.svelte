@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Dialog } from 'svelte-ascii-ui';
+  import { Button, Drawer } from 'svelte-ascii-ui';
 
   import {
     FactorHint,
@@ -65,8 +65,8 @@
   }
 </script>
 
-<Dialog
-  class="m-auto"
+<Drawer
+  side="bottom"
   bind:open={() => isVisible, handleOpenChange}
   title="Сравнение городов"
   size="xl"
@@ -76,7 +76,7 @@
   <p class="mb-6 text-base text-foreground/70">
     Значения и уровни по каждому фактору, как в карточке города.
   </p>
-  <div class="min-h-0 flex-1 overflow-auto">
+  <div class="aui-scrollbar min-h-0 flex-1 overflow-auto">
     <table class="w-max min-w-full border-separate border-spacing-0 text-sm">
       <thead>
         <tr>
@@ -165,4 +165,4 @@
       </tbody>
     </table>
   </div>
-</Dialog>
+</Drawer>

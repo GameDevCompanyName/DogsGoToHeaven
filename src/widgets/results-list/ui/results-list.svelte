@@ -94,7 +94,7 @@
     </div>
   {/if}
   <CompareBar onopen={oncompareopen} />
-  <div class="min-h-0 flex-1 overflow-y-auto">
+  <div class="aui-scrollbar min-h-0 flex-1 overflow-y-auto">
     <!-- Живая область стоит всегда: иначе скринридер не заметит первый результат поиска. -->
     <p class="sr-only" aria-live="polite">
       {#if needle !== ''}
@@ -152,7 +152,10 @@
     {/if}
   </div>
   {#if ranking.hiddenByFilter > 0 || ranking.hiddenByCoverage > 0}
-    <footer class="max-h-[40%] shrink-0 overflow-y-auto p-3" aria-label="Скрытые города">
+    <footer
+      class="aui-scrollbar max-h-[40%] shrink-0 overflow-y-auto p-3"
+      aria-label="Скрытые города"
+    >
       <Panel size="s">
         <div class="flex flex-col gap-2 text-sm">
           {#if ranking.hiddenByFilter > 0}
