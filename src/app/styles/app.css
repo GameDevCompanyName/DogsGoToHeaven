@@ -26,6 +26,11 @@
   --color-ring: var(--text);
 }
 
+/* Preserve the browser's root size for rem units when Theme styles the viewport. */
+html.ascii-theme {
+  font-size: 100%;
+}
+
 @layer base {
   * {
     @apply border-border;
