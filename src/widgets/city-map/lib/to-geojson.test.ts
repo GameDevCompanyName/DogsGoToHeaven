@@ -12,7 +12,16 @@ function makeCity(id: string, lon: number, lat: number): DatasetCity {
 function makeView(id: string, score: number | null, percentile: number | null): RankedCityView {
   return {
     city: makeCity(id, 10, 20),
-    ranked: { cityId: id, rank: 1, score, contributions: [], missingFactorIds: [] },
+    ranked: {
+      cityId: id,
+      rank: 1,
+      score,
+      contributions: [],
+      missingFactorIds: [],
+      unknownFilterIds: [],
+      missingImportantFactorIds: [],
+      knownWeightShare: 1,
+    },
     percentile,
     strengths: [],
     weaknesses: [],
@@ -21,6 +30,12 @@ function makeView(id: string, score: number | null, percentile: number | null): 
 }
 
 describe('toGeoJson', () => {
+  it('does not colour an incomplete candidate as a confirmed highly ranked city', () => {
+    const view = makeView('unknown', 1, 1);
+    view.ranked.unknownFilterIds = ['rent'];
+    const feature = toGeoJson([view], []).features[0];
+    expect(feature?.properties).toMatchObject({ state: 'unscored', colorValue: 0 });
+  });
   it('puts a ranked city at its coordinates with its score', () => {
     const collection = toGeoJson([makeView('tbilisi', 0.8, 1)], []);
 

@@ -7,7 +7,7 @@
     { id: 'map', label: 'Карта' },
     { id: 'cities', label: 'Города' },
     { id: 'table', label: 'Таблица' },
-    { id: 'settings', label: 'Настройки' },
+    { id: 'settings', label: 'Условия' },
   ];
 
   const PANEL_TABS: PanelTab[] = ['cities', 'table', 'settings'];
@@ -21,13 +21,13 @@
 </script>
 
 <script lang="ts">
+  import { tick } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { Button } from 'svelte-ascii-ui';
 
   import { createRankingState, setRankingContext } from '@/entities/ranking';
   import { ShareButton } from '@/features/share-link';
   import { loadRawData } from '@/shared/api';
-  import { isOnboarded, markOnboarded } from '@/shared/lib/onboarding';
   import { cn } from '@/shared/lib/utils';
   import { CityCard } from '@/widgets/city-card';
   import { CityMap } from '@/widgets/city-map';
@@ -36,20 +36,17 @@
   import { ResultsList } from '@/widgets/results-list';
   import { SettingsPanel } from '@/widgets/settings-panel';
   import { browser } from '$app/environment';
-  import { goto, replaceState } from '$app/navigation';
-  import { resolve } from '$app/paths';
+  import { replaceState } from '$app/navigation';
   import { page } from '$app/state';
 
   // При пререндере хеша нет: страница собирается с персоной по умолчанию.
   const initialHash = browser ? location.hash : '';
   const ranking = createRankingState(loadRawData(), initialHash);
   setRankingContext(ranking);
-  /** Первый заход без хеша сейчас уйдёт на лендинг: карту и список зря не монтируем. */
-  const isRedirecting = browser && initialHash === '' && !isOnboarded();
 
   const isDesktop = new MediaQuery('(min-width: 768px)');
 
-  let section = $state<Section>('map');
+  let section = $state<Section>('cities');
   let isCompareOpen = $state(false);
 
   /** Вкладка левой колонки: на десктопе карта видна всегда, поэтому «Карта» там — это «Города». */
@@ -59,6 +56,12 @@
 
   function handlePanelTabChange(value: string) {
     section = isPanelTab(value) ? value : 'cities';
+  }
+
+  async function showResults() {
+    section = 'cities';
+    await tick();
+    document.getElementById('selection-heading')?.focus();
   }
 
   /** Ссылку вставили в открытую вкладку или поправили хеш руками: состояние берётся из адреса. */
@@ -81,31 +84,22 @@
     }, URL_WRITE_DELAY_MS);
     return () => clearTimeout(timer);
   });
-
-  $effect(() => {
-    // Переход на лендинг — действие в браузере при первом показе, а не значение: через $derived
-    // его не выразить. Эффект не читает реактивного состояния и срабатывает один раз; при
-    // пререндере эффекты не запускаются, поэтому собранная страница остаётся главной.
-    // Пришедший по ссылке с настройками лендинг уже не увидит: он сразу получил карту.
-    if (isRedirecting) void goto(resolve('/start'), { replaceState: true });
-    else if (initialHash.replace(/^#/, '') !== '') markOnboarded();
-  });
 </script>
 
 <svelte:window onhashchange={handleHashChange} />
 
-{#if !isRedirecting}
-  <div
-    class={cn(
-      'relative h-dvh overflow-hidden md:grid',
-      panelTab === 'cities'
-        ? 'md:grid-cols-[400px_minmax(0,1fr)]'
-        : 'md:grid-cols-[440px_minmax(0,1fr)] lg:grid-cols-[480px_minmax(0,1fr)]',
-    )}
-  >
+<div
+  class={cn(
+    'grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden md:grid-rows-1',
+    panelTab === 'cities'
+      ? 'md:grid-cols-[440px_minmax(0,1fr)] lg:grid-cols-[480px_minmax(0,1fr)]'
+      : 'md:grid-cols-[440px_minmax(0,1fr)] lg:grid-cols-[480px_minmax(0,1fr)]',
+  )}
+>
+  <div class="relative min-h-0 md:contents">
     <aside
       class={cn(
-        'absolute inset-x-0 top-0 bottom-14 z-10 flex flex-col bg-background md:static md:h-dvh md:border-r md:border-dashed md:border-foreground/25',
+        'absolute inset-0 z-10 flex min-w-0 flex-col bg-background md:static md:h-dvh md:border-r md:border-dashed md:border-foreground/25',
         section === 'map' && 'hidden md:flex',
       )}
     >
@@ -130,21 +124,24 @@
         </nav>
       </header>
       <section class="min-h-0 flex-1" aria-label="Города" hidden={panelTab !== 'cities'}>
-        <ResultsList oncompareopen={() => (isCompareOpen = true)} />
+        <ResultsList
+          oncompareopen={() => (isCompareOpen = true)}
+          onsettingsopen={() => (section = 'settings')}
+        />
       </section>
       <section
         class="min-h-0 flex-1"
         aria-label="Настройки"
         hidden={!isWideTable && panelTab !== 'settings'}
       >
-        <SettingsPanel />
+        <SettingsPanel onresults={showResults} />
       </section>
       {#if section === 'table' && !isDesktop.current}
         <section class="min-h-0 flex-1" aria-label="Таблица"><CityTable /></section>
       {/if}
     </aside>
 
-    <main class="absolute inset-x-0 top-0 bottom-14 md:relative md:h-dvh">
+    <main class="absolute inset-0 md:relative md:h-dvh">
       <CityMap />
       <!-- Карта остаётся смонтированной под таблицей: возврат на неё не пересоздаёт MapLibre. -->
       {#if isWideTable}
@@ -153,31 +150,31 @@
         </div>
       {/if}
     </main>
-
-    <nav
-      class="absolute inset-x-0 bottom-0 z-20 grid h-14 grid-cols-[0.8fr_0.9fr_1fr_1.3fr] border-t border-dashed border-foreground/25 bg-background md:hidden"
-      aria-label="Разделы"
-    >
-      {#each MOBILE_SECTIONS as item (item.id)}
-        <div
-          class={section === item.id
-            ? 'flex border-t-4 border-primary font-semibold'
-            : 'flex border-t-4 border-transparent'}
-        >
-          <Button
-            size="s"
-            fullWidth
-            aria-pressed={section === item.id}
-            variant={section === item.id ? 'primary' : 'default'}
-            onclick={() => (section = item.id)}
-          >
-            <span class="text-[11px] whitespace-nowrap min-[360px]:text-sm">{item.label}</span>
-          </Button>
-        </div>
-      {/each}
-    </nav>
   </div>
 
-  <CityCard />
-  <CompareSheet isOpen={isCompareOpen} onclose={() => (isCompareOpen = false)} />
-{/if}
+  <nav
+    class="z-20 grid grid-cols-[repeat(auto-fit,minmax(min(100%,5rem),1fr))] gap-1 border-t border-dashed border-foreground/25 bg-background p-1 md:hidden"
+    aria-label="Разделы"
+  >
+    {#each MOBILE_SECTIONS as item (item.id)}
+      <div
+        class={section === item.id
+          ? 'flex min-w-0 border-t-2 border-primary font-semibold'
+          : 'flex min-w-0 border-t-2 border-transparent'}
+      >
+        <Button
+          size="s"
+          fullWidth
+          aria-pressed={section === item.id}
+          variant={section === item.id ? 'primary' : 'default'}
+          onclick={() => (section = item.id)}
+        >
+          <span class="text-xs min-[360px]:text-sm">{item.label}</span>
+        </Button>
+      </div>
+    {/each}
+  </nav>
+</div>
+
+<CityCard />
+<CompareSheet isOpen={isCompareOpen} onclose={() => (isCompareOpen = false)} />

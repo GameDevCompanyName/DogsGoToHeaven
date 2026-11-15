@@ -5,7 +5,7 @@ import { buildDataset, type RawData } from '@/shared/lib/ranking';
 import { RankingState } from './ranking-state.svelte';
 
 /** Персона, с которой сервис открывается, если ссылка не говорит иного. */
-export const DEFAULT_PRESET_ID = 'remote-long';
+export const DEFAULT_PRESET_ID = 'first-look';
 
 export const [getRankingContext, setRankingContext] = createContext<RankingState>();
 

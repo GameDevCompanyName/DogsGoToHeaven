@@ -7,10 +7,11 @@ test.beforeEach(async ({ page }) => {
   await expect(async () => {
     const settings = page
       .getByRole('navigation', { name: 'Разделы' })
-      .getByRole('button', { name: 'Настройки' });
+      .getByRole('button', { name: 'Условия' });
     await settings.click();
     await expect(settings).toHaveAttribute('aria-pressed', 'true');
   }).toPass();
+  await page.getByTestId('advanced-settings').locator('summary').click();
 });
 
 test('очистка обязательной границы сохраняет число для последующего шага', async ({ page }) => {

@@ -1,5 +1,35 @@
 [
   {
+    "id": "first-look",
+    "name": "Первое сравнение",
+    "description": "Отправная точка для удалённого дохода: расходы, безопасность и легализация, без обязательных ограничений",
+    "highlights": ["расходы", "безопасность", "условия проживания"],
+    "weights": {
+      "cost-of-living": 8,
+      "rent": 8,
+      "safety": 6,
+      "healthcare": 3,
+      "legalization-ease": 6,
+      "winter-temp": 3,
+      "summer-temp": 2,
+      "internet-speed": 2,
+      "remote-tax": 3
+    },
+    "enabled": {
+      "it-salary": false,
+      "tax-burden": false,
+      "air-quality": false,
+      "sunshine": false,
+      "muggy-days": false,
+      "nomad-visa-income": false,
+      "time-to-citizenship": false,
+      "english": false,
+      "banking-ease": false,
+      "moscow-time-diff": false,
+      "population": false
+    }
+  },
+  {
     "id": "short-stay",
     "name": "Пересидеть пару месяцев",
     "description": "Попробовать место без бумажной волокиты, работая удалённо",
