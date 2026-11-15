@@ -63,6 +63,8 @@ export class RankingState {
   readonly #datalessIds: readonly FactorId[];
 
   presetId = $state<string | null>(null);
+  /** Сбрасывает черновики формы только при явной замене всех настроек. */
+  settingsResetKey = $state(0);
   settings = $state<RankingSettings>({ weights: {}, enabled: {}, ranges: {}, filters: {} });
   selectedCityId = $state<CityId | null>(null);
   /** Города сравнения в порядке выбора, не больше трёх. */
@@ -208,6 +210,7 @@ export class RankingState {
 
   /** Пересобирает настройки из базы реестра и персоны; ручные правки сбрасываются. */
   applyPreset(presetId: string | null) {
+    this.settingsResetKey += 1;
     this.presetId = this.presets.some((preset) => preset.id === presetId) ? presetId : null;
     this.settings = this.#settingsFor(this.presetId);
   }

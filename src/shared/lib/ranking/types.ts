@@ -61,6 +61,12 @@ export interface RankedCity {
   contributions: FactorContribution[];
   /** Активные или фильтруемые факторы, по которым у города нет данных. */
   missingFactorIds: FactorId[];
+  /** Обязательные условия, соответствие которым нельзя проверить из-за пропуска. */
+  unknownFilterIds: FactorId[];
+  /** Пропуски среди трёх ведущих активных приоритетов, включая равные веса. */
+  missingImportantFactorIds: FactorId[];
+  /** Доля активного веса, для которой есть данные; не вероятность достоверности. */
+  knownWeightShare: number;
 }
 
 export interface ExcludedCity {

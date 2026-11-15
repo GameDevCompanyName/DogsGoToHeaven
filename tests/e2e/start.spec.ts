@@ -1,19 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-// Первый заход: флага в localStorage нет, главная без хеша уводит на лендинг.
+// Первый заход сразу даёт стартовую подборку; вводные и примеры доступны отдельно.
 
-test('без флага в localStorage главная уводит на лендинг', async ({ page }) => {
+test('без флага в localStorage главная сразу показывает города', async ({ page }) => {
   await page.addInitScript(() => localStorage.removeItem('dogs:onboarded'));
 
   await page.goto('/');
 
-  await expect(page).toHaveURL(/\/start$/);
+  await expect(page.getByTestId('city-list-item').first()).toBeVisible();
+  await expect(page).toHaveURL(/\/(#.*)?$/);
 });
 
-test('первый заход ведёт на лендинг, выбор персоны открывает карту с ней', async ({ page }) => {
-  await page.goto('/');
-
-  await expect(page).toHaveURL(/\/start$/);
+test('вводная страница позволяет выбрать готовый сценарий', async ({ page }) => {
+  await page.goto('/start');
+  await page.getByText('Готовые примеры подбора', { exact: true }).click();
   const cards = page.getByTestId('persona-card');
   await expect(cards.first()).toBeVisible();
   expect(await cards.count()).toBeGreaterThan(0);
@@ -28,7 +28,8 @@ test('первый заход ведёт на лендинг, выбор пер�
 
   await expect(page).toHaveURL(/\/#p=family$/);
   const sections = page.getByRole('navigation', { name: 'Разделы' });
-  await sections.getByRole('button', { name: 'Настройки' }).click();
+  await sections.getByRole('button', { name: 'Условия' }).click();
+  await page.getByTestId('advanced-settings').locator('summary').click();
   await expect(
     page.getByTestId('persona-card').filter({ hasText: 'Семья с детьми' }),
   ).toHaveAttribute('aria-pressed', 'true');
@@ -74,8 +75,9 @@ test('опрос из лендинга открывает карту с подо
   expect(await page.evaluate(() => localStorage.getItem('dogs:onboarded'))).toBe('1');
   await page
     .getByRole('navigation', { name: 'Разделы' })
-    .getByRole('button', { name: 'Настройки' })
+    .getByRole('button', { name: 'Условия' })
     .click();
+  await page.getByTestId('advanced-settings').locator('summary').click();
   await expect(
     page.locator('[data-testid="persona-card"][data-preset-id="warm-cheap"]'),
   ).toHaveAttribute('aria-pressed', 'true');

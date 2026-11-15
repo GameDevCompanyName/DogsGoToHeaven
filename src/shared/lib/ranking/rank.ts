@@ -88,6 +88,14 @@ function scoreCity(
     const normalized = normalizedByFactor.get(factor.id)?.[cityIndex] ?? null;
     return normalized === null ? sum : sum + (settings.weights[factor.id] ?? 0);
   }, 0);
+  const requestedWeight = activeFactors.reduce(
+    (sum, factor) => sum + (settings.weights[factor.id] ?? 0),
+    0,
+  );
+  const leadingWeights = activeFactors
+    .map((factor) => settings.weights[factor.id] ?? 0)
+    .toSorted((a, b) => b - a);
+  const importantThreshold = leadingWeights[Math.min(2, leadingWeights.length - 1)] ?? Infinity;
 
   const contributions: FactorContribution[] = activeFactors.map((factor) => {
     const normalized = normalizedByFactor.get(factor.id)?.[cityIndex] ?? null;
@@ -117,6 +125,15 @@ function scoreCity(
     score: totalWeight === 0 ? null : contributions.reduce((sum, c) => sum + c.contribution, 0),
     contributions,
     missingFactorIds: [...missing],
+    unknownFilterIds: filters.flatMap(([factorId]) =>
+      (city.values[factorId] ?? null) === null ? [factorId] : [],
+    ),
+    missingImportantFactorIds: activeFactors.flatMap((factor) =>
+      missing.has(factor.id) && (settings.weights[factor.id] ?? 0) >= importantThreshold
+        ? [factor.id]
+        : [],
+    ),
+    knownWeightShare: requestedWeight === 0 ? 0 : totalWeight / requestedWeight,
   };
 }
 
@@ -125,6 +142,9 @@ function compareRanked(
   b: Omit<RankedCity, 'rank'>,
   nameById: Map<string, string>,
 ): number {
+  const incompleteA = a.unknownFilterIds.length > 0 || a.missingImportantFactorIds.length > 0;
+  const incompleteB = b.unknownFilterIds.length > 0 || b.missingImportantFactorIds.length > 0;
+  if (incompleteA !== incompleteB) return incompleteA ? 1 : -1;
   if (a.score !== b.score) {
     if (a.score === null) return 1;
     if (b.score === null) return -1;

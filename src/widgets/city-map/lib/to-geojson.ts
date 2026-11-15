@@ -25,7 +25,9 @@ export type CityCollection = FeatureCollection<Point, CityPointProperties>;
 /** Города для слоя карты. Скрытые по покрытию не попадают на карту вовсе. */
 export function toGeoJson(views: RankedCityView[], filtered: DatasetCity[]): CityCollection {
   const ranked = views.map(({ city, ranked, percentile }) =>
-    ranked.score === null
+    ranked.score === null ||
+    ranked.unknownFilterIds.length > 0 ||
+    ranked.missingImportantFactorIds.length > 0
       ? toFeature(city, 'unscored', 0, 0)
       : toFeature(city, 'ranked', ranked.score, percentile ?? 1),
   );
