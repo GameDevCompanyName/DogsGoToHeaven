@@ -7,8 +7,17 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('dogs:onboarded', '1'));
 });
 
-function openSection(page: Page, name: 'Карта' | 'Города' | 'Таблица' | 'Настройки') {
-  return page.getByRole('navigation', { name: 'Разделы' }).getByRole('button', { name }).click();
+async function openSection(page: Page, name: 'Карта' | 'Города' | 'Таблица' | 'Настройки') {
+  await page
+    .getByRole('navigation', { name: 'Разделы' })
+    .getByRole('button', { name: name === 'Настройки' ? 'Условия' : name })
+    .click();
+  if (
+    name === 'Настройки' &&
+    (await page.getByTestId('advanced-settings').getAttribute('open')) === null
+  ) {
+    await page.getByTestId('advanced-settings').locator('summary').click();
+  }
 }
 
 test('карта и список городов на месте', async ({ page }) => {
@@ -20,23 +29,21 @@ test('карта и список городов на месте', async ({ page 
   await expect(page.getByTestId('city-list-item').first()).toBeVisible();
 });
 
-test('ползунок веса меняет балл города', async ({ page }) => {
+test('точная важность меняет индекс одного и того же города', async ({ page }) => {
   await page.goto('/');
-  await openSection(page, 'Города');
-  // Один город может сохранить балл после округления, поэтому сравниваем верхушку списка целиком.
-  const topBadges = page.getByTestId('city-list-item').getByTestId('score-badge');
-  const scoresBefore = (await topBadges.allInnerTexts()).slice(0, 5);
-  expect(scoresBefore).toHaveLength(5);
-
+  const city = page.locator('[data-city-id="tbilisi"]');
+  await city.click();
+  await page.getByTestId('city-card').getByText('Расчёт и все факторы', { exact: true }).click();
+  const before = await page.getByTestId('city-card').getByTestId('score-badge').innerText();
+  await page.getByRole('button', { name: 'Закрыть карточку города', exact: true }).click();
   await openSection(page, 'Настройки');
   const thumb = page.getByRole('slider', { name: 'Вес: Стоимость жизни' });
   await thumb.focus();
   await thumb.press('Home');
   await openSection(page, 'Города');
-
-  await expect
-    .poll(async () => (await topBadges.allInnerTexts()).slice(0, 5))
-    .not.toEqual(scoresBefore);
+  await city.click();
+  await page.getByTestId('city-card').getByText('Расчёт и все факторы', { exact: true }).click();
+  await expect(page.getByTestId('city-card').getByTestId('score-badge')).not.toHaveText(before);
 });
 
 test('диапазон порога сохраняется в ссылке и снимается крайними положениями', async ({ page }) => {
@@ -92,6 +99,8 @@ test('клик по городу открывает карточку с разб
 
   const card = page.getByTestId('city-card');
   await expect(card.getByRole('heading', { name: cityName })).toBeVisible();
+  await expect(card.getByRole('heading', { name: 'Расходы на месяц' })).toBeVisible();
+  await card.getByText('Расчёт и все факторы', { exact: true }).click();
   await expect(card.getByTestId('score-breakdown').getByRole('listitem').first()).toBeVisible();
 });
 
@@ -110,6 +119,7 @@ test('карточка объясняет место города уровням
   await page.getByTestId('city-list-item').first().click();
 
   const card = page.getByTestId('city-card');
+  await card.getByText('Расчёт и все факторы', { exact: true }).click();
   await expect(card.getByRole('heading', { name: 'Тянет вверх' })).toBeVisible();
   await expect(card.getByTestId('level-chip').first()).toHaveText(/\S/);
 

@@ -89,6 +89,45 @@ function find(result: ReturnType<typeof rank>, cityId: string) {
 }
 
 describe('rank', () => {
+  it('keeps an unknown hard limit separate from a confirmed match even when ranking is disabled', () => {
+    const result = rank(
+      makeDataset(),
+      makeSettings({
+        enabled: { rent: true, safety: false },
+        filters: { safety: { min: 60 } },
+      }),
+    );
+    expect(find(result, 'gamma')).toMatchObject({ unknownFilterIds: ['safety'] });
+    expect(find(result, 'alpha')).toMatchObject({ unknownFilterIds: [] });
+  });
+
+  it('puts complete leading preferences before a higher score with missing important data', () => {
+    const dataset = makeDataset([
+      makeCity('incomplete', { rent: 100, safety: null, visa: 'free' }),
+      makeCity('complete', { rent: 200, safety: 50, visa: 'free' }),
+    ]);
+    const result = rank(dataset, makeSettings());
+    expect(result.ranked.map((city) => city.cityId)).toEqual(['complete', 'incomplete']);
+    expect(find(result, 'incomplete')).toMatchObject({
+      missingImportantFactorIds: ['safety'],
+      knownWeightShare: 0.25,
+    });
+  });
+
+  it('includes tied leading preferences in the important-data check', () => {
+    const dataset = makeDataset();
+    const numeric = dataset.factors.filter((factor) => factor.kind === 'numeric');
+    dataset.factors.push(...numeric.map((factor) => ({ ...factor, id: `extra-${factor.id}` })));
+    const result = rank(
+      dataset,
+      makeSettings({
+        weights: { rent: 8, safety: 6, 'extra-rent': 6, 'extra-safety': 6 },
+        enabled: { rent: true, safety: true, 'extra-rent': true, 'extra-safety': true },
+      }),
+    );
+    expect(find(result, 'alpha').missingImportantFactorIds).toEqual(['extra-rent', 'extra-safety']);
+  });
+
   it('normalizes weights to shares and sums contributions into the score', () => {
     const alpha = find(rank(makeDataset(), makeSettings()), 'alpha');
     expect(alpha.contributions.map((c) => c.weightShare)).toEqual([0.25, 0.75]);

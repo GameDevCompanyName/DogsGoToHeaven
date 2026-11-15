@@ -102,7 +102,7 @@
       <Checkbox
         size="m"
         id={checkboxId}
-        label={factor.name}
+        label={factor.name + ': влияет на порядок'}
         bind:checked={() => isEnabled, handleEnabledChange}
       />
     </div>
@@ -123,11 +123,20 @@
   />
   <div class="grid min-w-0 gap-2 text-sm">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <span>{range ? 'Целевой диапазон' : 'Порог'}{unit ? ` · ${unit}` : ''}</span>
+      <span
+        >{range ? 'Предпочтительный диапазон' : 'Обязательное условие'}{unit
+          ? ` · ${unit}`
+          : ''}</span
+      >
       {#if !range && numericFilter}
         <Button size="s" onclick={() => updateBounds(undefined, undefined)}>Без ограничений</Button>
       {/if}
     </div>
+    {#if !isEnabled && numericFilter}
+      <p class="text-sm text-muted-foreground">
+        Влияние на порядок выключено. Обязательное условие действует отдельно.
+      </p>
+    {/if}
     <Range
       size="s"
       min={sliderMin}

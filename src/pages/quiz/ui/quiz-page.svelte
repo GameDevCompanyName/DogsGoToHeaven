@@ -22,9 +22,10 @@
 
 <main class="mx-auto flex min-h-dvh max-w-xl flex-col gap-8 px-4 py-8 md:py-16">
   <header class="flex flex-col gap-2">
-    <h1 class="text-2xl leading-tight font-semibold md:text-3xl">Подберём настройки</h1>
+    <h1 class="text-2xl leading-tight font-semibold md:text-3xl">С чего начать выбор города?</h1>
     <p class="text-base leading-relaxed text-foreground/80">
-      Пять коротких вопросов — и карта откроется с подходящей персоной. Потом всё можно поменять.
+      Пять коротких вопросов помогут собрать стартовую подборку. В ней будут видны условия,
+      компромиссы и неизвестные данные. Любой ответ можно изменить.
     </p>
   </header>
   <QuizForm exitHref={start} onfinish={handleFinish} />

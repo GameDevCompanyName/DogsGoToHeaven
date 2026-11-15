@@ -27,7 +27,7 @@ test('карточка на десктопе показывает сводку �
   await firstCity.click();
 
   const card = page.getByTestId('city-card');
-  await expect(card.getByTestId('summary-line')).toContainText('В топе за счёт');
+  await expect(card.getByRole('heading', { name: 'По вашим приоритетам' })).toBeVisible();
   await card.getByTestId('factor-hint').first().click();
   await expect(page.getByTestId('factor-hint-content')).toBeVisible();
 });
@@ -67,7 +67,7 @@ test('доход показывает остаток у города и сорт
   await page.goto('/');
   await page
     .getByRole('navigation', { name: 'Разделы' })
-    .getByRole('button', { name: 'Настройки' })
+    .getByRole('button', { name: 'Условия' })
     .click();
   await page.getByTestId('budget-input').fill('2000');
   await page
@@ -93,6 +93,7 @@ test('таблица встаёт вместо карты, сортируетс�
   const table = page.getByTestId('city-table');
   await expect(table).toBeVisible();
   // Слева при таблице — настройки: вес двигается, таблица справа видна.
+  await page.getByTestId('advanced-settings').locator('summary').click();
   await expect(page.getByTestId('weight-cost-of-living')).toBeVisible();
   const sortSafety = table.getByTestId('sort-safety');
 
